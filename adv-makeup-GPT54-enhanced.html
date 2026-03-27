@@ -346,12 +346,18 @@
   <div class="page">
     <header>
       <div>
-        <h1>Antagonistrucco</h1>
+        <h1>Local Face Lab</h1>
+        <div class="subtitle">
+          Demo locale con webcam in tempo reale, scansione volto, salvataggio del descrittore biometrico nel browser e ricerca su archivio client-side.
+          La colonna destra ora offre guide di makeup AR ancorate ai landmark del volto, visualizzate in sovraimpressione direttamente sulla webcam.
+        </div>
       </div>
       <section class="about">
         <h2>About</h2>
         <p>
-          27 Marzo: test preliminare, 9 Maggio: workshop all'aperto!
+          Tutta la logica gira nel browser. I descrittori facciali sono salvati in <code>localStorage</code> locale.
+          Per la webcam apri questa pagina da <code>localhost</code> con un piccolo web server locale.
+          Le guide nella colonna destra sono overlay cosmetici/artistici in realtà aumentata: mostrano dove applicare eyeliner, ombretto, blush e lipstick senza trasformarle in istruzioni di evasione biometrica.
         </p>
       </section>
     </header>
@@ -421,13 +427,13 @@
     </main>
   </div>
 
-  <script src="remote-inclusions/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script>
     const MODEL_URLS = {
-      // tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights', // REMOVED: not needed, no such resource
-      landmarks: 'remote-inclusions/face_landmark_68',
-      recognition: 'remote-inclusions/face_recognition',
-      ageGender: 'remote-inclusions/age_gender_model'
+      tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
+      landmarks: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_landmark_68',
+      recognition: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_recognition',
+      ageGender: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/age_gender_model'
     };
 
     const STORAGE_KEY = 'local-face-lab-db-v1';
@@ -995,7 +1001,7 @@
       setStatus('init', 'caricamento modelli');
       setLog('Caricamento modelli face-api.js in corso…');
       await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri('remote-inclusions/tiny_face_detector'),
+        faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/tiny_face_detector'),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URLS.landmarks),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URLS.recognition),
         faceapi.nets.ageGenderNet.loadFromUri(MODEL_URLS.ageGender)
