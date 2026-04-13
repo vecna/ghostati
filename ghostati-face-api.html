@@ -1,9 +1,16 @@
 <!doctype html>
 <html lang="it">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Local Face Lab</title>
+  <title>Ghostati Face Lab</title>
+  <!-- Se mi rompi il cazzo perchè ho messo dei google fonts: hai ragione e fai bene. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg: #0f1115;
@@ -21,8 +28,15 @@
       --radius: 18px;
     }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       min-width: 1280px;
@@ -31,7 +45,7 @@
         radial-gradient(circle at top right, rgba(159, 122, 234, 0.12), transparent 26%),
         var(--bg);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     .page {
@@ -57,10 +71,11 @@
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 34px;
-      letter-spacing: 0.02em;
-      font-weight: 800;
+      margin: 0 0 4px;
+      font-family: 'League Script', cursive;
+      font-size: 60px;
+      font-weight: 400;
+      line-height: 1;
     }
 
     .subtitle {
@@ -154,14 +169,14 @@
       padding: 14px 14px;
       cursor: pointer;
       transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, opacity 0.18s ease;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
     }
 
     .action-btn:hover,
     .preview-btn:hover,
     .secondary-btn:hover {
       transform: translateY(-1px);
-      border-color: rgba(255,255,255,0.18);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     .action-btn:disabled,
@@ -248,9 +263,18 @@
       z-index: 0;
     }
 
-    #video { z-index: 1; }
-    #previewImage { z-index: 2; display: none; }
-    #overlay { z-index: 3; }
+    #video {
+      z-index: 1;
+    }
+
+    #previewImage {
+      z-index: 2;
+      display: none;
+    }
+
+    #overlay {
+      z-index: 3;
+    }
 
     .status-pill {
       position: absolute;
@@ -263,7 +287,7 @@
       padding: 8px 12px;
       border-radius: 999px;
       background: rgba(15, 17, 21, 0.72);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--muted);
       font-size: 12px;
       font-weight: 700;
@@ -289,33 +313,62 @@
     }
 
     .logbox {
-      min-height: 82px;
+      height: 82px;
       border-top: 1px solid var(--line);
-      padding: 14px 18px;
-      background: rgba(255,255,255,0.02);
-      display: grid;
-      gap: 6px;
-      align-items: center;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
     }
 
-    .logbox .label {
-      color: var(--muted);
+    .log-line {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      line-height: 1.25;
+      color: #c6d0f5;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .log-line:first-child {
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    .log-line:nth-child(2) {
       font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 700;
+      font-weight: 400;
+      opacity: 0.7;
     }
 
-    .logbox .message {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.4;
+    .log-line:nth-child(3) {
+      font-size: 11px;
+      font-weight: 450;
+      opacity: 0.4;
+    }
+
+    .log-line:nth-child(4) {
+      font-size: 10px;
+      font-weight: 400;
+      opacity: 0.25;
+    }
+
+    .log-line:nth-child(5) {
+      font-size: 10px;
+      font-weight: 300;
+      opacity: 0.15;
+    }
+
+    .log-line:nth-child(n+6) {
+      display: none;
     }
 
     .list-card {
       margin: 0 16px 16px;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.025);
       border-radius: 14px;
       padding: 12px 14px;
     }
@@ -334,36 +387,51 @@
       gap: 12px;
       font-size: 13px;
       padding: 7px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .metric:last-child { border-bottom: 0; }
-    .metric span:first-child { color: var(--muted); }
-    .metric strong { font-weight: 700; }
+    .metric:last-child {
+      border-bottom: 0;
+    }
+
+    .metric span:first-child {
+      color: var(--muted);
+    }
+
+    .metric strong {
+      font-weight: 700;
+    }
   </style>
 </head>
+
 <body>
   <div class="page">
     <header>
       <div>
-        <h1>Ghostati</h1>
+        <h1>ghòstati</h1>
         <div class="subtitle">
-          Stabile solo al <a https="https://www.nina.watch/festival.html">Festival di NINA</a>, <a href="https://sindacato.nina.watch/ghostati" style="color: var(--accent-2);">Scopri di più</a>.
+          Stabile solo al <a https="https://www.nina.watch/festival.html">Festival di NINA</a>, <a
+            href="https://sindacato.nina.watch/ghostati" style="color: var(--accent-2);">Scopri di più</a>.
         </div>
       </div>
       <section class="about">
         <p>
-          Qui è tutto in ALPHA, se vuoi passa sul <a style="color: var(--accent-2);" href="https://github.com/vecna/antagonistrucco">repository</a>.
+          Qui è tutto in ALPHA, se vuoi passa sul <a style="color: var(--accent-2);"
+            href="https://github.com/vecna/antagonistrucco">repository</a>.
         </p>
       </section>
     </header>
 
     <main class="layout">
       <section class="panel controls">
-        <div class="panel-header" id="diagnosisBox" style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.12), rgba(122, 162, 255, 0.08)); border-bottom: 1px solid rgba(159, 122, 234, 0.3); padding-bottom: 20px; text-align: center;">
-          <h2 style="color: var(--accent-2); margin-bottom: 12px; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase;">Verifica efficacia</h2>
+        <div class="panel-header" id="diagnosisBox"
+          style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.12), rgba(122, 162, 255, 0.08)); border-bottom: 1px solid rgba(159, 122, 234, 0.3); padding-bottom: 20px; text-align: center;">
+          <h2
+            style="color: var(--accent-2); margin-bottom: 12px; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase;">
+            Verifica efficacia</h2>
           <button id="scanBtn" class="action-btn" style="transition: all 0.3s ease;">Scansiona Faccia</button>
-          <button id="copyMakeupBtn" class="secondary-btn" disabled style="margin-top: 8px; font-size: 11px;">Copia volto truccato</button>
+          <button id="copyMakeupBtn" class="secondary-btn" disabled style="margin-top: 8px; font-size: 11px;">Copia
+            volto truccato</button>
         </div>
         <div class="panel-header">
           <h2>Comandi</h2>
@@ -371,12 +439,6 @@
         </div>
         <div class="stack">
           <button id="mirrorToggle" class="action-btn">Mirror webcam</button>
-          <select id="fpsSelect" class="secondary-btn" style="text-align: center; cursor: pointer; appearance: none; -webkit-appearance: none; border-color: rgba(255,255,255,0.06);">
-            <option value="30">Tracking: Real-time (30ms)</option>
-            <option value="60">Tracking: Veloce (60ms)</option>
-            <option value="90">Tracking: Medio (90ms)</option>
-            <option value="120" selected>Tracking: Lento (120ms)</option>
-          </select>
           <button id="saveBtn" class="action-btn">Salva faccia</button>
           <button id="findBtn" class="action-btn">Trova faccia</button>
           <button id="clearDbBtn" class="secondary-btn">Azzera archivio locale</button>
@@ -392,37 +454,48 @@
       </section>
 
       <section class="panel image-panel">
-        <div class="panel-header">
-          <h2>Sezione Webcam</h2>
-          <p>Il sistema riconosce solo un volto alla volta.</p>
-        </div>
         <div class="viewer" id="viewer">
-          <div class="status-pill"><span id="statusDot" class="status-dot"></span><span id="statusText">inizializzazione...</span></div>
+          <div class="status-pill"><span id="statusDot" class="status-dot"></span><span
+              id="statusText">inizializzazione...</span></div>
           <div id="placeholder">Caricamento modelli e richiesta webcam…</div>
           <video id="video" autoplay muted playsinline></video>
           <img id="previewImage" alt="preview diagnostica" />
           <canvas id="overlay"></canvas>
         </div>
-        <div class="logbox">
-          <div class="label">Log</div>
-          <div id="logMessage" class="message">In attesa dell’avvio della webcam…</div>
+        <div class="logbox" id="logBox">
+          <div class="log-line">In attesa dell’avvio della webcam…</div>
         </div>
       </section>
 
       <section class="panel makeup">
         <div class="panel-header">
-          <h2>Makeup AR</h2>
           <p>Overlay live ancorati ai landmark del volto e visualizzati direttamente sulla webcam.</p>
         </div>
         <div class="stack" id="ghostylesContainer">
         </div>
-        <div id="ghostyleDetails" class="stack" style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: -12px; background-color: var(--accent-2); border-radius: 12px;">
-           <input type="url" id="remoteGhostyleUrl" style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text;" placeholder="https://.../urleffect.js" />
-           <button id="loadRemoteGhostyleBtn" class="secondary-btn" style="margin-top: -6px;">Carica Ghostyle Remoto</button>
-           <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg);">📖 Sviluppa in Ghostyle</a>
+        
+        <div style="padding: 0 16px 12px;">
+          <select id="fpsSelect" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
+            <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
+            <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
+            <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
+            <option value="120" selected>⚙️ Frequenza Rendering: 120ms (Ecosostenibile)</option>
+          </select>
+        </div>
+
+        <div id="ghostyleDetails" class="stack"
+          style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0px; background-color: var(--accent-2); border-radius: 12px;">
+          <input type="url" id="remoteGhostyleUrl"
+            style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text;"
+            placeholder="https://.../urleffect.js" />
+          <button id="loadRemoteGhostyleBtn" class="secondary-btn" style="margin-top: -6px;">Carica Ghostyle
+            Remoto</button>
+          <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg);">📖 Sviluppa in
+            Ghostyle</a>
         </div>
         <p class="small-note">
-          Un click attiva la guida sulla webcam; un secondo click sullo stesso pulsante la spegne e torna il feed pulito.
+          Un click attiva la guida sulla webcam; un secondo click sullo stesso pulsante la spegne e torna il feed
+          pulito.
         </p>
         <div class="list-card">
           <h3>Modalità attiva</h3>
@@ -456,7 +529,7 @@
       viewer: document.getElementById('viewer'),
       placeholder: document.getElementById('placeholder'),
       previewImage: document.getElementById('previewImage'),
-      logMessage: document.getElementById('logMessage'),
+      logBox: document.getElementById('logBox'),
       statusDot: document.getElementById('statusDot'),
       statusText: document.getElementById('statusText'),
       dbCount: document.getElementById('dbCount'),
@@ -483,7 +556,7 @@
       els.overlay.style.opacity = '1';
       void els.overlay.offsetHeight; // force reflow
       els.overlay.style.transition = 'opacity 2s ease-in-out';
-      
+
       if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
       overlayFadeTimeout = setTimeout(() => {
         els.overlay.style.opacity = '0';
@@ -544,18 +617,26 @@
     }
 
     function setLog(message, sourcePlugin = null) {
-      els.logMessage.innerHTML = '';
+      const line = document.createElement('div');
+      line.className = 'log-line';
+
       if (sourcePlugin) {
         const span = document.createElement('span');
         span.style.color = 'var(--accent-2)';
         span.style.fontWeight = '800';
         span.style.marginRight = '8px';
         span.textContent = `[${sourcePlugin.toUpperCase()}]`;
-        els.logMessage.appendChild(span);
+        line.appendChild(span);
       }
       const textSpan = document.createElement('span');
       textSpan.textContent = message;
-      els.logMessage.appendChild(textSpan);
+      line.appendChild(textSpan);
+      
+      els.logBox.insertBefore(line, els.logBox.firstChild);
+      
+      while (els.logBox.children.length > 5) {
+        els.logBox.removeChild(els.logBox.lastChild);
+      }
     }
 
     function setStatus(kind, text) {
@@ -745,7 +826,7 @@
       const id = url.split('/').pop().replace('.js', '');
       try {
         setLog(`Caricamento ghostyle da ${url}...`);
-        
+
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
@@ -754,16 +835,16 @@
 
         const module = await import(url);
         loadedGhostyles.set(id, { id, name, module, url });
-        
+
         const btn = document.createElement('button');
         btn.className = 'preview-btn';
         btn.textContent = name;
         btn.dataset.effect = id;
         btn.onclick = () => toggleEffect(id, btn);
-        
+
         els.ghostylesContainer.appendChild(btn);
         setLog(`Ghostyle '${name}' pronto all'uso.`);
-        
+
         if (module.onInit) {
           module.onInit();
         }
@@ -953,23 +1034,23 @@
         deactivateEffect();
         return;
       }
-      
+
       if (activeEffect) {
         const styleId = activeEffect;
         deactivateEffect({ silent: true });
         // wait for complete removal then continue
       }
-      
+
       activeEffect = effect;
       const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
       previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
       els.previewImage.style.display = 'none';
       els.previewImage.removeAttribute('src');
       updateEffectStats();
-      
+
       const style = loadedGhostyles.get(effect);
       setLog(`Guida makeup attiva: ${style ? style.name : effect}. Cerca un volto nella webcam per vedere dove applicarlo.`);
-      
+
       els.scanBtn.textContent = 'Scansiona trucco';
       els.scanBtn.style.background = 'linear-gradient(180deg, rgba(159, 122, 234, 0.35), rgba(159, 122, 234, 0.15))';
       els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
@@ -978,7 +1059,7 @@
       if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
       els.overlay.style.transition = 'none';
       els.overlay.style.opacity = '1';
-      
+
       startEffectLoop();
     }
 
@@ -1140,50 +1221,50 @@
           exportCanvas.width = lastCompositedCanvas.width;
           exportCanvas.height = lastCompositedCanvas.height + headerHeight + footerHeight;
           const ctx = exportCanvas.getContext('2d');
-          
+
           ctx.fillStyle = '#0f1115';
           ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-          
+
           ctx.drawImage(lastCompositedCanvas, 0, headerHeight);
-          
+
           ctx.fillStyle = '#eef2ff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          
+
           const style = loadedGhostyles.get(activeEffect);
           const pluginName = style ? style.name : 'Unknown Plugin';
           ctx.font = 'bold 14px Inter, sans-serif';
           ctx.fillText(`github.com/vecna/antagonistrucco | Modulo attivo: ${pluginName}`, exportCanvas.width / 2, headerHeight / 2);
-          
-          const logText = els.logMessage.textContent;
+
+          const logText = els.logBox.firstChild ? els.logBox.firstChild.textContent : '';
           ctx.font = '14px Inter, sans-serif';
           ctx.fillStyle = '#3ddc97'; // default verde o bianco, usiamo un bianco leggero
           if (logText.includes('ECCELLENTE') || logText.includes('BUONO')) ctx.fillStyle = '#3ddc97';
           else if (logText.includes('INSUFFICIENTE')) ctx.fillStyle = '#ff7a7a';
           else ctx.fillStyle = '#eef2ff';
-          
+
           ctx.fillText(logText, exportCanvas.width / 2, exportCanvas.height - footerHeight / 2);
 
           exportCanvas.toBlob(blob => {
-             navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => {
-                setLog('Immagine con referto diagnostico copiata negli appunti!');
-             });
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => {
+              setLog('Immagine con referto diagnostico copiata negli appunti!');
+            });
           });
         } catch (err) {
-           console.error(err);
-           setLog('Errore durante la copia. Forse manca il permesso nel browser?');
+          console.error(err);
+          setLog('Errore durante la copia. Forse manca il permesso nel browser?');
         }
       });
 
       els.scanBtn.addEventListener('click', async () => {
         setBusy(true);
         try {
-           if (activeEffect) {
-             await testMakeupEfficacy();
-             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
-           } else {
-             await scanFace();
-           }
+          if (activeEffect) {
+            await testMakeupEfficacy();
+            // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
+          } else {
+            await scanFace();
+          }
         }
         catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
         finally {
@@ -1245,7 +1326,7 @@
       try {
         await loadModels();
         await startCamera();
-        
+
         try {
           const ghostylistRes = await fetch('ghostylist.json');
           if (ghostylistRes.ok) {
@@ -1256,7 +1337,7 @@
           } else {
             setLog('File ghostylist.json non trovato, caricamento plugin saltato.', 'Sistema');
           }
-        } catch(err) {
+        } catch (err) {
           setLog('Errore durante la lettura di ghostylist.json: ' + err.message, 'Sistema');
         }
       } catch (err) {
@@ -1270,4 +1351,5 @@
     init();
   </script>
 </body>
+
 </html>
