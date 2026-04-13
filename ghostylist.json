@@ -1,0 +1,9 @@
+[
+  { "name": "Graphic Liner", "url": "./ghostyles/graphic-liner.js" },
+  { "name": "Smokey Eyes", "url": "./ghostyles/smokey-eyes.js" },
+  { "name": "Blush Lift", "url": "./ghostyles/blush-lift.js" },
+  { "name": "Lip Tint", "url": "./ghostyles/lip-tint.js" },
+  { "name": "Soft Contour", "url": "./ghostyles/soft-contour.js" },
+  { "name": "Stage Mask", "url": "./ghostyles/stage-mask.js" },
+  { "name": "Template Didattico", "url": "./ghostyles/00-template.js" }
+]

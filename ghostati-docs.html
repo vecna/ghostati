@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghostati - Guida per Sviluppatori</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1d2230;
+      --text: #eef2ff;
+      --muted: #aeb6cf;
+      --line: #2c3346;
+      --accent: #7aa2ff;
+      --accent-2: #9f7aea;
+      --success: #3ddc97;
+      --warn: #ffcc66;
+      --danger: #ff7a7a;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(122, 162, 255, 0.14), transparent 28%),
+        radial-gradient(circle at top right, rgba(159, 122, 234, 0.12), transparent 26%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      background: linear-gradient(135deg, rgba(122, 162, 255, 0.16), rgba(159, 122, 234, 0.12));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .btn-back {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 20px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-back:hover {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    section {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 18px;
+      color: var(--accent-2);
+      margin-top: 30px;
+    }
+
+    p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    pre {
+      background: #0a0d12;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, fallback;
+      color: #c6d0f5;
+    }
+
+    .block-explain {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      border-radius: 0 12px 12px 0;
+    }
+
+    .block-explain strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Documentazione Ghostyles</h1>
+      <div class="subtitle">Guida per Sviluppatori all'Architettura a Plugin di Ghostati</div>
+      <a href="ghostati-face-api.html" class="btn-back">← Torna all'App Principal</a>
+    </header>
+
+    <section>
+      <h2>Architettura ad Alto Livello</h2>
+      <p>Il sistema "Ghostati" utilizza un'<strong>architettura a plugin modulari</strong> pensata per separare il nucleo di tracciamento facciale dagli effetti visivi (i "Ghostyles").</p>
+      
+      <p>Tecnicamente, l'engine principale è una web app Vanilla JS che inizializza la webcam, e utilizza <code>face-api.js</code> per inferire in tempo reale i <em>Landmarks a 68 punti</em> del viso. Il loop di rendering è gestito autonomamente per garantire performance scalabili (FPS controllati).</p>
+
+      <p>Og intanto, l'engine richiama l'effetto attivo (il plugin). Ogni <strong>Ghostyle</strong> è un ES Module (<code>.js</code>) caricato dinamicamente via <code>import(url)</code>. Questo significa che i Ghostyle possono essere creati come file locali indipendenti, o addirittura hostati su server remoti e passati via URL.</p>
+
+      <p>L'engine fornisce al plugin due cose: le coordinate del volto aggiornate e le API globali offerte da <code>window.Ghostati</code> per semplificare drasticamente la geometria e il disegno su un Canvas dedicato (livello di overlay).</p>
+    </section>
+
+    <section>
+      <h2>Template Didattico</h2>
+      <p>Un plugin Ghostyle per funzionare deve unicamente esportare un paio di funzioni specifiche (gli "Event Hooks"). Questo snippet di codice rappresenta lo scheletro di base per cominciare a sviluppare.</p>
+      
+<pre><code>// @name Effetto Base
+
+/**
+ * [BLOCCO INIT]
+ * Funzione di inizializzazione locale (Opzionale).
+ * Chiamata *una sola volta* quando il Ghostyle viene importato in memoria.
+ */
+export function onInit() {
+  Ghostati.log('Effetto base caricato correttamente!', 'BASE_STYLE');
+}
+
+/**
+ * [BLOCCO DRAW]
+ * Funzione principale di rendering.
+ * L'Engine richiama questa funzione iterativamente nel RAF loop.
+ * 
+ * @param {CanvasRenderingContext2D} ctx - Il contesto 2D nativo.
+ * @param {faceapi.FaceLandmarks68} landmarks - Collezione dei landmark spaziali del viso.
+ * @param {faceapi.Box} box - Il Bounding Box che riquadra tutto il viso.
+ */
+export function onDraw(ctx, landmarks, box) {
+  // 1. Estrazione Segmenti (Array di {x,y})
+  const leftEye = landmarks.getLeftEye();
+  const rightEye = landmarks.getRightEye();
+
+  // 2. Logging temporaneo (opzionale) o manipolazione
+  // Attenzione: usare Ghostati.log qui scriverà messaggi ad alto rate / frame.
+  
+  // 3. Staging via ctx standard
+  ctx.fillStyle = 'rgba(255, 122, 122, 0.45)';
+  ctx.strokeStyle = 'rgba(255, 122, 122, 0.9)';
+
+  // 4. Rendering tramite libreria Helper
+  Ghostati.drawClosedPath(ctx, leftEye, ctx.fillStyle, ctx.strokeStyle, 2);
+  Ghostati.drawClosedPath(ctx, rightEye, ctx.fillStyle, ctx.strokeStyle, 2);
+}
+
+/**
+ * [BLOCCO CLEAR]
+ * Funzione di smontaggio / teardown (Opzionale).
+ * L'Engine svuota automaticamente il Canvas. Usalo se hai timer o memorie da annullare.
+ */
+export function onClear(ctx) {
+  console.log("Ripristino pulizia plugin base.");
+}
+</code></pre>
+    </section>
+
+    <section>
+      <h2>Spiegazione dei Blocchi</h2>
+
+      <div class="block-explain">
+        <strong>1. Metadati Commentati</strong>
+        La prima riga <code>// @name [Nome]</code> è letta dall'Engine in fase di fetch come fallback se il plugin non ha un id chiaro o necessita di una label UI amichevole. Non è strettamente javascript-eseguibile, ma va in cima al modulo!
+      </div>
+
+      <div class="block-explain">
+        <strong>2. Blocco INIT (<code>export function onInit</code>)</strong>
+        È l'Entry Point primario eseguito all'iniezione nel DOM/Browser dal Plugin Manager. Idealmente usato per scaricare asset aggiuntivi o notificare l'interfaccia via <code>Ghostati.log</code>. Può essere asincrono (<code>async/await</code>).
+      </div>
+
+      <div class="block-explain">
+        <strong>3. Blocco DRAW (<code>export function onDraw</code>)</strong>
+        È il cuore pulsante del tuo scrip AR. L'argomento <code>landmarks</code> espone i metodi standard di face-api per ottenere array di coordinate <code>{x,y}</code> suddivise semanticamente: <code>getLeftEye()</code>, <code>getJawOutline()</code>, <code>getNose()</code>, <code>getMouth()</code>. È tutto disegnato su un livello trasparente perfettamente riallineato sulla webcam.
+      </div>
+
+      <div class="block-explain">
+        <strong>4. Utilizzo Metodi <code>Ghostati</code></strong>
+        Piuttosto che calcolare le curve Bezier punto per punto, usa le Utility messe a disposizione nell'interfaccia <code>window.Ghostati</code> come <code>drawClosedPath</code>. Ci sono anche funzioni di morphing sofisticate come <code>Ghostati.expandEyePolygon</code> o <code>Ghostati.drawEyeWing</code> per riprodurre eyeliner e sagome senza sforzo matematico.
+      </div>
+
+      <div class="block-explain">
+        <strong>5. Blocco CLEAR (<code>export function onClear</code>)</strong>
+        L'Engine passa a questo Hook prima di effettuare uno "switch" verso un altro plugin, garantendovi un life-cycle appropriato in cui eliminare custom listeners o fermare calcoli costosi derivati se necessario.
+      </div>
+    </section>
+  </div>
+</body>
+</html>

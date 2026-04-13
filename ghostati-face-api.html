@@ -13,7 +13,7 @@
       --muted: #aeb6cf;
       --line: #2c3346;
       --accent: #7aa2ff;
-      --accent-2: #9f7aea;
+      --accent-2: aliceblue;
       --success: #3ddc97;
       --warn: #ffcc66;
       --danger: #ff7a7a;
@@ -348,7 +348,7 @@
       <div>
         <h1>Ghostati</h1>
         <div class="subtitle">
-          Un esperimento di <a https="https://www.nina.watch">NINA</a>, <a href="https://sindacato.nina.watch/ghostati">Scopri di più</a>.
+          Un esperimento di <a https="https://www.nina.watch">NINA</a>, <a href="https://sindacato.nina.watch/ghostati" style="color: var(--accent-2);">Scopri di più</a>.
         </div>
       </div>
       <section class="about">
@@ -388,8 +388,8 @@
 
       <section class="panel image-panel">
         <div class="panel-header">
-          <h2>Sezione immagine</h2>
-          <p>La webcam viene ritagliata automaticamente per riempire i 4/6 centrali.</p>
+          <h2>Sezione Webcam</h2>
+          <p>Il sistema riconosce solo un volto alla volta.</p>
         </div>
         <div class="viewer" id="viewer">
           <div class="status-pill"><span id="statusDot" class="status-dot"></span><span id="statusText">inizializzazione...</span></div>
@@ -409,13 +409,12 @@
           <h2>Makeup AR</h2>
           <p>Overlay live ancorati ai landmark del volto e visualizzati direttamente sulla webcam.</p>
         </div>
-        <div class="stack">
-          <button class="preview-btn" data-effect="graphic-liner">Graphic liner</button>
-          <button class="preview-btn" data-effect="smokey-eyes">Smokey eyes</button>
-          <button class="preview-btn" data-effect="blush-lift">Blush lift</button>
-          <button class="preview-btn" data-effect="lip-tint">Lip tint</button>
-          <button class="preview-btn" data-effect="soft-contour">Soft contour</button>
-          <button class="preview-btn" data-effect="stage-mask">Stage mask</button>
+        <div class="stack" id="ghostylesContainer">
+        </div>
+        <div id="ghostyleDetails" class="stack" style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: -12px; background-color: var(--accent-2); border-radius: 12px;">
+           <input type="url" id="remoteGhostyleUrl" style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text;" placeholder="https://.../urleffect.js" />
+           <button id="loadRemoteGhostyleBtn" class="secondary-btn" style="margin-top: -6px;">Carica Ghostyle Remoto</button>
+           <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg); display: block; border-color: rgba(255,255,255,0.2);">📖 Sviluppa in Ghostyle</a>
         </div>
         <p class="small-note">
           Un click attiva la guida sulla webcam; un secondo click sullo stesso pulsante la spegne e torna il feed pulito.
@@ -465,7 +464,9 @@
       findBtn: document.getElementById('findBtn'),
       clearDbBtn: document.getElementById('clearDbBtn'),
       clearOverlayBtn: document.getElementById('clearOverlayBtn'),
-      previewButtons: Array.from(document.querySelectorAll('.preview-btn')),
+      ghostylesContainer: document.getElementById('ghostylesContainer'),
+      remoteGhostyleUrl: document.getElementById('remoteGhostyleUrl'),
+      loadRemoteGhostyleBtn: document.getElementById('loadRemoteGhostyleBtn'),
       mirrorToggle: document.getElementById('mirrorToggle'),
       fpsSelect: document.getElementById('fpsSelect')
     };
@@ -530,12 +531,24 @@
     }
 
     function updateEffectStats() {
-      els.effectName.textContent = activeEffect ? effectLabel(activeEffect) : 'nessuno';
+      const style = loadedGhostyles.get(activeEffect);
+      els.effectName.textContent = style ? style.name : 'nessuno';
       els.effectTracking.textContent = activeEffect ? 'on' : 'off';
     }
 
-    function setLog(message) {
-      els.logMessage.textContent = message;
+    function setLog(message, sourcePlugin = null) {
+      els.logMessage.innerHTML = '';
+      if (sourcePlugin) {
+        const span = document.createElement('span');
+        span.style.color = 'var(--accent-2)';
+        span.style.fontWeight = '800';
+        span.style.marginRight = '8px';
+        span.textContent = `[${sourcePlugin.toUpperCase()}]`;
+        els.logMessage.appendChild(span);
+      }
+      const textSpan = document.createElement('span');
+      textSpan.textContent = message;
+      els.logMessage.appendChild(textSpan);
     }
 
     function setStatus(kind, text) {
@@ -547,9 +560,11 @@
 
     function setBusy(isBusy) {
       isSystemBusy = isBusy;
-      [els.scanBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, ...els.previewButtons].forEach(btn => {
+      [els.scanBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
         btn.disabled = isBusy;
       });
+      const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+      previewBtns.forEach(btn => btn.disabled = isBusy);
     }
 
     function resizeCanvas() {
@@ -651,17 +666,6 @@
       ctx.closePath();
     }
 
-    function effectLabel(effect) {
-      return {
-        'graphic-liner': 'graphic liner',
-        'smokey-eyes': 'smokey eyes',
-        'blush-lift': 'blush lift',
-        'lip-tint': 'lip tint',
-        'soft-contour': 'soft contour',
-        'stage-mask': 'stage mask'
-      }[effect] || effect;
-    }
-
     function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
       const center = avgPoint(eye);
       const topBrow = eyebrow.map((b, idx) => {
@@ -710,108 +714,63 @@
       drawLabel(ctx, label, mid.x + 10, mid.y - 6);
     }
 
-    function drawEffectStyle(ctx, resized, effect) {
-      const landmarks = resized.landmarks;
-      const box = resized.detection.box;
-      const leftEye = landmarks.getLeftEye();
-      const rightEye = landmarks.getRightEye();
-      const leftBrow = landmarks.getLeftEyeBrow();
-      const rightBrow = landmarks.getRightEyeBrow();
-      const jaw = landmarks.getJawOutline();
-      const mouth = landmarks.getMouth();
-      const nose = landmarks.getNose();
-      const leftEyeCenter = avgPoint(leftEye);
-      const rightEyeCenter = avgPoint(rightEye);
-      const mouthCenter = avgPoint(mouth.slice(0, 7));
+    window.Ghostati = {
+      log: (message, sourcePlugin) => setLog(message, sourcePlugin),
+      distance,
+      avgPoint,
+      lerp,
+      scaleFrom,
+      point,
+      drawClosedPath,
+      drawOpenPath,
+      drawLabel,
+      roundRect,
+      expandEyePolygon,
+      drawEyeWing,
+      drawCheekSweep,
+      drawContourBand
+    };
 
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    const loadedGhostyles = new Map();
 
-      if (effect === 'graphic-liner') {
-        drawEyeWing(ctx, leftEye, leftBrow, 'liner', {
-          fill: 'rgba(32, 32, 38, 0.28)',
-          stroke: 'rgba(248, 248, 255, 0.80)',
-          line: 'rgba(255, 255, 255, 0.96)',
-          tailX: -34,
-          tailY: 30,
-          scale: 1.08,
-          brow: 0.56,
-          side: 'left'
-        });
-        drawEyeWing(ctx, rightEye, rightBrow, 'liner', {
-          fill: 'rgba(32, 32, 38, 0.28)',
-          stroke: 'rgba(248, 248, 255, 0.80)',
-          line: 'rgba(255, 255, 255, 0.96)',
-          tailX: 34,
-          tailY: 30,
-          scale: 1.08,
-          brow: 0.56,
-          side: 'right'
-        });
-        ctx.restore();
-        return;
+    async function loadGhostyle(url, expectedName = null) {
+      const id = url.split('/').pop().replace('.js', '');
+      try {
+        setLog(`Caricamento ghostyle da ${url}...`);
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const matchName = text.match(/@name\s+(.+)/);
+        const name = matchName ? matchName[1].trim() : (expectedName || id);
+
+        const module = await import(url);
+        loadedGhostyles.set(id, { id, name, module, url });
+        
+        const btn = document.createElement('button');
+        btn.className = 'preview-btn';
+        btn.textContent = name;
+        btn.dataset.effect = id;
+        btn.onclick = () => toggleEffect(id, btn);
+        
+        els.ghostylesContainer.appendChild(btn);
+        setLog(`Ghostyle '${name}' pronto all'uso.`);
+        
+        if (module.onInit) {
+          module.onInit();
+        }
+      } catch (err) {
+        console.error(err);
+        const btn = document.createElement('button');
+        btn.className = 'preview-btn';
+        btn.textContent = expectedName || id;
+        btn.disabled = true;
+        btn.style.color = 'var(--danger)';
+        btn.style.borderColor = 'rgba(255, 122, 122, 0.4)';
+        btn.title = `Errore di caricamento: ${err.message}`;
+        els.ghostylesContainer.appendChild(btn);
+        setLog(`Impossibile caricare Ghostyle ${expectedName || id}: ${err.message}`, 'Sistema (Error)');
       }
-
-      if (effect === 'smokey-eyes') {
-        const leftShape = expandEyePolygon(leftEye, leftBrow, 1.32, 0.8).map(p => point(p.x - 8, p.y + 4));
-        const rightShape = expandEyePolygon(rightEye, rightBrow, 1.32, 0.8).map(p => point(p.x + 8, p.y + 4));
-        drawClosedPath(ctx, leftShape, 'rgba(125, 86, 172, 0.32)', 'rgba(194, 157, 255, 0.44)', 2);
-        drawClosedPath(ctx, rightShape, 'rgba(125, 86, 172, 0.32)', 'rgba(194, 157, 255, 0.44)', 2);
-        drawOpenPath(ctx, [leftEye[0], leftEye[1], leftEye[2], leftEye[3]], 'rgba(244, 236, 255, 0.92)', 2.6);
-        drawOpenPath(ctx, [rightEye[0], rightEye[1], rightEye[2], rightEye[3]], 'rgba(244, 236, 255, 0.92)', 2.6);
-        drawLabel(ctx, 'ombretto', leftEyeCenter.x - 20, leftEyeCenter.y - 40);
-        drawLabel(ctx, 'ombretto', rightEyeCenter.x + 18, rightEyeCenter.y - 40);
-      }
-
-      if (effect === 'blush-lift') {
-        drawCheekSweep(
-          ctx,
-          jaw[2],
-          nose[2],
-          mouth[0],
-          jaw[4],
-          'blush',
-          'rgba(255, 138, 176, 0.22)',
-          'rgba(255, 187, 208, 0.55)'
-        );
-        drawCheekSweep(
-          ctx,
-          jaw[14],
-          nose[6],
-          mouth[6],
-          jaw[12],
-          'blush',
-          'rgba(255, 138, 176, 0.22)',
-          'rgba(255, 187, 208, 0.55)'
-        );
-      }
-
-      if (effect === 'lip-tint') {
-        const outer = mouth.slice(0, 12);
-        const inner = mouth.slice(12);
-        drawClosedPath(ctx, outer, 'rgba(232, 81, 116, 0.40)', 'rgba(255, 201, 211, 0.70)', 2.1);
-        drawClosedPath(ctx, inner, 'rgba(255,255,255,0.18)', null, 0);
-        drawLabel(ctx, 'lip tint', mouthCenter.x + 12, mouthCenter.y - 16);
-      }
-
-      if (effect === 'soft-contour') {
-        drawContourBand(ctx, [jaw[1], jaw[2], jaw[3], jaw[4], jaw[5]], 'contour');
-        drawContourBand(ctx, [jaw[15], jaw[14], jaw[13], jaw[12], jaw[11]], 'contour');
-        drawContourBand(ctx, [nose[0], nose[1], nose[2]], 'nose contour');
-        drawContourBand(ctx, [nose[4], nose[5], nose[6]], 'nose contour');
-      }
-
-      if (effect === 'stage-mask') {
-        const leftMask = expandEyePolygon(leftEye, leftBrow, 1.46, 0.92).map((p, i) => i < 5 ? point(p.x - 18, p.y - 10) : point(p.x - 12, p.y + 10));
-        const rightMask = expandEyePolygon(rightEye, rightBrow, 1.46, 0.92).map((p, i) => i < 5 ? point(p.x + 18, p.y - 10) : point(p.x + 12, p.y + 10));
-        const bridge = [leftMask[0], point((leftEyeCenter.x + rightEyeCenter.x) / 2, box.y + box.height * 0.34), rightMask[4], rightMask[5], point((leftEyeCenter.x + rightEyeCenter.x) / 2, box.y + box.height * 0.52), leftMask[leftMask.length - 1]];
-        drawClosedPath(ctx, [...leftMask, ...bridge], 'rgba(92, 176, 255, 0.22)', 'rgba(176, 226, 255, 0.70)', 2.2);
-        drawClosedPath(ctx, [...rightMask, bridge[1], bridge[0]], 'rgba(92, 176, 255, 0.22)', 'rgba(176, 226, 255, 0.70)', 2.2);
-        drawLabel(ctx, 'stage mask', (leftEyeCenter.x + rightEyeCenter.x) / 2 - 24, box.y + 42);
-      }
-
-      ctx.restore();
     }
 
     function drawDetectionScaffold(ctx, resized) {
@@ -866,7 +825,16 @@
       ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
       const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
       if (includeDetectionScaffold) drawDetectionScaffold(ctx, resized);
-      if (activeEffect) drawEffectStyle(ctx, resized, activeEffect);
+      if (activeEffect) {
+        const style = loadedGhostyles.get(activeEffect);
+        if (style && style.module.onDraw) {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          style.module.onDraw(ctx, resized.landmarks, resized.detection.box);
+          ctx.restore();
+        }
+      }
       lastKnownEffectResult = result;
     }
 
@@ -893,7 +861,16 @@
       ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
       const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
       drawDetectionScaffold(ctx, resized);
-      if (activeEffect) drawEffectStyle(ctx, resized, activeEffect);
+      if (activeEffect) {
+        const style = loadedGhostyles.get(activeEffect);
+        if (style && style.module.onDraw) {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          style.module.onDraw(ctx, resized.landmarks, resized.detection.box);
+          ctx.restore();
+        }
+      }
       lastKnownEffectResult = result;
     }
 
@@ -940,9 +917,16 @@
     }
 
     function deactivateEffect({ silent = false } = {}) {
+      if (activeEffect) {
+        const style = loadedGhostyles.get(activeEffect);
+        if (style && style.module.onClear) {
+          style.module.onClear(els.overlay.getContext('2d'));
+        }
+      }
       activeEffect = null;
       stopEffectLoop();
-      els.previewButtons.forEach(btn => btn.classList.remove('active'));
+      const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+      previewBtns.forEach(btn => btn.classList.remove('active'));
       updateEffectStats();
       lastKnownEffectResult = null;
       clearOverlay();
@@ -954,12 +938,22 @@
         deactivateEffect();
         return;
       }
+      
+      if (activeEffect) {
+        const styleId = activeEffect;
+        deactivateEffect({ silent: true });
+        // wait for complete removal then continue
+      }
+      
       activeEffect = effect;
-      els.previewButtons.forEach(btn => btn.classList.toggle('active', btn === button));
+      const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+      previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
       els.previewImage.style.display = 'none';
       els.previewImage.removeAttribute('src');
       updateEffectStats();
-      setLog(`Guida makeup attiva: ${effectLabel(effect)}. Cerca un volto nella webcam per vedere dove applicarlo.`);
+      
+      const style = loadedGhostyles.get(effect);
+      setLog(`Guida makeup attiva: ${style ? style.name : effect}. Cerca un volto nella webcam per vedere dove applicarlo.`);
       
       if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
       els.overlay.style.transition = 'none';
@@ -1120,14 +1114,34 @@
         setLog('Overlay pulito.');
       });
 
-      els.previewButtons.forEach(btn => {
-        btn.addEventListener('click', () => toggleEffect(btn.dataset.effect, btn));
+      els.loadRemoteGhostyleBtn.addEventListener('click', async () => {
+        const url = els.remoteGhostyleUrl.value.trim();
+        if (url) {
+          els.loadRemoteGhostyleBtn.disabled = true;
+          await loadGhostyle(url);
+          els.remoteGhostyleUrl.value = '';
+          els.loadRemoteGhostyleBtn.disabled = false;
+        }
       });
 
       setBusy(true);
       try {
         await loadModels();
         await startCamera();
+        
+        try {
+          const ghostylistRes = await fetch('ghostylist.json');
+          if (ghostylistRes.ok) {
+            const list = await ghostylistRes.json();
+            for (const item of list) {
+              await loadGhostyle(item.url, item.name);
+            }
+          } else {
+            setLog('File ghostylist.json non trovato, caricamento plugin saltato.', 'Sistema');
+          }
+        } catch(err) {
+          setLog('Errore durante la lettura di ghostylist.json: ' + err.message, 'Sistema');
+        }
       } catch (err) {
         handleError(err, 'Impossibile inizializzare webcam o modelli. Apri la pagina da localhost e verifica i permessi camera.');
         return;
