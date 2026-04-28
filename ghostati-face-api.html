@@ -31,12 +31,12 @@
         <h1>ghòstati</h1>
         <div class="subtitle">
           Questo giocattolo sarà presentato al <a href="https://www.nina.watch/festival.html">Festival di NINA</a>, scopri di più <a
-            href="https://www.nina.watch/festival_eng.html" style="color: var(--accent-2);">(anche internazionale)</a>.
+            href="https://www.nina.watch/festival_eng.html" class="link-accent">(anche internazionale)</a>.
         </div>
       </div>
       <section class="about">
         <p>
-          Qui è tutto in ALPHA, se vuoi passa sul <a style="color: var(--accent-2);"
+          Qui è tutto in ALPHA, se vuoi passa sul <a class="link-accent"
             href="https://github.com/vecna/antagonistrucco">repository</a>.
         </p>
       </section>
@@ -44,13 +44,56 @@
 
     <main class="layout">
       <section class="panel controls">
-        <div class="panel-header" id="diagnosisBox"
-          style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.12), rgba(122, 162, 255, 0.08)); border-bottom: 1px solid rgba(159, 122, 234, 0.3); padding-bottom: 20px; text-align: center;">
-          <h2
-            style="color: var(--accent-2); margin-bottom: 12px; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase;">
+        
+        <div class="panel-header panel-header-source" id="videoSourceBox">
+          <h2 class="panel-eyebrow-title">
+            Sorgente Video
+          </h2>
+          <div class="source-indicator" id="videoSourceIndicator">
+            Nessuna sorgente
+          </div>
+          <div class="stack stack-compact">
+            <button id="srcWebcamBtn" class="action-btn action-btn-source">Avvia Webcam</button>
+            <label for="srcFileInput" class="secondary-btn file-upload-label">Carica Video (Locale)</label>
+            <input type="file" id="srcFileInput" accept="video/*" class="file-input-hidden" />
+            <div id="fileInfoBox" class="file-info-box">
+                <span id="fileSizeLabel"></span><br>
+                <strong class="file-warning-label">Attenzione:</strong> I browser hanno limiti di risorse stringenti. Video lunghi o 4K possono causare crash di memoria.
+                <span id="memoryLabel" class="memory-label"></span>
+            </div>
+            
+            <div id="phaseTransitionBox" class="phase-transition-box">
+                <button id="phaseStartBtn" class="action-btn action-btn-start-overlay">AVVIA OVERLAY</button>
+                <button id="phaseStopBtn" class="secondary-btn secondary-btn-stop">Ferma e Modifica Sorgente</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-card workflow-card">
+          <h3>Workflow sorgente</h3>
+          <div class="workflow-badges">
+            <span id="workflowSourceBadge" class="workflow-badge workflow-badge-source">nessuna sorgente</span>
+            <span id="workflowPhaseBadge" class="workflow-badge workflow-badge-phase">in attesa</span>
+          </div>
+          <p id="workflowHintTitle" class="workflow-hint-title">Seleziona da dove partire</p>
+          <p id="workflowHintText" class="workflow-hint-text">Con la webcam puoi iniziare subito. Con un file locale puoi prima scorrere il video, scegliere il punto utile e poi attivare l'overlay.</p>
+          <div class="workflow-grid">
+            <div id="workflowWebcamCard" class="workflow-mode-card">
+              <strong>Modalità webcam</strong>
+              <span>Feed live immediato, mirror del feed e scansione continua senza fase di scrub.</span>
+            </div>
+            <div id="workflowFileCard" class="workflow-mode-card">
+              <strong>Modalità file locale</strong>
+              <span>Controlli nativi del video in selezione, poi tracking e overlay sul playback quando avvii la fase dedicata.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-header panel-header-diagnosis" id="diagnosisBox">
+          <h2 class="panel-eyebrow-title panel-eyebrow-title-accent">
             Verifica efficacia</h2>
-          <button id="scanBtn" class="action-btn" style="transition: all 0.3s ease;">Scansiona Faccia</button>
-          <button id="copyMakeupBtn" class="secondary-btn" disabled style="margin-top: 8px; font-size: 11px;">Copia
+          <button id="scanBtn" class="action-btn action-btn-scan">Scansiona Faccia</button>
+          <button id="copyMakeupBtn" class="secondary-btn secondary-btn-copy" disabled>Copia
             volto truccato</button>
         </div>
         <div class="panel-header">
@@ -77,25 +120,25 @@
         <div class="viewer" id="viewer">
           <div class="status-pill"><span id="statusDot" class="status-dot"></span><span
               id="statusText">inizializzazione...</span></div>
-          <div id="placeholder">Caricamento modelli e richiesta webcam…</div>
+          <div id="placeholder">Caricamento modelli e inizializzazione sorgente video…</div>
           <video id="video" autoplay muted playsinline></video>
           <img id="previewImage" alt="preview diagnostica" />
           <canvas id="overlay"></canvas>
         </div>
         <div class="logbox" id="logBox">
-          <div class="log-line">In attesa dell’avvio della webcam…</div>
+          <div class="log-line">In attesa della selezione della sorgente video…</div>
         </div>
       </section>
 
       <section class="panel makeup">
         <div class="panel-header">
-          <p>Overlay live ancorati ai landmark del volto e visualizzati direttamente sulla webcam.</p>
+          <p>Overlay live ancorati ai landmark del volto e visualizzati direttamente sul feed video.</p>
         </div>
         <div class="stack" id="ghostylesContainer">
         </div>
         
-        <div style="padding: 0 16px 12px;">
-          <select id="fpsSelect" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
+        <div class="select-wrap">
+          <select id="fpsSelect" class="fps-select">
             <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
             <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
             <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
@@ -103,18 +146,16 @@
           </select>
         </div>
 
-        <div id="ghostyleDetails" class="stack"
-          style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0px; background-color: var(--accent-2); border-radius: 12px;">
-          <input type="url" id="remoteGhostyleUrl"
-            style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text;"
+        <div id="ghostyleDetails" class="stack ghostyle-details">
+          <input type="url" id="remoteGhostyleUrl" class="ghostyle-url-input"
             placeholder="https://.../urleffect.js" />
-          <button id="loadRemoteGhostyleBtn" class="secondary-btn" style="margin-top: -6px;">Carica Ghostyle
+          <button id="loadRemoteGhostyleBtn" class="secondary-btn ghostyle-load-btn">Carica Ghostyle
             Remoto</button>
-          <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg);">📖 Sviluppa in
+          <a href="ghostati-docs.html" class="btn-link ghostyle-docs-link">📖 Sviluppa in
             Ghostyle</a>
         </div>
         <p class="small-note">
-          Un click attiva la guida sulla webcam; un secondo click sullo stesso pulsante la spegne e torna il feed
+          Un click attiva la guida sul feed selezionato; un secondo click sullo stesso pulsante la spegne e torna il feed
           pulito.
         </p>
         <div class="list-card">
@@ -128,7 +169,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="scripts/ghostati-face-api.js"></script>
+  <script type="module" src="scripts/overlay.js"></script>
 </body>
 
 </html>

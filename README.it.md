@@ -8,16 +8,17 @@
 
 **ghòstati** (dal repository `antagonistrucco`) è una piattaforma sperimentale e uno strumento diagnostico progettato per contrastare gli algoritmi di riconoscimento facciale. Applicando specifici pattern di trucco (ispirati al concetto di CV Dazzle), gli utenti possono esplorare come i modelli di computer vision interpretano i landmark facciali e tentare di offuscare la propria identità digitale in tempo reale.
 
-Il progetto presenta un'architettura modulare basata su plugin, la quale permette a qualsiasi sviluppatore di scrivere script di trucco AR personalizzati ("Ghostyles") e di testarne l'efficacia contro i modelli di riconoscimento direttamente nel browser tramite la webcam.
+Il progetto presenta un'architettura modulare basata su plugin, la quale permette a qualsiasi sviluppatore di scrivere script di trucco AR personalizzati ("Ghostyles") e di testarne l'efficacia contro i modelli di riconoscimento direttamente nel browser sia tramite la webcam live sia tramite un file video locale caricato dall'utente.
 
 ## Funzionalità Principali
 
 - **Live Face Tracking:** Rilevamento dei landmark facciali in tempo reale direttamente nel browser utilizzando `face-api.js`.
+- **Flusso a Doppia Sorgente:** Puoi partire dalla webcam live oppure caricare un file video locale. I file locali usano un flusso in due fasi: una fase di selezione per scorrere il video e scegliere il punto di partenza, seguita da una fase overlay per eseguire tracking dei landmark e rendering dei Ghostyle in tempo reale.
 - **Sistema di Plugin Modulare (Ghostyles):** Carica dinamicamente effetti di trucco AR personalizzati. I plugin possono essere ospitati localmente o tramite URL remoto. Alcuni effetti inclusi:
   - Graphic Liner, Smokey Eyes, Blush Lift, Lip Tint, Soft Contour, Stage Mask, Splash, etc.
 - **Modalità Diagnostica ("Scansione Trucco"):** Testa l'efficacia del tuo camouflage AR. Lo strumento valuta l'opacità del trucco, cattura il volto alterato e calcola la probabilità di corrispondenza rispetto ai profili salvati per determinare se il sistema di riconoscimento è stato ingannato.
 - **Salva e Confronta (Enrolling):** Salva un volto di base iniziale e confrontalo con il feed live della webcam per verificare se l'algoritmo di face matching ti riconosce ancora dopo aver applicato il camuffamento.
-- **Privacy-First:** Tutte le elaborazioni vengono eseguite localmente sul computer, senza caricare dati biometrici su server remoti.
+- **Privacy-First:** Tutte le elaborazioni vengono eseguite localmente sul computer, senza caricare dati biometrici o file video su server remoti.
 
 ## Installazione
 
@@ -35,6 +36,15 @@ Trattandosi di un'applicazione web statica, non è necessario alcun passaggio di
    python3 -m http.server 8000
    ```
 3. Apri un browser moderno e vai all'indirizzo `http://localhost:8000/ghostati-face-api.html`.
+4. Scegli `Avvia Webcam` per il flusso live, oppure carica un file con `Carica Video (Locale)`.
+5. Se usi un file locale, scorri il video nella fase di selezione e poi premi `AVVIA OVERLAY` per avviare tracking e rendering.
+
+## Uso Dei File Video Locali
+
+- L'analisi dei file video locali avviene interamente nel browser e non carica il media su servizi esterni.
+- Durante la fase di selezione il video espone i controlli nativi del browser, così puoi scegliere il punto di partenza prima di avviare l'overlay.
+- File lunghi, ad alta risoluzione o in 4K possono saturare la memoria del browser. L'interfaccia mostra un indicatore del JS heap per aiutare a capire quando il clip è troppo pesante per la sessione corrente.
+- Quando torni alla webcam, la sorgente file viene rilasciata e l'object URL associato viene revocato.
 
 ## Sviluppare un Ghostyle (Plugin)
 
