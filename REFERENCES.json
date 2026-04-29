@@ -1,0 +1,369 @@
+{
+  "schema_version": "2.0",
+  "project_scope": "anti-surveillance / face-obfuscation / makeup-adjacent artistic, research, and activism references",
+  "ordering_definition": "Sort newest first. Primary key year descending; secondary key closeness descending; tertiary key title ascending.",
+  "closeness_definition": {
+    "description": "Integer 1-100 indicating how close a source is to the conceptual core of the project: face-centered anti-surveillance through appearance design, makeup, camouflage, or directly adjacent face-recognition attacks.",
+    "anchor_examples": {
+      "100": [
+        "Michelle Tylicki + Lauri Love — DAZZLE",
+        "Adam Harvey — CV Dazzle"
+      ],
+      "20": [
+        "infrared / night-vision sensor disturbance references such as The Camera-Shy Hoodie"
+      ]
+    },
+    "bands": {
+      "90_100": "direct face-centered anti-surveillance / makeup / camouflage references",
+      "70_89": "directly relevant face-recognition attack literature or strongly adjacent face-obfuscation work",
+      "40_69": "enabling or adjacent adversarial-vision methods",
+      "1_39": "peripheral or modality-shifted references, especially infrared / sensor-jamming / non-face-centric work"
+    }
+  },
+  "preview_image_definition": "Local site-root path to a preview asset intended for static visualisation. In this package the assets live under /REFERENCES-images/ as SVG files.",
+  "references": [
+    {
+      "slug": "human-imperceptible-nir-face-attack",
+      "title": "Human-Imperceptible Physical Adversarial Attack for NIR Face Recognition Models",
+      "author": [
+        "Songyan Xie",
+        "Jinghang Wen",
+        "Encheng Su",
+        "Qiucheng Yu"
+      ],
+      "year": 2025,
+      "link": "https://arxiv.org/abs/2504.15823",
+      "type": "research",
+      "closeness": 22,
+      "description": "Studio recente su perturbazioni fisiche quasi invisibili per modelli di riconoscimento facciale nel vicino infrarosso, utile come riferimento periferico sul disturbo dei sensori.",
+      "preview_image": "/REFERENCES-images/human-imperceptible-nir-face-attack.svg",
+      "visual_hint": "nir_subtle_points"
+    },
+    {
+      "slug": "accessorize-in-the-dark",
+      "title": "Accessorize in the Dark: A Security Analysis of Near-Infrared Face Recognition",
+      "author": [
+        "Amit Cohen",
+        "Mahmood Sharif"
+      ],
+      "year": 2024,
+      "link": "https://doi.org/10.1007/978-3-031-51479-1_3",
+      "type": "research",
+      "closeness": 22,
+      "description": "Analisi delle vulnerabilità dei sistemi di riconoscimento facciale nel vicino infrarosso, importante per collocare la linea di ricerca che esce dal makeup visibile e si sposta verso la sensoristica.",
+      "preview_image": "/REFERENCES-images/accessorize-in-the-dark.svg",
+      "visual_hint": "nir_points"
+    },
+    {
+      "slug": "dazzle",
+      "title": "DAZZLE",
+      "author": [
+        "Michelle Tylicki",
+        "Lauri Love"
+      ],
+      "year": 2023,
+      "link": "https://www.michelletylicki.info/dazzle/",
+      "type": "activism",
+      "closeness": 100,
+      "description": "Progetto artivista che trasforma il linguaggio del beauty in un dispositivo critico contro la sorveglianza, mettendo il volto e il gesto del trucco al centro della resistenza visiva.",
+      "preview_image": "/REFERENCES-images/dazzle.svg",
+      "visual_hint": "salon_mask"
+    },
+    {
+      "slug": "physical-world-optical-attacks-3d-face",
+      "title": "Physical-World Optical Adversarial Attacks on 3D Face Recognition",
+      "author": [
+        "Yanjie Li",
+        "Yiquan Li",
+        "Xuelong Dai",
+        "Songtao Guo",
+        "Bin Xiao"
+      ],
+      "year": 2023,
+      "link": "https://openaccess.thecvf.com/content/CVPR2023/html/Li_Physical-World_Optical_Adversarial_Attacks_on_3D_Face_Recognition_CVPR_2023_paper.html",
+      "type": "research",
+      "closeness": 30,
+      "description": "Lavoro su attacchi ottici rivolti al riconoscimento facciale 3D; amplia il campo dal piano del volto visibile a quello della profondità e della luce proiettata.",
+      "preview_image": "/REFERENCES-images/physical-world-optical-attacks-3d-face.svg",
+      "visual_hint": "projector_depth_face"
+    },
+    {
+      "slug": "camera-shy-hoodie",
+      "title": "The Camera-Shy Hoodie",
+      "author": [
+        "Mac Pierce"
+      ],
+      "year": 2023,
+      "link": "https://www.macpierce.com/the-camera-shy-hoodie",
+      "type": "artistic",
+      "closeness": 20,
+      "description": "Capo DIY che usa LED infrarossi per saturare o degradare la lettura di camere night-vision: riferimento laterale, più vicino al disturbo del sensore che al camouflage del volto.",
+      "preview_image": "/REFERENCES-images/camera-shy-hoodie.svg",
+      "visual_hint": "hoodie_ir"
+    },
+    {
+      "slug": "shadows-can-be-dangerous",
+      "title": "Shadows can be Dangerous: Stealthy and Effective Physical-world Adversarial Attack by Natural Phenomenon",
+      "author": [
+        "Yiqi Zhong",
+        "Xianming Liu",
+        "Deming Zhai",
+        "Junjun Jiang",
+        "Xiangyang Ji"
+      ],
+      "year": 2022,
+      "link": "https://arxiv.org/abs/2203.03818",
+      "type": "research",
+      "closeness": 35,
+      "description": "Introduce l’ombra come fenomeno fisico naturale capace di produrre perturbazioni credibili e difficili da notare; è una fonte laterale ma forte per pensare design e mimetismo ambientale.",
+      "preview_image": "/REFERENCES-images/shadows-can-be-dangerous.svg",
+      "visual_hint": "shadow_cast"
+    },
+    {
+      "slug": "dazzle-club",
+      "title": "The Dazzle Club",
+      "author": [
+        "Evie Price",
+        "Emily Roderick",
+        "Georgina Rowlands",
+        "Anna Hart"
+      ],
+      "year": 2021,
+      "link": "https://emilyroderick.com/work/the-dazzle-club/",
+      "type": "activism",
+      "closeness": 96,
+      "description": "Pratica collettiva tra arte, attivismo e ricerca embodied nello spazio pubblico; sposta il camouflage dal volto singolo a una coreografia sociale contro la normalizzazione della sorveglianza.",
+      "preview_image": "/REFERENCES-images/dazzle-club.svg",
+      "visual_hint": "group_walk"
+    },
+    {
+      "slug": "adv-makeup",
+      "title": "Adv-Makeup: A New Imperceptible and Transferable Attack on Face Recognition",
+      "author": [
+        "Bangjie Yin",
+        "Wenxuan Wang",
+        "Taiping Yao",
+        "Junfeng Guo",
+        "Zelun Kong",
+        "Shouhong Ding",
+        "Jilin Li",
+        "Cong Liu"
+      ],
+      "year": 2021,
+      "link": "https://arxiv.org/abs/2105.03162",
+      "type": "research",
+      "closeness": 95,
+      "description": "Paper cardine sul trucco adversarial centrato sulla regione orbitale: fondamentale per il tema makeup/riconoscimento facciale e per l’idea di blending del gesto cosmetico.",
+      "preview_image": "/REFERENCES-images/adv-makeup.svg",
+      "visual_hint": "orbital_makeup"
+    },
+    {
+      "slug": "adversarial-attacks-against-face-recognition",
+      "title": "Adversarial Attacks against Face Recognition: A Comprehensive Study",
+      "author": [
+        "Fatemeh Vakhshiteh",
+        "Ahmad Nickabadi",
+        "Raghavendra Ramachandra"
+      ],
+      "year": 2020,
+      "link": "https://arxiv.org/abs/2007.11709",
+      "type": "research",
+      "closeness": 82,
+      "description": "Survey utile per mappare tassonomie, vettori e limiti degli attacchi contro il riconoscimento facciale; funziona come vista d’insieme del territorio tecnico.",
+      "preview_image": "/REFERENCES-images/adversarial-attacks-against-face-recognition.svg",
+      "visual_hint": "survey_grid"
+    },
+    {
+      "slug": "breaking-certified-defenses-shadow-attack",
+      "title": "Breaking certified defenses: Semantic adversarial examples with spoofed robustness certificates",
+      "author": [
+        "Amin Ghiasi",
+        "Ali Shafahi",
+        "Tom Goldstein"
+      ],
+      "year": 2020,
+      "link": "https://arxiv.org/abs/2003.08937",
+      "type": "research",
+      "closeness": 35,
+      "description": "Il cosiddetto Shadow Attack lavora su perturbazioni semantiche ampie e credibili; non è face-specific, ma aiuta a leggere l’evasione come trasformazione percettiva e non solo come rumore digitale.",
+      "preview_image": "/REFERENCES-images/breaking-certified-defenses-shadow-attack.svg",
+      "visual_hint": "shadow_cast"
+    },
+    {
+      "slug": "vla-visible-light-face-attack",
+      "title": "VLA: A Practical Visible Light-based Attack on Face Recognition Systems in Physical World",
+      "author": [
+        "Meng Shen",
+        "Zelin Liao",
+        "Liehuang Zhu",
+        "Ke Xu",
+        "Xiaojiang Du"
+      ],
+      "year": 2019,
+      "link": "https://doi.org/10.1145/3351261",
+      "type": "research",
+      "closeness": 78,
+      "description": "Attacco nel mondo fisico basato su luce visibile: importante perché mostra come l’interferenza possa essere progettata come layer ottico sul volto e non solo come pattern stampato.",
+      "preview_image": "/REFERENCES-images/vla-visible-light-face-attack.svg",
+      "visual_hint": "light_beam"
+    },
+    {
+      "slug": "art-toolbox",
+      "title": "Adversarial Robustness Toolbox v1.0.0",
+      "author": [
+        "Maria-Irina Nicolae",
+        "Mathieu Sinn",
+        "Minh Ngoc Tran",
+        "Beat Buesser",
+        "Ambrish Rawat",
+        "Martin Wistuba",
+        "Valentina Zantedeschi",
+        "Nathalie Baracaldo",
+        "Bryant Chen",
+        "Heiko Ludwig",
+        "Ian M. Molloy",
+        "Ben Edwards"
+      ],
+      "year": 2018,
+      "link": "https://arxiv.org/abs/1807.01069",
+      "type": "research",
+      "closeness": 55,
+      "description": "Framework di riferimento per attacchi e difese adversariali; non è una fonte estetica, ma è la cornice tecnica che connette molti dei paper operativi del dataset.",
+      "preview_image": "/REFERENCES-images/art-toolbox.svg",
+      "visual_hint": "toolbox"
+    },
+    {
+      "slug": "dpatch",
+      "title": "DPatch: An Adversarial Patch Attack on Object Detectors",
+      "author": [
+        "Xin Liu",
+        "Huanrui Yang",
+        "Ziwei Liu",
+        "Linghao Song",
+        "Hai Li",
+        "Yiran Chen"
+      ],
+      "year": 2018,
+      "link": "https://arxiv.org/abs/1806.02299",
+      "type": "research",
+      "closeness": 40,
+      "description": "Estende la logica della patch agli object detector, mostrando come una piccola superficie progettata possa sabotare localizzazione e classificazione.",
+      "preview_image": "/REFERENCES-images/dpatch.svg",
+      "visual_hint": "detector_box_patch"
+    },
+    {
+      "slug": "shapeshifter",
+      "title": "ShapeShifter: Robust Physical Adversarial Attack on Faster R-CNN Object Detector",
+      "author": [
+        "Shang-Tse Chen",
+        "Cory Cornelius",
+        "Jason Martin",
+        "Duen Horng Chau"
+      ],
+      "year": 2018,
+      "link": "https://arxiv.org/abs/1804.05810",
+      "type": "research",
+      "closeness": 38,
+      "description": "Riferimento classico sugli attacchi fisici robusti ai detector: meno vicino al volto, ma utile per la genealogia delle perturbazioni materiali e stampabili.",
+      "preview_image": "/REFERENCES-images/shapeshifter.svg",
+      "visual_hint": "object_shape_distort"
+    },
+    {
+      "slug": "agns-face-recognition",
+      "title": "Adversarial Generative Nets: Neural Network Attacks on State-of-the-Art Face Recognition",
+      "author": [
+        "Mahmood Sharif",
+        "Sruti Bhagavatula",
+        "Lujo Bauer",
+        "Michael K. Reiter"
+      ],
+      "year": 2017,
+      "link": "https://arxiv.org/abs/1801.00349",
+      "type": "research",
+      "closeness": 90,
+      "description": "Estende la genealogia degli occhiali adversarial con una generazione più robusta e scalabile, facendo degli accessori facciali un vero medium di attacco fisico.",
+      "preview_image": "/REFERENCES-images/agns-face-recognition.svg",
+      "visual_hint": "generated_glasses"
+    },
+    {
+      "slug": "adversarial-patch",
+      "title": "Adversarial Patch",
+      "author": [
+        "Tom B. Brown",
+        "Dandelion Mané",
+        "Aurko Roy",
+        "Martín Abadi",
+        "Justin Gilmer"
+      ],
+      "year": 2017,
+      "link": "https://arxiv.org/abs/1712.09665",
+      "type": "research",
+      "closeness": 50,
+      "description": "Paper seminale sulla patch universale e stampabile; è meno face-centered ma fondamentale per capire la logica dell’oggetto grafico che devia l’attenzione algoritmica.",
+      "preview_image": "/REFERENCES-images/adversarial-patch.svg",
+      "visual_hint": "patch_sticker"
+    },
+    {
+      "slug": "accessorize-to-a-crime",
+      "title": "Accessorize to a Crime: Real and Stealthy Attacks on State-of-the-Art Face Recognition",
+      "author": [
+        "Mahmood Sharif",
+        "Sruti Bhagavatula",
+        "Lujo Bauer",
+        "Michael K. Reiter"
+      ],
+      "year": 2016,
+      "link": "https://dl.acm.org/doi/10.1145/2976749.2978392",
+      "type": "research",
+      "closeness": 92,
+      "description": "Punto di svolta sugli occhiali adversarial fisici: dimostra che un accessorio quotidiano può diventare una superficie di attacco mirata contro la biometria facciale.",
+      "preview_image": "/REFERENCES-images/accessorize-to-a-crime.svg",
+      "visual_hint": "glasses"
+    },
+    {
+      "slug": "hyperface",
+      "title": "HyperFace",
+      "author": [
+        "Adam Harvey"
+      ],
+      "year": 2016,
+      "link": "https://adam.harvey.studio/hyperface/",
+      "type": "artistic",
+      "closeness": 92,
+      "description": "Tessuto/camouflage basato su false facce che abbassa l’affidabilità della detection; riferimento artistico cruciale per pensare il pattern come rumore semantico.",
+      "preview_image": "/REFERENCES-images/hyperface.svg",
+      "visual_hint": "false_faces"
+    },
+    {
+      "slug": "adversarial-manipulation-deep-representations",
+      "title": "Adversarial Manipulation of Deep Representations",
+      "author": [
+        "Sara Sabour",
+        "Yanshuai Cao",
+        "Fartash Faghri",
+        "David J. Fleet"
+      ],
+      "year": 2015,
+      "link": "https://arxiv.org/abs/1511.05122",
+      "type": "research",
+      "closeness": 45,
+      "description": "Fonte teorica dietro le feature adversaries: importante per capire come si possa spingere un’immagine verso le rappresentazioni interne di un’altra senza copiarne l’aspetto.",
+      "preview_image": "/REFERENCES-images/adversarial-manipulation-deep-representations.svg",
+      "visual_hint": "latent_match"
+    },
+    {
+      "slug": "cv-dazzle",
+      "title": "CV Dazzle",
+      "author": [
+        "Adam Harvey"
+      ],
+      "year": 2010,
+      "link": "https://adam.harvey.studio/cvdazzle/",
+      "type": "artistic",
+      "closeness": 100,
+      "description": "Progetto fondativo del camouflage per computer vision: makeup, hairstyling e asimmetria geometrica usati per interrompere i segnali che i detector facciali cercano nel volto umano.",
+      "preview_image": "/REFERENCES-images/cv-dazzle.svg",
+      "visual_hint": "dazzle_face"
+    }
+  ]
+}

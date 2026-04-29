@@ -316,14 +316,29 @@ async function loadGhostyle(url, expectedName = null) {
    try {
       setLog(`Caricamento ghostyle da ${url}...`);
 
+      /* Nota sul caricamento dinamico: avvengono 2 chiamate http, la prima
+       * è per gestire il testo, con tutti i commenti e metadata, la seconda 
+       * è per importare effettivamente il modulo. */
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       const matchName = text.match(/@name\s+(.+)/);
       const name = matchName ? matchName[1].trim() : (expectedName || id);
 
-      const module = await import(url);
-      loadedGhostyles.set(id, { id, name, module, url });
+      setLog(`Ghostyle '${name}' intergrità verificata, caricamento modulo...`);
+
+      try {
+         const module = await import(url);
+         loadedGhostyles.set(id, { id, name, module, url });
+
+         if (module.onInit) {
+            console.log(`Funzione di inizializzazione trovata in '${name}'`);
+            module.onInit();
+         }
+      } catch (err) {
+         console.log(`Errore durante l'importazione del modulo '${name}': ${err.message}`);
+         throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
+      }
 
       const btn = document.createElement('button');
       btn.className = 'preview-btn';
@@ -332,11 +347,7 @@ async function loadGhostyle(url, expectedName = null) {
       btn.onclick = () => toggleEffect(id, btn);
 
       els.ghostylesContainer.appendChild(btn);
-      setLog(`Ghostyle '${name}' pronto all'uso.`);
 
-      if (module.onInit) {
-         module.onInit();
-      }
    } catch (err) {
       console.error(err);
       const btn = document.createElement('button');
@@ -642,6 +653,7 @@ function clearDb() {
 }
 
 function handleError(err, fallbackMessage) {
+   console.log('Errore:', fallbackMessage);
    console.error(err);
    setStatus('error', 'errore');
    els.placeholder.style.display = 'grid';
@@ -812,29 +824,38 @@ async function init() {
    });
 
    setBusy(true);
+   setLog('Caricamento plugin di makeup in corso...')
    try {
       await loadModels();
-      await startCamera();
 
-      try {
-         const ghostylistRes = await fetch('ghostylist.json');
-         if (ghostylistRes.ok) {
-            const list = await ghostylistRes.json();
-            for (const item of list) {
-               await loadGhostyle(item.url, item.name);
-            }
-         } else {
-            setLog('File ghostylist.json non trovato, caricamento plugin saltato.', 'Sistema');
+      const relurl = window.location.pathname.split('/').slice(0, -1).join('/')
+      const ghostListUrl = relurl + '/ghostylist.json'
+      const ghostylistRes = await fetch(ghostListUrl);
+      if (ghostylistRes.ok) {
+         const list = await ghostylistRes.json();
+         for (const item of list) {
+            let effectiveUrl = relurl + '/' + item.url;
+            await loadGhostyle(effectiveUrl, item.name);
          }
-      } catch (err) {
-         setLog('Errore durante la lettura di ghostylist.json: ' + err.message, 'Sistema');
       }
+      else
+         throw new Error(`HTTP ${ghostylistRes.status}`);
    } catch (err) {
-      handleError(err, 'Impossibile inizializzare webcam o modelli. Apri la pagina da localhost e verifica i permessi camera.');
+      setLog('Errore durante la lettura di ghostylist.json: ' + err.message, 'Sistema');
       return;
-   } finally {
-      setBusy(false);
    }
+
+   setLog('Inizializzazione completata. Avvio webcam in corso...');
+   try {
+      await startCamera();
+   } catch (err) {
+      handleError(err, 'Impossibile inizializzare webcam: verifica i permessi camera per ' + window.location.origin);
+      return;
+   }
+
+   setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
+   setBusy(false);
+
 }
 
 init();

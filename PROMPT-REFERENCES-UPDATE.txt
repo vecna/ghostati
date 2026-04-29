@@ -1,0 +1,86 @@
+Produce or extend a JSON reference set for the same project universe as the existing file "REFERENCES.json".
+
+Goal:
+Maintain a coherent, deduplicated set of cultural, artistic, academic, and activism-adjacent references around:
+- anti-surveillance aesthetics
+- face obfuscation / face camouflage
+- makeup-based or appearance-based interventions
+- adversarial attacks on face recognition
+- adjacent physical-world adversarial vision techniques
+
+Output rules:
+1. Output valid JSON only.
+2. Preserve the top-level structure:
+{
+  "schema_version": "2.0",
+  "project_scope": "...",
+  "ordering_definition": "...",
+  "closeness_definition": {...},
+  "preview_image_definition": "...",
+  "references": [...]
+}
+3. Each reference object MUST contain at least:
+- slug
+- title
+- author
+- year
+- link
+- type
+- closeness
+- description
+- preview_image
+
+Field conventions:
+- slug: kebab-case unique identifier stable across updates.
+- title: canonical public title of the work/project/paper.
+- author: array of author/creator names in display order.
+- year: integer year of publication, release, first public presentation, or first documented appearance.
+- link: stable canonical link preferred in this order:
+  DOI > arXiv abs page > official project page > official institutional page.
+- type: exactly one of "artistic" | "research" | "activism".
+- closeness: integer from 1 to 100, not a string and no percent sign.
+- description: short editorial description in Italian, ideally 1–2 sentences, written for exhibition/timeline display.
+- preview_image: local site-root path beginning with / and pointing to an image asset, e.g. "/references-v2-previews/my-item.svg".
+
+Closeness rubric:
+- 100 = exact anchor cluster for this project world:
+  * Michelle Tylicki + Lauri Love — DAZZLE
+  * Adam Harvey — CV Dazzle
+- 90–99 = direct face-centered anti-surveillance / makeup / camouflage references.
+- 70–89 = directly relevant face-recognition attack literature or highly adjacent face-obfuscation work.
+- 40–69 = enabling or adjacent adversarial-vision methods that matter conceptually but are less face/makeup-specific.
+- 1–39 = peripheral or modality-shifted references, especially infrared/night-vision/sensor-jamming examples.
+
+Preview-image rules:
+- preview_image should point to a local asset, not a remote URL.
+- If no authoritative image is available, use a typological illustration or icon that represents the strategy visually.
+- Prefer one preview image per entry, stable over time.
+- Do not leave preview_image empty.
+
+Normalization rules:
+- Deduplicate by normalized title first, then by DOI or canonical link.
+- Prefer canonical capitalization.
+- Prefer full author lists when available.
+- Do not invent missing metadata.
+- If metadata is uncertain, keep the source out rather than guessing.
+- Keep the existing entry if the new candidate is the same work with a worse link.
+- If the same work exists with a better canonical link, replace only the link and preserve closeness unless there is a strong reason to revise it.
+- Preserve the existing slug whenever the same work reappears.
+
+Ordering logic:
+- Return the full updated JSON sorted newest first:
+  year descending, closeness descending, title ascending.
+
+Style constraints:
+- Avoid generic press coverage unless it is itself the primary artistic or activist source.
+- Prefer official project pages, DOI links, arXiv abs pages, institutional pages, or artist pages.
+- Keep the set operational: every added item should help situate the project culturally, artistically, academically, or politically.
+- Descriptions should be concise, readable, and suitable for a static timeline in Hugo.
+
+When adding new references:
+- Merge them into the existing JSON instead of rewriting from scratch.
+- Preserve the schema_version, ordering_definition, closeness_definition, and preview_image_definition unless explicitly asked to change them.
+- Maintain internal consistency with previously assigned closeness values.
+
+If asked to append items, return the full updated JSON, not just the delta.
+

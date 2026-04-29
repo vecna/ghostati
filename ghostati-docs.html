@@ -3,157 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ghostati - Guida per Sviluppatori</title>
-  <style>
-    :root {
-      --bg: #0f1115;
-      --panel: #171a21;
-      --panel-2: #1d2230;
-      --text: #eef2ff;
-      --muted: #aeb6cf;
-      --line: #2c3346;
-      --accent: #7aa2ff;
-      --accent-2: #9f7aea;
-      --success: #3ddc97;
-      --warn: #ffcc66;
-      --danger: #ff7a7a;
-      --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-      --radius: 18px;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(122, 162, 255, 0.14), transparent 28%),
-        radial-gradient(circle at top right, rgba(159, 122, 234, 0.12), transparent 26%),
-        var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-
-    .page {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    header {
-      background: linear-gradient(135deg, rgba(122, 162, 255, 0.16), rgba(159, 122, 234, 0.12));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 30px;
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    .btn-back {
-      display: inline-block;
-      margin-top: 20px;
-      text-decoration: none;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      color: var(--muted);
-      border-radius: 14px;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 10px 20px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-back:hover {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
-      color: var(--text);
-      transform: translateY(-1px);
-    }
-
-    section {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 32px;
-    }
-
-    h2 {
-      margin: 0 0 16px;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--accent);
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 8px;
-    }
-
-    h3 {
-      font-size: 18px;
-      color: var(--accent-2);
-      margin-top: 30px;
-    }
-
-    p {
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-
-    pre {
-      background: #0a0d12;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 20px;
-      overflow-x: auto;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, fallback;
-      color: #c6d0f5;
-    }
-
-    .block-explain {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 4px solid var(--accent);
-      padding: 16px 20px;
-      margin-bottom: 16px;
-      border-radius: 0 12px 12px 0;
-    }
-
-    .block-explain strong {
-      display: block;
-      color: var(--text);
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-  </style>
+  <title>Ghòstati - Guida per Sviluppatori</title>
+  <link rel="stylesheet" href="styles/ghostati-docs.css" />
 </head>
 <body>
   <div class="page">
     <header>
-      <h1>Documentazione Ghostyles</h1>
-      <div class="subtitle">Guida per Sviluppatori all'Architettura a Plugin di Ghostati</div>
-      <a href="ghostati-face-api.html" class="btn-back">← Torna all'App Principal</a>
+      <h1>Documentazione Ghòstyles</h1>
+      <div class="subtitle">Guida per Sviluppatori all'Architettura a Plugin di Ghòstati</div>
+      <a href="ghostati-face-api.html" class="btn-back">← Torna a Ghòstati</a>
     </header>
 
     <section>
       <h2>Architettura ad Alto Livello</h2>
-      <p>Il sistema "Ghostati" utilizza un'<strong>architettura a plugin modulari</strong> pensata per separare il nucleo di tracciamento facciale dagli effetti visivi (i "Ghostyles").</p>
+      <p>Il sistema "Ghòstati" utilizza un'<strong>architettura a plugin modulari</strong> pensata per separare il nucleo di tracciamento facciale dagli effetti visivi (i "Ghostyles").</p>
       
       <p>Tecnicamente, l'engine principale è una web app Vanilla JS che inizializza la webcam, e utilizza <code>face-api.js</code> per inferire in tempo reale i <em>Landmarks a 68 punti</em> del viso. Il loop di rendering è gestito autonomamente per garantire performance scalabili (FPS controllati).</p>
 
@@ -164,7 +27,7 @@
 
     <section>
       <h2>Template Didattico</h2>
-      <p>Un plugin Ghostyle per funzionare deve unicamente esportare un paio di funzioni specifiche (gli "Event Hooks"). Questo snippet di codice rappresenta lo scheletro di base per cominciare a sviluppare.</p>
+      <p>Un plugin Ghòstyle per funzionare deve unicamente esportare un paio di funzioni specifiche (gli "Event Hooks"). Questo snippet di codice rappresenta lo scheletro di base per cominciare a sviluppare.</p>
       
 <pre><code>// @name Effetto Base
 
@@ -245,7 +108,7 @@ export function onClear(ctx) {
 
     <section>
       <h2>Modalità Diagnostica (Test CV Dazzle)</h2>
-      <p>Ghostati non si limita ad applicare il trucco AR in modo cosmetico, ma include uno strumento di <strong>Diagnostica e Analisi delle Vulnerabilità</strong> progettato per valutare la reale efficacia del <em>Ghostyle</em> nel neutralizzare gli algoritmi di Facial Recognition (CV Dazzle).</p>
+      <p>Ghòstati non si limita ad applicare il trucco AR in modo cosmetico, ma include uno strumento di <strong>Diagnostica e Analisi delle Vulnerabilità</strong> progettato per valutare la reale efficacia del <em>Ghostyle</em> nel neutralizzare gli algoritmi di Facial Recognition (CV Dazzle).</p>
       
       <div class="block-explain">
         <strong>Pulsante "Scansiona Trucco" e Compositing Off-screen</strong>
