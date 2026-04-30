@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghòstati</title>
+  <meta name="description"
+    content="Gòstati, diventa fantasma, sfuggi al riconoscimento facciale" />
+
+  <!-- Se mi rompi il cazzo perchè ho messo dei google fonts: hai ragione e fai bene. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/index.css" />
+  <link rel="stylesheet" href="styles/ghostati-face-api.css" />
+
+  <meta property="description"
+    content="Diventa un fantasma, sviluppa e testa camuffamenti anti-riconoscimento biometrico." />
+  <meta property="og:title" content="Ghòstati" />
+  <meta property="og:description"
+    content="Diventa un fantasma, sviluppa e testa camuffamenti anti-riconoscimento biometrico." />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sindacato.nina.watch/ghostati/" />
+  <meta property="og:image" content="https://sindacato.nina.watch/ghostati/facerec-transparency.png" />
+  <meta property="og:site_name" content="NINA" />
+
+</head>
+
+<body>
+
+  <main class="ghost-hero" id="ghostHero" data-target="ghostati-face-api.html">
+    <canvas class="ghost-hero__veil" id="ghostVeil" aria-hidden="true"></canvas>
+
+    <img class="ghost-hero__image" src="images/ghostati-hero.png" 
+      alt="Immagine semi-temporanea di un volto generato con un lamerissimo servizio." />
+
+    <a class="ghost-hero__wordmark" id="ghostLink" href="ghostati-face-api.html" aria-disabled="true" tabindex="-1">
+      <h1 class="wordmark__layer">Ghòstati</h1>
+    </a>
+  </main>
+
+  <script src="scripts/index-effect.js"></script>
+</body>
+
+</html>

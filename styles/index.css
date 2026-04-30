@@ -1,0 +1,236 @@
+:root {
+  --paper: #ffffff;
+  --ink: #000000;
+  --text-on-dark: #ffffff;
+  --accent-a: #ffffff;
+  --accent-b: #7ed7ff;
+  --accent-c: #ffd2ef;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--text-on-dark);
+}
+
+.ghost-hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--paper);
+  cursor: crosshair;
+}
+
+.ghost-hero__image,
+.ghost-hero__veil,
+.ghost-hero__wordmark {
+  position: absolute;
+  inset: 0;
+}
+
+.ghost-hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ghost-hero__veil {
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  pointer-events: none;
+}
+
+.ghost-hero__wordmark {
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  color: inherit;
+  pointer-events: none;
+  cursor: crosshair;
+}
+
+.ghost-hero__wordmark::after {
+  content: "";
+  position: absolute;
+  width: clamp(6.5rem, 18vw, 13rem);
+  height: 0.13rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0;
+  transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(0.65);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.wordmark__layer {
+  position: absolute;
+  margin: 0;
+  line-height: 0.88;
+  letter-spacing: -0.055em;
+  font-size: clamp(4.2rem, 11vw, 10rem);
+  white-space: nowrap;
+  text-align: center;
+  user-select: none;
+  padding: 1em;
+  font-weight: 900;
+  color: var(--text-on-dark);
+  transition:
+    color 280ms ease,
+    transform 220ms ease,
+    filter 220ms ease;
+}
+
+.ghost-hero.is-unlocked .ghost-hero__wordmark {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.ghost-hero.is-unlocked {
+  cursor: pointer;
+}
+
+.ghost-hero.is-unlocked .ghost-hero__wordmark::after {
+  opacity: 0.92;
+  transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(1);
+}
+
+.ghost-hero.is-unlocked .ghost-hero__wordmark:hover .wordmark__layer,
+.ghost-hero.is-unlocked .ghost-hero__wordmark:focus-visible .wordmark__layer {
+  transform: translateY(-0.05em);
+}
+
+.ghost-hero.is-unlocked .ghost-hero__wordmark:focus-visible {
+  outline: none;
+}
+
+.ghost-hero.is-unlocked .wordmark__layer {
+  color: var(--ink);
+}
+
+/* Lightweight CSS-only hover cue: moving gradient on text when unlocked. */
+.ghost-hero.is-unlocked .ghost-hero__wordmark:hover .wordmark__layer,
+.ghost-hero.is-unlocked .ghost-hero__wordmark:focus-visible .wordmark__layer {
+  color: transparent;
+  background-image: linear-gradient(
+    120deg,
+    var(--accent-a) 0%,
+    var(--accent-b) 38%,
+    var(--accent-c) 72%,
+    var(--accent-a) 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 0%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: wordmarkGradientShift 2850ms linear infinite;
+  filter: drop-shadow(0 0 0.4rem rgba(255, 255, 255, 0.35));
+}
+
+.ghost-hero.just-unlocked .wordmark__layer {
+  animation: unlockBlink 400ms linear 1;
+}
+
+.ghost-hero.just-unlocked .ghost-hero__wordmark::after {
+  animation: unlockUnderlineBlink 400ms linear 1;
+}
+
+@keyframes unlockBlink {
+  0% { opacity: 1; }
+  15% { opacity: 0.15; }
+  30% { opacity: 1; }
+  45% { opacity: 0.25; }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes unlockUnderlineBlink {
+  0% {
+    opacity: 0;
+    transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(1.06);
+  }
+  60% {
+    opacity: 0.35;
+    transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(0.88);
+  }
+  100% {
+    opacity: 0.92;
+    transform: translateY(clamp(2.4rem, 4.8vw, 4.4rem)) scaleX(1);
+  }
+}
+
+@keyframes wordmarkGradientShift {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 0%;
+  }
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .wordmark__layer {
+    width: 90vw;
+    font-size: clamp(3.4rem, 22vw, 8rem);
+    letter-spacing: -0.05em;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .ghost-hero.is-unlocked .ghost-hero__wordmark:hover .wordmark__layer,
+  .ghost-hero.is-unlocked .ghost-hero__wordmark:focus-visible .wordmark__layer {
+    transform: translate(-50%, calc(-50% - 0.05em));
+  }
+
+  .ghost-hero__wordmark::after {
+    width: 80vw;
+    transform: translateY(calc(clamp(2.4rem, 4.8vw, 4.4rem) + 50vh - 0.07rem)) scaleX(0.65);
+  }
+
+  .ghost-hero.is-unlocked .ghost-hero__wordmark::after {
+    transform: translateY(calc(clamp(2.4rem, 4.8vw, 4.4rem) + 50vh - 0.07rem)) scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark__layer {
+    transition: none;
+    animation: none;
+  }
+
+  .ghost-hero__wordmark::after {
+    transition: none;
+    animation: none;
+  }
+
+  .ghost-hero.is-unlocked .ghost-hero__wordmark:hover .wordmark__layer,
+  .ghost-hero.is-unlocked .ghost-hero__wordmark:focus-visible .wordmark__layer {
+    animation: none;
+  }
+}
