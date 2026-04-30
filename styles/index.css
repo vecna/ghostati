@@ -26,6 +26,16 @@ body {
   color: var(--text-on-dark);
 }
 
+@import url('https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+h1 {
+  margin: 0 0 4px;
+  font-family: 'League Script', cursive;
+  font-size: 60px;
+  font-weight: 400;
+  line-height: 1;
+}
+
 .ghost-hero {
   position: relative;
   width: 100%;

@@ -35,7 +35,9 @@ const els = {
    ghostylesContainer: document.getElementById('ghostylesContainer'),
    remoteGhostyleUrl: document.getElementById('remoteGhostyleUrl'),
    loadRemoteGhostyleBtn: document.getElementById('loadRemoteGhostyleBtn'),
-   mirrorToggle: document.getElementById('mirrorToggle'),
+   mirrorToggle: document.getElementById('mirrorToggle'), // Left for fallback, but managed by JS via camera direction
+   switchCameraBtn: document.getElementById('switchCameraBtn'),
+   dbCountBadge: document.getElementById('dbCountBadge'),
    fpsSelect: document.getElementById('fpsSelect')
 };
 
@@ -53,17 +55,34 @@ function triggerOverlayFadeout() {
 }
 
 let isMirrored = false;
-// Mirror toggle logic
-els.mirrorToggle.addEventListener('click', () => {
-   isMirrored = !isMirrored;
-   els.video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-   els.overlay.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-   els.mirrorToggle.classList.toggle('mirrored', isMirrored);
-   els.mirrorToggle.textContent = isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
-});
-// Initialize mirror state on load
-els.video.style.transform = 'scaleX(1)';
-els.overlay.style.transform = 'scaleX(1)';
+let currentFacingMode = 'user';
+
+// Mirror toggle logic (fallback, hidden in UI)
+if (els.mirrorToggle) {
+   els.mirrorToggle.addEventListener('click', () => {
+      isMirrored = !isMirrored;
+      els.video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      els.overlay.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      els.mirrorToggle.classList.toggle('mirrored', isMirrored);
+      els.mirrorToggle.textContent = isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
+   });
+}
+
+// Switch Camera logic
+if (els.switchCameraBtn) {
+   els.switchCameraBtn.addEventListener('click', async () => {
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+      setLog(`Cambio fotocamera... (${currentFacingMode})`);
+      if (els.video.srcObject) {
+         els.video.srcObject.getTracks().forEach(track => track.stop());
+      }
+      try {
+         await startCamera();
+      } catch (err) {
+         handleError(err, 'Errore nel cambio fotocamera.');
+      }
+   });
+}
 
 let db = loadDb();
 let activeEffect = null;
@@ -97,6 +116,11 @@ function renderDbStats() {
    els.dbCount.textContent = String(db.faces.length);
    els.nextId.textContent = String(db.nextId);
    els.thresholdLabel.textContent = MATCH_THRESHOLD.toFixed(2);
+   
+   if (els.dbCountBadge) {
+      els.dbCountBadge.textContent = String(db.faces.length);
+      els.dbCountBadge.style.display = db.faces.length > 0 ? 'inline-block' : 'none';
+   }
 }
 
 function updateEffectStats() {
@@ -620,18 +644,28 @@ async function startCamera() {
       video: {
          width: { ideal: 1920 },
          height: { ideal: 1080 },
-         facingMode: 'user'
+         facingMode: currentFacingMode
       },
       audio: false
    });
    els.video.srcObject = stream;
+   
+   // Auto mirror based on facingMode
+   isMirrored = currentFacingMode === 'user';
+   els.video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+   els.overlay.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+   if (els.mirrorToggle) {
+      els.mirrorToggle.classList.toggle('mirrored', isMirrored);
+      els.mirrorToggle.textContent = isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
+   }
+
    await new Promise(resolve => {
       els.video.onloadedmetadata = () => resolve();
    });
    await els.video.play();
    els.placeholder.style.display = 'none';
    setStatus('live', 'webcam attiva');
-   setLog('Webcam attiva. Premi “Scansiona faccia” o attiva una guida makeup AR dalla colonna destra.');
+   setLog('Webcam attiva. Premi l\'icona bersaglio per la scansione o scegli un effetto.');
    resizeCanvas();
 }
 

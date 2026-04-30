@@ -25,110 +25,127 @@
 </head>
 
 <body>
-  <div class="page">
-    <header>
-      <div>
-        <h1>Ghòstati!</h1>
-        <div class="subtitle">
-          Giocattolo sviluppato per il <a href="https://www.nina.watch/festival.html" style="color: var(--accent-2)">Festival di NINA</a>. Disponibile <a
-            href="https://www.nina.watch/festival_eng.html" style="color: var(--accent-2);">anche in inglese</a>.
-        </div>
-      </div>
-      <section class="about">
-        <p>
-          Siamo in βeta, se sai cosa fare, passa sul <a style="color: var(--accent-2);"
-            href="https://github.com/vecna/ghostati">repository</a>.
-        </p>
-      </section>
-    </header>
-
-    <main class="layout">
-      <section class="panel controls">
-        <div class="panel-header" id="diagnosisBox"
-          style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.12), rgba(122, 162, 255, 0.08)); border-bottom: 1px solid rgba(159, 122, 234, 0.3); padding-bottom: 20px; text-align: center;">
-          <h2
-            style="color: var(--accent-2); margin-bottom: 12px; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase;">
-            Verifica efficacia</h2>
-          <button id="scanBtn" class="action-btn" style="transition: all 0.3s ease;">Scansiona Faccia</button>
-          <button id="copyMakeupBtn" class="secondary-btn" disabled style="margin-top: 8px; font-size: 11px;">Copia
-            volto truccato</button>
-        </div>
-        <div class="panel-header">
-          <h2>Comandi</h2>
-          <p>Salvataggio e ricerca del volto corrente.</p>
-        </div>
-        <div class="stack">
-          <button id="mirrorToggle" class="action-btn">Mirror webcam</button>
-          <button id="saveBtn" class="action-btn">Salva faccia</button>
-          <button id="findBtn" class="action-btn">Trova faccia</button>
-          <button id="clearDbBtn" class="secondary-btn">Azzera archivio locale</button>
-          <button id="clearOverlayBtn" class="secondary-btn">Pulisci overlay</button>
-        </div>
-        <div class="list-card">
-          <h3>Archivio locale</h3>
-          <div class="metric"><span>Volti salvati</span><strong id="dbCount">0</strong></div>
-          <div class="metric"><span>Prossimo ID</span><strong id="nextId">0</strong></div>
-          <div class="metric"><span>Soglia match</span><strong id="thresholdLabel">0.58</strong></div>
-          <div class="metric"><span>Opacità stimata del trucco</span><strong>0.45</strong></div>
-        </div>
-      </section>
-
-      <section class="panel image-panel">
-        <div class="viewer" id="viewer">
-          <div class="status-pill"><span id="statusDot" class="status-dot"></span><span
-              id="statusText">inizializzazione...</span></div>
-          <div id="placeholder">Caricamento modelli e richiesta webcam…</div>
-          <video id="video" autoplay muted playsinline></video>
-          <img id="previewImage" alt="preview diagnostica" />
-          <canvas id="overlay"></canvas>
-        </div>
-        <div class="logbox" id="logBox">
-          <div class="log-line">In attesa dell’avvio della webcam…</div>
-        </div>
-      </section>
-
-      <section class="panel makeup">
-        <div class="panel-header">
-          <p>Overlay live ancorati ai landmark del volto e visualizzati direttamente sulla webcam.</p>
-        </div>
-        <div class="stack" id="ghostylesContainer">
-        </div>
-        
-        <div style="padding: 0 16px 12px;">
-          <select id="fpsSelect" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
-            <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
-            <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
-            <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
-            <option value="120" selected>⚙️ Frequenza Rendering: 120ms (Ecosostenibile)</option>
-          </select>
-        </div>
-
-        <div id="ghostyleDetails" class="stack"
-          style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0px; background-color: var(--accent-2); border-radius: 12px;">
-          <input type="url" id="remoteGhostyleUrl"
-            style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text;"
-            placeholder="https://.../urleffect.js" />
-          <button id="loadRemoteGhostyleBtn" class="secondary-btn" style="margin-top: -6px;">Carica Ghostyle
-            Remoto</button>
-          <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg);">📖 Sviluppa in
-            Ghostyle</a>
-        </div>
-        <p class="small-note">
-          Un click attiva la guida sulla webcam; un secondo click sullo stesso pulsante la spegne e torna il feed
-          pulito.
-        </p>
-        <div class="list-card">
-          <h3>Modalità attiva</h3>
-          <div class="metric"><span>Effetto</span><strong id="effectName">nessuno</strong></div>
-          <div class="metric"><span>Tracking</span><strong id="effectTracking">off</strong></div>
-          <div class="metric"><span>Rendering</span><strong>live su landmark</strong></div>
-        </div>
-      </section>
-    </main>
+  <!-- The fullscreen background -->
+  <div class="viewer fullscreen" id="viewer">
+    <div class="status-pill"><span id="statusDot" class="status-dot"></span><span id="statusText">inizializzazione...</span></div>
+    <div id="placeholder">Caricamento modelli e richiesta webcam…</div>
+    <video id="video" autoplay muted playsinline></video>
+    <img id="previewImage" alt="preview diagnostica" />
+    <canvas id="overlay"></canvas>
   </div>
 
+  <!-- Mobile Floating UI Layers -->
+  <!-- Top Left: Main Actions -->
+  <div class="floating-container top-left">
+    <button id="scanBtn" class="floating-btn main-action" title="Scansiona Faccia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5M20 16v4m0 0h-4m4 0l-5-5"></path></svg>
+    </button>
+    <button id="copyMakeupBtn" class="floating-btn main-action" disabled title="Copia volto truccato">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+    </button>
+    <button id="fullscreenBtn" class="floating-btn main-action" title="Fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+    </button>
+  </div>
+
+  <!-- Top Right: Settings Toggle -->
+  <div class="floating-container top-right">
+    <button id="toggleSettingsBtn" class="floating-btn" title="Impostazioni">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+  </div>
+
+  <!-- Middle Right: Vertical Actions -->
+  <div class="floating-container right-sidebar">
+    <button id="saveBtn" class="floating-btn side-action" title="Salva faccia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+    </button>
+    <div class="badge-container">
+      <button id="findBtn" class="floating-btn side-action" title="Trova faccia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </button>
+      <span id="dbCountBadge" class="notification-badge" style="display: none;">0</span>
+    </div>
+    <button id="clearDbBtn" class="floating-btn side-action" title="Azzera archivio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+    </button>
+    <button id="switchCameraBtn" class="floating-btn side-action" title="Gira webcam">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+    </button>
+  </div>
+
+  <!-- Bottom: Logs -->
+  <div class="logbox floating-logbox" id="logBox">
+    <div class="log-line">In attesa dell’avvio della webcam…</div>
+  </div>
+
+  <!-- Settings Drawer / Menu Overlay -->
+  <div id="settingsDrawer" class="settings-drawer hidden">
+    <div class="drawer-header">
+      <h2>Ghòstati! Menu</h2>
+      <button id="closeSettingsBtn" class="icon-btn" title="Chiudi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="drawer-content scrollable">
+      <!-- Info intro -->
+      <p class="small-note">Laboratorio Web AR in tempo reale per lo sviluppo di camuffamenti.</p>
+      
+      <!-- Ghostyles Section -->
+      <div class="panel-header">
+        <p style="margin-top:0;">Overlay live ancorati ai landmark del volto.</p>
+      </div>
+      <div class="stack" id="ghostylesContainer">
+        <!-- Generati dinamicamente -->
+      </div>
+      
+      <div style="padding: 0 16px 12px;">
+        <select id="fpsSelect" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
+          <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
+          <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
+          <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
+          <option value="120" selected>⚙️ Frequenza Rendering: 120ms (Ecosostenibile)</option>
+        </select>
+      </div>
+
+      <div id="ghostyleDetails" class="stack"
+        style="padding-top: 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0px; background-color: var(--accent-2); border-radius: 12px; padding: 12px;">
+        <input type="url" id="remoteGhostyleUrl"
+          style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text; width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: white; margin-bottom: 8px;"
+          placeholder="https://.../urleffect.js" />
+        <button id="loadRemoteGhostyleBtn" class="secondary-btn">Carica Ghostyle Remoto</button>
+        <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg); display: block; margin-top: 8px; text-decoration: none;">📖 Sviluppa in Ghostyle</a>
+      </div>
+
+      <!-- Controls -->
+      <div class="stack">
+        <!-- Il bottone mirror esiste ancora ma potremmo nasconderlo tramite CSS se gestito via JS, lo lascio nel DOM per fallback -->
+        <button id="mirrorToggle" class="secondary-btn" style="display: none;">Mirror webcam</button>
+        <button id="clearOverlayBtn" class="secondary-btn">Pulisci overlay manuale</button>
+      </div>
+
+      <!-- Metrics / Info -->
+      <div class="list-card">
+        <h3>Archivio locale</h3>
+        <div class="metric"><span>Volti salvati</span><strong id="dbCount">0</strong></div>
+        <div class="metric"><span>Prossimo ID</span><strong id="nextId">0</strong></div>
+        <div class="metric"><span>Soglia match</span><strong id="thresholdLabel">0.58</strong></div>
+        <div class="metric"><span>Opacità stimata</span><strong>0.45</strong></div>
+      </div>
+
+      <div class="list-card" style="margin-bottom: 40px;">
+        <h3>Modalità attiva</h3>
+        <div class="metric"><span>Effetto</span><strong id="effectName">nessuno</strong></div>
+        <div class="metric"><span>Tracking</span><strong id="effectTracking">off</strong></div>
+        <div class="metric"><span>Rendering</span><strong>live su landmark</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="scripts/ghostati-face-api.js"></script>
+  <script src="scripts/ghostati-mobile-ui.js"></script>
 </body>
 
 </html>
