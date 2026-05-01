@@ -1,4 +1,4 @@
-/* ghostati-face-api.css: extracted from ghostati-face-api.html */
+
 :root {
   --bg: #0f1115;
   --panel: #171a21;
@@ -465,6 +465,8 @@ body {
     /* If drawer is 360px wide, and right sidebar is normally 20px from right. 
        We can either move the right sidebar to 380px or leave it where it is and it will be covered by the drawer if open.
        On desktop, user can close the drawer. If open, it overlays the sidebar or pushes it. Let's push it via JS or CSS. */
+    right: 20px;
+  }
 }
 
 /* --- NUDGING (TUTORIAL) --- */

@@ -1,35 +1,66 @@
 <!doctype html>
 <html lang="it">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ghòstati - Guida per Sviluppatori</title>
   <link rel="stylesheet" href="styles/ghostati-docs.css" />
+  <link rel="stylesheet" href="styles/index.css" />
 </head>
+
 <body>
   <div class="page">
-    <header>
-      <h1>Documentazione Ghòstyles</h1>
-      <div class="subtitle">Guida per Sviluppatori all'Architettura a Plugin di Ghòstati</div>
-      <a href="ghostati-face-api.html" class="btn-back">← Torna a Ghòstati</a>
+
+    <header class="ghost-topbar" id="ghostTopbar">
+
+      <button class="ghost-topbar__toggle" id="ghostMenuToggle" type="button" aria-expanded="false"
+        aria-controls="ghostTopbarMenu" aria-label="Apri menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="ghost-topbar__nav" aria-label="Workshop e progetto">
+        <ul class="ghost-topbar__links" id="ghostTopbarMenu">
+          <li><a href="ghostati.html">Ghòstati!</a></li>
+          <li><a href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">codice</a></li>
+          <li><a href="https://sindacato.nina.watch/">progetto</a></li>
+        </ul>
+      </nav>
+
     </header>
+
+    <h1>Documentazione</h1>
+    <div class="subtitle">Sviluppa il tuo Ghostyle</div>
+
 
     <section>
       <h2>Architettura ad Alto Livello</h2>
-      <p>Il sistema "Ghòstati" utilizza un'<strong>architettura a plugin modulari</strong> pensata per separare il nucleo di tracciamento facciale dagli effetti visivi (i "Ghostyles").</p>
-      
-      <p>Tecnicamente, l'engine principale è una web app Vanilla JS che inizializza la webcam, e utilizza <code>face-api.js</code> per inferire in tempo reale i <em>Landmarks a 68 punti</em> del viso. Il loop di rendering è gestito autonomamente per garantire performance scalabili (FPS controllati).</p>
+      <p>Il sistema "Ghòstati" utilizza un'<strong>architettura a plugin modulari</strong> pensata per separare il
+        nucleo di tracciamento facciale dagli effetti visivi (i "Ghostyles").</p>
 
-      <p>Og intanto, l'engine richiama l'effetto attivo (il plugin). Ogni <strong>Ghostyle</strong> è un ES Module (<code>.js</code>) caricato dinamicamente via <code>import(url)</code>. Questo significa che i Ghostyle possono essere creati come file locali indipendenti, o addirittura hostati su server remoti e passati via URL.</p>
+      <p>Tecnicamente, l'engine principale è una web app Vanilla JS che inizializza la webcam, e utilizza
+        <code>face-api.js</code> per inferire in tempo reale i <em>Landmarks a 68 punti</em> del viso. Il loop di
+        rendering è gestito autonomamente per garantire performance scalabili (FPS controllati).
+      </p>
 
-      <p>L'engine fornisce al plugin due cose: le coordinate del volto aggiornate e le API globali offerte da <code>window.Ghostati</code> per semplificare drasticamente la geometria e il disegno su un Canvas dedicato (livello di overlay).</p>
+      <p>Og intanto, l'engine richiama l'effetto attivo (il plugin). Ogni <strong>Ghostyle</strong> è un ES Module
+        (<code>.js</code>) caricato dinamicamente via <code>import(url)</code>. Questo significa che i Ghostyle possono
+        essere creati come file locali indipendenti, o addirittura hostati su server remoti e passati via URL.</p>
+
+      <p>L'engine fornisce al plugin due cose: le coordinate del volto aggiornate e le API globali offerte da
+        <code>window.Ghostati</code> per semplificare drasticamente la geometria e il disegno su un Canvas dedicato
+        (livello di overlay).
+      </p>
     </section>
 
     <section>
       <h2>Template Didattico</h2>
-      <p>Un plugin Ghòstyle per funzionare deve unicamente esportare un paio di funzioni specifiche (gli "Event Hooks"). Questo snippet di codice rappresenta lo scheletro di base per cominciare a sviluppare.</p>
-      
-<pre><code>// @name Effetto Base
+      <p>Un plugin Ghòstyle per funzionare deve unicamente esportare un paio di funzioni specifiche (gli "Event Hooks").
+        Questo snippet di codice rappresenta lo scheletro di base per cominciare a sviluppare.</p>
+
+      <pre><code>// @name Effetto Base
 
 /**
  * [BLOCCO INIT]
@@ -82,55 +113,79 @@ export function onClear(ctx) {
 
       <div class="block-explain">
         <strong>1. Metadati Commentati</strong>
-        La prima riga <code>// @name [Nome]</code> è letta dall'Engine in fase di fetch come fallback se il plugin non ha un id chiaro o necessita di una label UI amichevole. Non è strettamente javascript-eseguibile, ma va in cima al modulo!
+        La prima riga <code>// @name [Nome]</code> è letta dall'Engine in fase di fetch come fallback se il plugin non
+        ha un id chiaro o necessita di una label UI amichevole. Non è strettamente javascript-eseguibile, ma va in cima
+        al modulo!
       </div>
 
       <div class="block-explain">
         <strong>2. Blocco INIT (<code>export function onInit</code>)</strong>
-        È l'Entry Point primario eseguito all'iniezione nel DOM/Browser dal Plugin Manager. Idealmente usato per scaricare asset aggiuntivi o notificare l'interfaccia via <code>Ghostati.log</code>. Può essere asincrono (<code>async/await</code>).
+        È l'Entry Point primario eseguito all'iniezione nel DOM/Browser dal Plugin Manager. Idealmente usato per
+        scaricare asset aggiuntivi o notificare l'interfaccia via <code>Ghostati.log</code>. Può essere asincrono
+        (<code>async/await</code>).
       </div>
 
       <div class="block-explain">
         <strong>3. Blocco DRAW (<code>export function onDraw</code>)</strong>
-        È il cuore pulsante del tuo scrip AR. L'argomento <code>landmarks</code> espone i metodi standard di face-api per ottenere array di coordinate <code>{x,y}</code> suddivise semanticamente: <code>getLeftEye()</code>, <code>getJawOutline()</code>, <code>getNose()</code>, <code>getMouth()</code>. È tutto disegnato su un livello trasparente perfettamente riallineato sulla webcam.
+        È il cuore pulsante del tuo scrip AR. L'argomento <code>landmarks</code> espone i metodi standard di face-api
+        per ottenere array di coordinate <code>{x,y}</code> suddivise semanticamente: <code>getLeftEye()</code>,
+        <code>getJawOutline()</code>, <code>getNose()</code>, <code>getMouth()</code>. È tutto disegnato su un livello
+        trasparente perfettamente riallineato sulla webcam.
       </div>
 
       <div class="block-explain">
         <strong>4. Utilizzo Metodi <code>Ghostati</code></strong>
-        Piuttosto che calcolare le curve Bezier punto per punto, usa le Utility messe a disposizione nell'interfaccia <code>window.Ghostati</code> come <code>drawClosedPath</code>. Ci sono anche funzioni di morphing sofisticate come <code>Ghostati.expandEyePolygon</code> o <code>Ghostati.drawEyeWing</code> per riprodurre eyeliner e sagome senza sforzo matematico.
+        Piuttosto che calcolare le curve Bezier punto per punto, usa le Utility messe a disposizione nell'interfaccia
+        <code>window.Ghostati</code> come <code>drawClosedPath</code>. Ci sono anche funzioni di morphing sofisticate
+        come <code>Ghostati.expandEyePolygon</code> o <code>Ghostati.drawEyeWing</code> per riprodurre eyeliner e sagome
+        senza sforzo matematico.
       </div>
 
       <div class="block-explain">
         <strong>5. Blocco CLEAR (<code>export function onClear</code>)</strong>
-        L'Engine passa a questo Hook prima di effettuare uno "switch" verso un altro plugin, garantendovi un life-cycle appropriato in cui eliminare custom listeners o fermare calcoli costosi derivati se necessario.
+        L'Engine passa a questo Hook prima di effettuare uno "switch" verso un altro plugin, garantendovi un life-cycle
+        appropriato in cui eliminare custom listeners o fermare calcoli costosi derivati se necessario.
       </div>
     </section>
 
     <section>
       <h2>Modalità Diagnostica (Test CV Dazzle)</h2>
-      <p>Ghòstati non si limita ad applicare il trucco AR in modo cosmetico, ma include uno strumento di <strong>Diagnostica e Analisi delle Vulnerabilità</strong> progettato per valutare la reale efficacia del <em>Ghostyle</em> nel neutralizzare gli algoritmi di Facial Recognition (CV Dazzle).</p>
-      
+      <p>Ghòstati non si limita ad applicare il trucco AR in modo cosmetico, ma include uno strumento di
+        <strong>Diagnostica e Analisi delle Vulnerabilità</strong> progettato per valutare la reale efficacia del
+        <em>Ghostyle</em> nel neutralizzare gli algoritmi di Facial Recognition (CV Dazzle).
+      </p>
+
       <div class="block-explain">
         <strong>Pulsante "Scansiona Trucco" e Compositing Off-screen</strong>
-        Quando un Ghostyle è attivo, il normale pulsante maschera la sua funzione primaria e si trasforma in "Scansiona Trucco". Premendolo, il sistema:
+        Quando un Ghostyle è attivo, il normale pulsante maschera la sua funzione primaria e si trasforma in "Scansiona
+        Trucco". Premendolo, il sistema:
         <ol style="margin-top: 8px; margin-bottom: 8px; padding-left: 20px;">
           <li>Genera un <strong>canvas off-screen</strong> invisibile all'utente.</li>
-          <li>Esegue un <em>compositing</em> fondendo pixel per pixel il feed reale della webcam con l'output grafico del trucco (mantenendone inalterate le opacità e i colori originali).</li>
-          <li>Forza il motore neurale (<code>face-api</code>) a scansionare questa nuova immagine sintetica per vedere se riesce ad estrarre la stessa identità.</li>
+          <li>Esegue un <em>compositing</em> fondendo pixel per pixel il feed reale della webcam con l'output grafico
+            del trucco (mantenendone inalterate le opacità e i colori originali).</li>
+          <li>Forza il motore neurale (<code>face-api</code>) a scansionare questa nuova immagine sintetica per vedere
+            se riesce ad estrarre la stessa identità.</li>
         </ol>
-        Durante questo processo, l'overlay a schermo rimane "bloccato" per continuare a fungere da specchio di guida, senza scomodi fade-out visivi.
+        Durante questo processo, l'overlay a schermo rimane "bloccato" per continuare a fungere da specchio di guida,
+        senza scomodi fade-out visivi.
       </div>
 
       <div class="block-explain">
         <strong>Opacità e Colori: Il fattore di difficoltà</strong>
-        Ai fini del test, il Canvas composito rispetta testualmente gli stili <code>rgba()</code> del tuo codice (non li forza al 100% di opacità). Questo significa che se usi colori troppo tenui, c'è un'alta probabilità che il sistema biometrico riesca a "vedere attraverso" il tratto. Nell'archivio locale a schermo è annotata in tempo reale "l'Opacità stimata" del trucco.
+        Ai fini del test, il Canvas composito rispetta testualmente gli stili <code>rgba()</code> del tuo codice (non li
+        forza al 100% di opacità). Questo significa che se usi colori troppo tenui, c'è un'alta probabilità che il
+        sistema biometrico riesca a "vedere attraverso" il tratto. Nell'archivio locale a schermo è annotata in tempo
+        reale "l'Opacità stimata" del trucco.
       </div>
 
       <div class="block-explain">
         <strong>Pulsante "Copia Volto Truccato"</strong>
-        Una volta che la simulazione è conclusa con successo, un pulsante speciale si accende. Cliccandolo, l'immagina composita generata <em>(volto della webcam alterato permanentemente dal Ghostyle sovrapposto)</em> viene salvata comodamente negli Appunti del sistema operativo, pronta per essere ispezionata.
+        Una volta che la simulazione è conclusa con successo, un pulsante speciale si accende. Cliccandolo, l'immagina
+        composita generata <em>(volto della webcam alterato permanentemente dal Ghostyle sovrapposto)</em> viene salvata
+        comodamente negli Appunti del sistema operativo, pronta per essere ispezionata.
       </div>
     </section>
   </div>
 </body>
+
 </html>

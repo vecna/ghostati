@@ -8,26 +8,34 @@
   <!-- Se mi rompi il cazzo perchè ho messo dei google fonts: hai ragione e fai bene. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  
-  <meta name="description" content="Laboratorio Web AR per lo sviluppo e il test di trucco anti-riconoscimento biometrico (CV Dazzle)." />
+  <link
+    href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <meta name="description"
+    content="Laboratorio Web AR per lo sviluppo e il test di trucco anti-riconoscimento biometrico (CV Dazzle)." />
   <meta property="og:title" content="Ghòstati | Face Lab" />
-  <meta property="og:description" content="Laboratorio Web AR in tempo reale per lo sviluppo di camuffamenti anti-riconoscimento biometrico (CV Dazzle) via plugin." />
+  <meta property="og:description"
+    content="Laboratorio Web AR in tempo reale per lo sviluppo di camuffamenti anti-riconoscimento biometrico (CV Dazzle) via plugin." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://sindacato.nina.watch/ghostati/" />
   <meta property="og:image" content="https://sindacato.nina.watch/ghostati/facerec-transparency.png" />
   <meta property="og:site_name" content="NINA" />
-  
+
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/ghostati/sitemap.xml" />
- 
-  <link rel="stylesheet" href="styles/ghostati-face-api.css" />
+
+  <meta name="generator" content="Hand-coded with rage against the algorithm" />
+  <link rel="source" href="https://github.com/vecna/ghostati" />
+
+  <link rel="stylesheet" href="styles/ghostati.css" />
 </head>
 
 <body>
   <!-- The fullscreen background -->
   <div class="viewer fullscreen" id="viewer">
-    <div class="status-pill"><span id="statusDot" class="status-dot"></span><span id="statusText">inizializzazione...</span></div>
+    <div class="status-pill"><span id="statusDot" class="status-dot"></span><span
+        id="statusText">inizializzazione...</span></div>
     <div id="placeholder">Caricamento modelli e richiesta webcam…</div>
     <video id="video" autoplay muted playsinline></video>
     <img id="previewImage" alt="preview diagnostica" />
@@ -38,39 +46,76 @@
   <!-- Top Left: Main Actions -->
   <div class="floating-container top-left">
     <button id="scanBtn" class="floating-btn main-action" title="Scansiona Faccia">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <path d="M9 9h.01" />
+        <path d="M15 9h.01" />
+      </svg>
     </button>
     <button id="copyMakeupBtn" class="floating-btn main-action" disabled title="Copia volto truccato">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
     </button>
     <button id="fullscreenBtn" class="floating-btn main-action" title="Fullscreen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      </svg>
     </button>
   </div>
 
   <!-- Top Right: Settings Toggle -->
   <div class="floating-container top-right">
     <button id="toggleSettingsBtn" class="floating-btn" title="Impostazioni">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+        </path>
+      </svg>
     </button>
   </div>
 
   <!-- Middle Right: Vertical Actions -->
   <div class="floating-container right-sidebar">
     <button id="saveBtn" class="floating-btn side-action" title="Salva faccia">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
     </button>
     <div class="badge-container">
       <button id="findBtn" class="floating-btn side-action" title="Trova faccia">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
       </button>
       <span id="dbCountBadge" class="notification-badge" style="display: none;">0</span>
     </div>
     <button id="clearDbBtn" class="floating-btn side-action" title="Azzera archivio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
     </button>
     <button id="switchCameraBtn" class="floating-btn side-action" title="Gira webcam">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
     </button>
   </div>
 
@@ -84,13 +129,17 @@
     <div class="drawer-header">
       <h2>Ghòstati! Menu</h2>
       <button id="closeSettingsBtn" class="icon-btn" title="Chiudi">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
     </div>
     <div class="drawer-content scrollable">
       <!-- Info intro -->
       <p class="small-note">Laboratorio Web AR in tempo reale per lo sviluppo di camuffamenti.</p>
-      
+
       <!-- Ghostyles Section -->
       <div class="panel-header">
         <p style="margin-top:0;">Overlay live ancorati ai landmark del volto.</p>
@@ -98,9 +147,10 @@
       <div class="stack" id="ghostylesContainer">
         <!-- Generati dinamicamente -->
       </div>
-      
+
       <div style="padding: 0 16px 12px;">
-        <select id="fpsSelect" style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
+        <select id="fpsSelect"
+          style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
           <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
           <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
           <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
@@ -114,7 +164,9 @@
           style="background: rgba(0,0,0,0.3); font-size:12px; text-align: left; padding: 10px; cursor: text; width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: white; margin-bottom: 8px;"
           placeholder="https://.../urleffect.js" />
         <button id="loadRemoteGhostyleBtn" class="secondary-btn">Carica Ghostyle Remoto</button>
-        <a href="ghostati-docs.html" class="btn-link" style="text-align: center; color: var(--bg); display: block; margin-top: 8px; text-decoration: none;">📖 Sviluppa in Ghostyle</a>
+        <a href="ghostati-docs.html" class="btn-link"
+          style="text-align: center; color: var(--bg); display: block; margin-top: 8px; text-decoration: none;">📖
+          Documentazione</a>
       </div>
 
       <!-- Controls -->
@@ -144,7 +196,7 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="scripts/ghostati-face-api.js"></script>
+  <script src="scripts/ghostati.js"></script>
   <script src="scripts/ghostati-mobile-ui.js"></script>
 </body>
 
