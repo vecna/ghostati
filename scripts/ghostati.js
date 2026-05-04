@@ -110,6 +110,9 @@ function loadDb() {
 function persistDb() {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
    renderDbStats();
+   ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
+      detail: { count: db.faces.length, nextId: db.nextId }
+   }));
 }
 
 function renderDbStats() {
@@ -231,6 +234,14 @@ function distance(a, b) {
    }
    return Math.sqrt(sum);
 }
+
+function computeMatchState(descriptor) {
+   if (!descriptor || db.faces.length === 0) return 'unknown';
+   const minDist = Math.min(...db.faces.map(e => distance(descriptor, e.descriptor)));
+   return minDist <= MATCH_THRESHOLD ? 'matched' : 'eluded';
+}
+
+const ghostatiEvents = new EventTarget();
 
 function avgPoint(points) {
    const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
@@ -398,7 +409,13 @@ window.Ghostati = {
    expandEyePolygon,
    drawEyeWing,
    drawCheekSweep,
-   drawContourBand
+   drawContourBand,
+   events: ghostatiEvents,
+   getDb: () => structuredClone(db),
+   getActiveEffect: () => activeEffect,
+   getLastResult: () => lastKnownEffectResult,
+   getMatchThreshold: () => MATCH_THRESHOLD,
+   computeMatchState
 };
 
 const loadedGhostyles = new Map();
@@ -582,16 +599,24 @@ function drawResult(result) {
 }
 
 async function runEffectPass() {
-   if (!activeEffect || isSystemBusy || effectInferenceInFlight || els.video.readyState < 2) return;
+   if (isSystemBusy || effectInferenceInFlight || els.video.readyState < 2) return;
    effectInferenceInFlight = true;
    try {
-      const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS).withFaceLandmarks();
+      const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
+      const result = activeEffect ? await detector.withFaceLandmarks() : await detector;
+
       if (!result) {
          lastKnownEffectResult = null;
-         clearOverlay();
-         return;
+         if (activeEffect) clearOverlay();
+      } else if (activeEffect) {
+         drawEffectOverlay(result, false);
+      } else {
+         lastKnownEffectResult = result;
       }
-      drawEffectOverlay(result, false);
+
+      ghostatiEvents.dispatchEvent(new CustomEvent('detection', {
+         detail: { result: result || null, activeEffect }
+      }));
    } catch (err) {
       console.error(err);
    } finally {
@@ -600,10 +625,6 @@ async function runEffectPass() {
 }
 
 function effectLoop(ts = 0) {
-   if (!activeEffect) {
-      effectLoopHandle = null;
-      return;
-   }
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - lastEffectRun > currentDelay) {
       lastEffectRun = ts;
@@ -624,6 +645,7 @@ function stopEffectLoop() {
 }
 
 function deactivateEffect({ silent = false } = {}) {
+   const previousEffect = activeEffect;
    if (activeEffect) {
       const style = loadedGhostyles.get(activeEffect);
       if (style && style.module.onClear) {
@@ -631,7 +653,11 @@ function deactivateEffect({ silent = false } = {}) {
       }
    }
    activeEffect = null;
-   stopEffectLoop();
+   if (previousEffect) {
+      ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
+         detail: { activeEffect: null, previous: previousEffect }
+      }));
+   }
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.classList.remove('active'));
    els.scanBtn.style.background = '';
@@ -658,7 +684,11 @@ function toggleEffect(effect, button) {
       // wait for complete removal then continue
    }
 
+   const previousEffect = activeEffect;
    activeEffect = effect;
+   ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
+      detail: { activeEffect: effect, previous: previousEffect }
+   }));
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
    els.previewImage.style.display = 'none';
@@ -689,7 +719,11 @@ async function scanFace() {
    const gender = result.gender || 'n/d';
    const confidence = typeof result.genderProbability === 'number' ? ` (${Math.round(result.genderProbability * 100)}%)` : '';
    setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Overlay biometrico aggiornato.`);
-   
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: computeMatchState(result.descriptor), source: 'scan' }
+   }));
+
    if (nudgeStep === 1) { nudgeStep = 2; updateNudging(); }
 }
 
@@ -708,6 +742,10 @@ async function saveFace() {
    });
    persistDb();
    setLog(`Impronta biometrica salvata con ID ${id}. Archivio locale aggiornato.`);
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: computeMatchState(result.descriptor), source: 'save' }
+   }));
 
    if (nudgeStep === 2) { nudgeStep = 3; updateNudging(); }
 }
@@ -730,11 +768,18 @@ async function findFace() {
 
    if (!matches.length) {
       setLog(`Nessuna corrispondenza trovata sotto soglia ${MATCH_THRESHOLD.toFixed(2)}.`);
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state: 'eluded', source: 'find' }
+      }));
       return;
    }
 
    const summary = matches.map(m => `${m.id} (${m.distance.toFixed(3)})`).join(', ');
    setLog(`Corrispondenze trovate: ${summary}.`);
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: 'matched', source: 'find', distance: matches[0].distance, matchedId: matches[0].id }
+   }));
 }
 
 async function startCamera() {
@@ -765,6 +810,7 @@ async function startCamera() {
    setStatus('live', 'webcam attiva');
    setLog('Webcam attiva. Premi l\'icona bersaglio per la scansione o scegli un effetto.');
    resizeCanvas();
+   startEffectLoop();
 }
 
 async function loadModels() {
@@ -781,6 +827,9 @@ async function loadModels() {
 function clearDb() {
    db = { nextId: 0, faces: [] };
    persistDb();
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: 'unknown', source: 'clear' }
+   }));
    setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
 }
 
@@ -827,24 +876,36 @@ async function testMakeupEfficacy() {
       .withFaceDescriptor();
 
    if (!obfuscatedResult) {
+      const state = db.faces.length === 0 ? 'unknown' : 'eluded';
       if (db.faces.length === 0) {
          setLog('Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! (Salva un volto nel DB per testare il riconoscimento).');
       } else {
          setLog('Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l\'algoritmo di rilevamento.');
       }
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy' }
+      }));
       return;
    }
 
    if (db.faces.length === 0) {
       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
+      const state = dist > MATCH_THRESHOLD ? 'eluded' : 'matched';
       if (dist > MATCH_THRESHOLD) {
          setLog(`Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base (distanza: ${dist.toFixed(3)}). Salva un volto nel DB per testare contro i salvataggi!`);
       } else {
          setLog(`Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta (distanza: ${dist.toFixed(3)} <= ${MATCH_THRESHOLD.toFixed(2)}).`);
       }
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', distance: dist }
+      }));
    } else {
       const dbMatches = db.faces.map(entry => distance(obfuscatedResult.descriptor, entry.descriptor));
       const minDist = Math.min(...dbMatches);
+      const state = minDist > MATCH_THRESHOLD ? 'eluded' : 'matched';
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', distance: minDist }
+      }));
       if (minDist > MATCH_THRESHOLD) {
          setLog(`Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile (distanza minima DB: ${minDist.toFixed(3)}).`);
       } else {
@@ -1045,6 +1106,7 @@ async function init() {
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);
    updateNudging();
+   ghostatiEvents.dispatchEvent(new CustomEvent('ready', { detail: {} }));
 }
 
 init();
