@@ -70,34 +70,48 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
    }
 
-   async function loadPlugin(url, expectedName) {
+   async function loadPlugin(url, expectedName, opts = {}) {
       const id = url.split('/').pop().replace('.js', '');
+      const cacheBust = opts.cacheBust ? `?t=${Date.now()}` : '';
       try {
          Ghostati.log(`Caricamento plugin 3D da ${url}...`, 'plugins3d');
-         const txtRes = await fetch(url);
+         const txtRes = await fetch(url + cacheBust, { cache: 'no-store' });
          if (!txtRes.ok) throw new Error(`HTTP ${txtRes.status}`);
          const text = await txtRes.text();
          const nameMatch = text.match(/@name\s+(.+)/);
          const name = nameMatch ? nameMatch[1].trim() : (expectedName || id);
-         const module = await import(url);
+         const module = await import(url + cacheBust);
          loaded.set(id, { id, name, module, url });
-         initParamsFromModule(id, module);
+         initParamsFromModule(id, module, opts.preserveValues);
          if (typeof module.onInit === 'function') {
             try { module.onInit(); }
             catch (e) { console.error(`[plugins3d] onInit di '${name}':`, e); }
          }
-         renderButton(id, name);
+         if (!opts.skipRenderButton) renderButton(id, name);
          Ghostati.log(`Plugin 3D '${name}' caricato.`, 'plugins3d');
+         return id;
       } catch (err) {
          console.error('[plugins3d] errore caricamento:', err);
          Ghostati.log(`Impossibile caricare plugin 3D ${expectedName || id}: ${err.message}`, 'plugins3d');
+         return null;
       }
    }
 
-   function initParamsFromModule(id, module) {
-      if (!Array.isArray(module.params) || module.params.length === 0) return;
+   // initParamsFromModule: setta i valori correnti per il plugin. Se
+   // `preserveValues` è passato (snapshot da prima del reload), ripristina i
+   // valori per i param che esistono ancora con lo stesso nome — i nuovi
+   // ottengono il default, i rimossi vengono scartati.
+   function initParamsFromModule(id, module, preserveValues) {
+      if (!Array.isArray(module.params) || module.params.length === 0) {
+         paramValues.delete(id);
+         return;
+      }
       const values = {};
-      for (const p of module.params) values[p.name] = p.default;
+      for (const p of module.params) {
+         values[p.name] = (preserveValues && p.name in preserveValues)
+            ? preserveValues[p.name]
+            : p.default;
+      }
       paramValues.set(id, values);
    }
 
@@ -284,21 +298,91 @@
       }
    });
 
-   // Bootstrap
-   (async () => {
-      const relurl = window.location.pathname.split('/').slice(0, -1).join('/');
-      const manifestUrl = relurl + '/ghostylist3d.json';
+   const relurl = window.location.pathname.split('/').slice(0, -1).join('/');
+   const manifestUrl = relurl + '/ghostylist3d.json';
+
+   async function fetchManifest(opts = {}) {
+      const cacheBust = opts.cacheBust ? `?t=${Date.now()}` : '';
+      const res = await fetch(manifestUrl + cacheBust, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+   }
+
+   async function loadFromManifest(opts = {}) {
       try {
-         const res = await fetch(manifestUrl);
-         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-         const list = await res.json();
+         const list = await fetchManifest(opts);
          for (const item of list) {
             const effectiveUrl = relurl + '/' + item.url;
-            await loadPlugin(effectiveUrl, item.name);
+            await loadPlugin(effectiveUrl, item.name, opts);
          }
       } catch (err) {
          console.error('[plugins3d] errore lettura manifest:', err);
          Ghostati.log(`Errore lettura ${manifestUrl}: ${err.message}`, 'plugins3d');
       }
+   }
+
+   // Reload manuale: re-fetch manifest + re-import di tutti i plugin con
+   // cache busting. Preserva il plugin attivo (se ancora presente nel manifest)
+   // e i valori dei param per nome.
+   async function reloadAll() {
+      const previouslyActive = active;
+      const valuesSnapshot = new Map();
+      for (const [id, vals] of paramValues.entries()) {
+         valuesSnapshot.set(id, { ...vals });
+      }
+
+      // Disattiva (chiama onClear sul vecchio modulo) prima di sostituire.
+      deactivate();
+
+      // Pulisci stato e UI: bottoni plugin (non il bottone reload) + entry caricate.
+      loaded.clear();
+      paramValues.clear();
+      container.querySelectorAll('.preview-btn[data-effect3d]').forEach(b => b.remove());
+
+      try {
+         const list = await fetchManifest({ cacheBust: true });
+         for (const item of list) {
+            const effectiveUrl = relurl + '/' + item.url;
+            const id = effectiveUrl.split('/').pop().replace('.js', '');
+            const preserve = valuesSnapshot.get(id);
+            await loadPlugin(effectiveUrl, item.name, { cacheBust: true, preserveValues: preserve });
+         }
+      } catch (err) {
+         console.error('[plugins3d] errore reload manifest:', err);
+         Ghostati.log(`Errore reload ${manifestUrl}: ${err.message}`, 'plugins3d');
+      }
+
+      // Riposiziona il pulsante reload in fondo (i nuovi plugin button vengono
+      // appesi dopo, quindi senza riposizionamento il reload finirebbe in mezzo).
+      if (reloadBtn && reloadBtn.parentNode === container) {
+         container.appendChild(reloadBtn);
+      }
+
+      // Re-attiva il plugin precedente se ancora presente.
+      if (previouslyActive && loaded.has(previouslyActive)) {
+         const btn = container.querySelector(`[data-effect3d="${previouslyActive}"]`);
+         if (btn) activatePlugin(previouslyActive, btn);
+      }
+      Ghostati.log('Reload plugin 3D completato.', 'plugins3d');
+   }
+
+   let reloadBtn = null;
+   function renderReloadButton() {
+      reloadBtn = document.createElement('button');
+      reloadBtn.className = 'preview-btn reload3d-btn';
+      reloadBtn.textContent = '🔄 Ricarica plugin';
+      reloadBtn.style.opacity = '0.75';
+      reloadBtn.onclick = async () => {
+         reloadBtn.disabled = true;
+         try { await reloadAll(); }
+         finally { reloadBtn.disabled = false; }
+      };
+      container.appendChild(reloadBtn);
+   }
+
+   // Bootstrap
+   (async () => {
+      await loadFromManifest();
+      renderReloadButton();
    })();
 })();
