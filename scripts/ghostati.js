@@ -847,6 +847,11 @@ async function findFace() {
 }
 
 async function startCamera() {
+   if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+      const httpsHint = !window.isSecureContext ? ' La pagina deve essere servita via HTTPS o da localhost (su mobile l\'IP locale non basta).' : '';
+      setLog('Webcam non disponibile in questo contesto.' + httpsHint);
+      throw new Error('mediaDevices unavailable (insecure context?)');
+   }
    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
          width: { ideal: 1920 },

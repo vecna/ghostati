@@ -3,17 +3,30 @@
  *
  * I plugin 3D devono solo:
  *   - dichiarare `params` (schema controlli UI)
- *   - implementare `paintUV(ctx, paramsValues)` che disegna in spazio UV su un
- *     canvas quadrato `textureSize × textureSize` (default 256)
+ *   - implementare `paintUV(ctx, paramsValues, helpers)` che disegna in spazio
+ *     UV su un canvas quadrato `textureSize × textureSize` (default 256)
  *   - opzionalmente esportare `textureSize` (numero) per scegliere la
  *     risoluzione della texture
+ *   - opzionalmente esportare `region = { include?, exclude? }` per limitare il
+ *     disegno a regioni del volto (gestito automaticamente come post-mask)
+ *
+ * Helpers passati come 3° argomento di paintUV:
+ *   helpers.regionAt(u, v)    → string|null   nome regione del pixel UV [0..1]²
+ *   helpers.labels            → Uint8Array    etichette regione, w*h byte
+ *   helpers.regions           → { name: id }  mappa nome → id (per confronti veloci)
+ *   helpers.regionsList       → string[]      nomi disponibili
  *
  * Il framework si occupa di:
  *   - caricare `data/face_canonical_uv.json` (lazy, una volta)
+ *   - precomputare la label map regionale per ogni textureSize, una volta
  *   - mantenere una cache della texture per (plugin, hash dei params), così
  *     `paintUV` viene chiamato solo quando i parametri cambiano
  *   - per ogni frame, calcolare l'affine UV→screen di ciascuno dei 906
  *     triangoli della mesh canonica, fare clip + setTransform + drawImage
+ *
+ * Regioni native costruite dalle costanti FACE_LANDMARKS_* di MediaPipe:
+ *   `faceOval`, `eye` (entrambi gli occhi), `eyebrow` (entrambi, area engrossata),
+ *   `lips`, `iris`. Pixel fuori da `faceOval` non hanno regione (regionAt → null).
  *
  * TODO backface culling: i triangoli del lato non visibile (volto di profilo)
  * vengono attualmente disegnati. Un primo tentativo basato sul confronto del
@@ -60,6 +73,255 @@
    // WeakMap così non trattiene il modulo se viene scaricato (futuro hot-reload).
    const cache = new WeakMap();
 
+   // ---- Region label map -------------------------------------------------
+
+   // ID delle regioni. 0 = nessuna regione (pixel fuori dal volto).
+   const REGION_IDS = {
+      skin:    1,
+      eyebrow: 2,
+      eye:     3,
+      lips:    4,
+      iris:    5
+   };
+   const REGION_NAMES = Object.fromEntries(
+      Object.entries(REGION_IDS).map(([n, id]) => [id, n])
+   );
+   const REGION_LIST = Object.keys(REGION_IDS);
+
+   // Cache delle label maps: size → { labels: Uint8Array, size }
+   const labelsBySize = new Map();
+   // Cache delle mask binarie per spec dichiarativo: `${size}|${specHash}` → Canvas
+   const maskCache = new Map();
+
+   // Estrae cicli (loop chiusi e path aperti) da una lista di segmenti
+   // {start, end} costruendo un grafo. Ogni componente connessa diventa una
+   // sequenza ordinata di indici.
+   function extractChains(segments) {
+      const adj = new Map();
+      for (const s of segments) {
+         if (!adj.has(s.start)) adj.set(s.start, []);
+         if (!adj.has(s.end))   adj.set(s.end,   []);
+         adj.get(s.start).push(s.end);
+         adj.get(s.end).push(s.start);
+      }
+      const visited = new Set();
+      const chains = [];
+      for (const start of adj.keys()) {
+         if (visited.has(start)) continue;
+         // Cerca un nodo di grado 1 (estremo di un path) per partire da lì,
+         // altrimenti parti da `start` (loop chiuso).
+         let entry = start;
+         for (const n of adj.keys()) {
+            if (!visited.has(n) && adj.get(n).length === 1) { entry = n; break; }
+         }
+         const chain = [entry];
+         visited.add(entry);
+         let current = entry;
+         let prev = -1;
+         while (true) {
+            const neighbors = adj.get(current).filter(n => n !== prev);
+            const next = neighbors.find(n => !visited.has(n));
+            if (next == null) {
+               // Verifica chiusura: se uno dei vicini è il punto di partenza
+               // e abbiamo almeno 3 nodi, è un loop chiuso.
+               const closing = neighbors.find(n => n === entry);
+               if (closing != null && chain.length >= 3) chain.push(entry);
+               break;
+            }
+            chain.push(next);
+            visited.add(next);
+            prev = current;
+            current = next;
+         }
+         if (chain.length >= 2) chains.push(chain);
+      }
+      return chains;
+   }
+
+   function isClosedChain(chain) {
+      return chain.length >= 4 && chain[0] === chain[chain.length - 1];
+   }
+
+   function fillChainOnCtx(ctx, chain, uv, size) {
+      ctx.beginPath();
+      for (let i = 0; i < chain.length; i++) {
+         const p = uv[chain[i]];
+         if (!p) continue;
+         const x = p[0] * size, y = p[1] * size;
+         if (i === 0) ctx.moveTo(x, y);
+         else         ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+   }
+
+   function strokeChainOnCtx(ctx, chain, uv, size, lineWidth) {
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < chain.length; i++) {
+         const p = uv[chain[i]];
+         if (!p) continue;
+         const x = p[0] * size, y = p[1] * size;
+         if (!started) { ctx.moveTo(x, y); started = true; }
+         else          ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+   }
+
+   // Costruisce la label map per `size`. Ogni regione viene rasterizzata su un
+   // canvas temporaneo separato per evitare il color-mixing dell'anti-aliasing
+   // (un pixel di edge tra eye e skin altrimenti darebbe un ID intermedio
+   // sbagliato). Le regioni interne vengono passate dopo quelle esterne, così
+   // sovrascrivono nel buffer labels finale. Outside-of-faceOval = 0.
+   function buildLabels(size) {
+      const F = window.Ghostati && window.Ghostati.FaceLandmarker;
+      if (!F || !UV_DATA) return null;
+      const uv = UV_DATA.uv;
+
+      const tmp = document.createElement('canvas');
+      tmp.width = size;
+      tmp.height = size;
+      const tctx = tmp.getContext('2d', { willReadFrequently: true });
+      tctx.fillStyle = 'white';
+      tctx.strokeStyle = 'white';
+
+      const STROKE_W = Math.max(4, Math.round(size * 0.04)); // ~4% del lato
+      const labels = new Uint8Array(size * size);
+
+      // Rasterizza i `segments` su `tmp` (in bianco) e marca con `regionId`
+      // ogni pixel del buffer `labels` la cui alpha sul tmp supera 128.
+      function paintAndLabel(regionId, segments) {
+         if (!segments) return;
+         tctx.clearRect(0, 0, size, size);
+         const chains = extractChains(segments);
+         for (const ch of chains) {
+            if (isClosedChain(ch)) fillChainOnCtx(tctx, ch, uv, size);
+            else                   strokeChainOnCtx(tctx, ch, uv, size, STROKE_W);
+         }
+         const img = tctx.getImageData(0, 0, size, size);
+         const data = img.data;
+         for (let i = 3, j = 0; j < labels.length; i += 4, j++) {
+            if (data[i] > 128) labels[j] = regionId;
+         }
+      }
+
+      // Ordine di pittura = ordine di sovrascrittura. Le interne vincono.
+      paintAndLabel(REGION_IDS.skin,    F.FACE_LANDMARKS_FACE_OVAL);
+      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_LEFT_EYEBROW);
+      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_RIGHT_EYEBROW);
+      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_LEFT_EYE);
+      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_RIGHT_EYE);
+      paintAndLabel(REGION_IDS.lips,    F.FACE_LANDMARKS_LIPS);
+      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_LEFT_IRIS);
+      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_RIGHT_IRIS);
+
+      // Diagnostica: conta i pixel etichettati per regione.
+      if (window.Ghostati && Ghostati.log) {
+         const counts = {};
+         for (let i = 0; i < labels.length; i++) {
+            const id = labels[i];
+            counts[id] = (counts[id] || 0) + 1;
+         }
+         const tot = labels.length;
+         const pct = id => ((counts[id] || 0) / tot * 100).toFixed(1);
+         Ghostati.log(
+            `Label map ${size}×${size}: outside ${pct(0)}% · skin ${pct(REGION_IDS.skin)}% ` +
+            `· eyebrow ${pct(REGION_IDS.eyebrow)}% · eye ${pct(REGION_IDS.eye)}% ` +
+            `· lips ${pct(REGION_IDS.lips)}% · iris ${pct(REGION_IDS.iris)}%`,
+            'uv-renderer'
+         );
+      }
+
+      return { labels, size };
+   }
+
+   function ensureLabels(size) {
+      let entry = labelsBySize.get(size);
+      if (entry) return entry;
+      entry = buildLabels(size);
+      if (entry) labelsBySize.set(size, entry);
+      return entry;
+   }
+
+   function buildHelpers(size) {
+      const entry = ensureLabels(size);
+      const labels = entry ? entry.labels : null;
+
+      function regionAt(u, v) {
+         if (!labels) return null;
+         const px = Math.min(size - 1, Math.max(0, Math.floor(u * size)));
+         const py = Math.min(size - 1, Math.max(0, Math.floor(v * size)));
+         const id = labels[py * size + px];
+         return id === 0 ? null : (REGION_NAMES[id] || null);
+      }
+
+      return {
+         regionAt,
+         labels,
+         regions: REGION_IDS,
+         regionsList: REGION_LIST.slice()
+      };
+   }
+
+   // Mask binaria (RGBA con alpha = 255 dove la spec è soddisfatta) per
+   // applicazione automatica via destination-in dopo paintUV.
+   function getDeclarativeMask(size, spec) {
+      if (!spec) return null;
+      const include = Array.isArray(spec.include) ? spec.include
+                    : (typeof spec.include === 'string' ? [spec.include] : null);
+      const exclude = Array.isArray(spec.exclude) ? spec.exclude.slice() : [];
+      if (!include && exclude.length === 0) return null;
+
+      const key = `${size}|inc:${(include || ['*']).slice().sort().join(',')}|exc:${exclude.slice().sort().join(',')}`;
+      const cached = maskCache.get(key);
+      if (cached) return cached;
+
+      const entry = ensureLabels(size);
+      if (!entry) return null;
+      const labels = entry.labels;
+
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const mctx = c.getContext('2d');
+      const img = mctx.createImageData(size, size);
+      const data = img.data;
+
+      const includeIds = include
+         ? new Set(include.map(n => REGION_IDS[n]).filter(Boolean))
+         : null;
+      const excludeIds = new Set(exclude.map(n => REGION_IDS[n]).filter(Boolean));
+
+      let included = 0;
+      for (let i = 0, j = 0; j < labels.length; i += 4, j++) {
+         const id = labels[j];
+         const inIncluded = includeIds ? includeIds.has(id) : true;
+         const inExcluded = excludeIds.has(id);
+         if (inIncluded && !inExcluded) {
+            data[i + 3] = 255;
+            included++;
+         } else {
+            data[i + 3] = 0;
+         }
+      }
+      // Fallback: se la spec non risulta in nessun pixel incluso (label map
+      // costruita male o spec degenere), salta la mask invece di azzerare
+      // tutta la texture. Loggiamo per diagnosi.
+      if (included === 0) {
+         if (window.Ghostati && Ghostati.log) {
+            Ghostati.log(`Mask region degenere (0 px inclusi) per spec ${JSON.stringify(spec)} — skip applicazione`, 'uv-renderer');
+         }
+         maskCache.set(key, null);
+         return null;
+      }
+      mctx.putImageData(img, 0, 0);
+      maskCache.set(key, c);
+      return c;
+   }
+
    function hashParams(params) {
       // Stringificazione deterministica: chiavi ordinate, valori numerici troncati.
       const keys = Object.keys(params || {}).sort();
@@ -92,9 +354,19 @@
          }
          entry.ctx.clearRect(0, 0, size, size);
          try {
-            module.paintUV(entry.ctx, params);
+            const helpers = buildHelpers(size);
+            module.paintUV(entry.ctx, params, helpers);
          } catch (err) {
             console.error('[uv-renderer] paintUV errore:', err);
+         }
+         // Applica mask dichiarativa `region = { include, exclude }` se
+         // dichiarata dal plugin. L'effetto è equivalente a un destination-in.
+         const declarativeMask = getDeclarativeMask(size, module.region);
+         if (declarativeMask) {
+            const prev = entry.ctx.globalCompositeOperation;
+            entry.ctx.globalCompositeOperation = 'destination-in';
+            entry.ctx.drawImage(declarativeMask, 0, 0);
+            entry.ctx.globalCompositeOperation = prev;
          }
          entry.key = key;
       }

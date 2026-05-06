@@ -24,6 +24,13 @@ export const params = [
    { name: 'mode',     type: 'select', label: 'Modalità',        options: ['stripe', 'chevron'], default: 'chevron' }
 ];
 
+// Disegniamo solo sulla pelle del volto, escludendo occhi, labbra, sopracciglia
+// e iride. Il framework rasterizza queste regioni in spazio UV e applica una
+// mask `destination-in` dopo paintUV. Plugin non deve gestire nulla.
+export const region = {
+   include: 'skin'
+};
+
 const COLORS = [
    [255, 255, 255],
    [0, 0, 220],
