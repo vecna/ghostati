@@ -16,10 +16,17 @@
       eluded:  'rgba(61, 220, 151, 0.95)',
       unknown: 'rgba(170, 180, 195, 0.85)'
    };
-   const LINE_WIDTH = 2.6;
-   const LABEL_FONT = '13px ui-monospace, SFMono-Regular, Menlo, monospace';
-   const LABEL_PADDING = 4;
-   const LABEL_GAP = 6;
+   const LINE_WIDTH_CSS = 2.6;
+   // Stesso font del logger UI (vedi .log-line in styles/ghostati.css). I valori
+   // sono in pixel CSS: vengono moltiplicati per la scala canvas/CSS in drawLabels
+   // così il rendering risulta della stessa dimensione visiva su qualsiasi
+   // risoluzione webcam (su mobile il canvas è 1920×1080 ma visualizzato a ~350px:
+   // 12px canvas-pixel sarebbero illeggibili senza la scala).
+   const LABEL_FONT_FAMILY = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace";
+   const LABEL_FONT_SIZE_CSS = 12;
+   const LABEL_LINE_HEIGHT_CSS = 16;
+   const LABEL_PADDING_CSS = 6;
+   const LABEL_GAP_CSS = 8;
 
    const canvas = document.getElementById('bboxOverlay');
    const overlayEl = document.getElementById('overlay');
@@ -74,16 +81,24 @@
          `post  ${fmt(lastObfMinDist, 3)}`
       ];
 
-      ctx.save();
-      ctx.font = LABEL_FONT;
-      ctx.textBaseline = 'top';
-      const lineHeight = 16;
-      const widths = lines.map(t => ctx.measureText(t).width);
-      const blockW = Math.max(...widths) + LABEL_PADDING * 2;
-      const blockH = lineHeight * lines.length + LABEL_PADDING * 2;
+      // Scala canvas→CSS: moltiplico tutte le dimensioni in CSS-px per ottenere
+      // canvas-px coerenti col rendering visivo.
+      const cssW = canvas.clientWidth || canvas.width;
+      const scale = canvas.width / cssW;
+      const fontSize = LABEL_FONT_SIZE_CSS * scale;
+      const lineHeight = LABEL_LINE_HEIGHT_CSS * scale;
+      const padding = LABEL_PADDING_CSS * scale;
+      const gap = LABEL_GAP_CSS * scale;
 
-      const aboveY = box.y - blockH - LABEL_GAP;
-      const belowY = box.y + box.height + LABEL_GAP;
+      ctx.save();
+      ctx.font = `${fontSize}px ${LABEL_FONT_FAMILY}`;
+      ctx.textBaseline = 'top';
+      const widths = lines.map(t => ctx.measureText(t).width);
+      const blockW = Math.max(...widths) + padding * 2;
+      const blockH = lineHeight * lines.length + padding * 2;
+
+      const aboveY = box.y - blockH - gap;
+      const belowY = box.y + box.height + gap;
       const top = aboveY >= 0 ? aboveY : belowY;
       let left = box.x;
       if (left + blockW > canvas.width) left = canvas.width - blockW;
@@ -102,7 +117,7 @@
 
       ctx.fillStyle = COLORS[lastMatchState] || COLORS.unknown;
       lines.forEach((t, i) => {
-         ctx.fillText(t, left + LABEL_PADDING, top + LABEL_PADDING + i * lineHeight);
+         ctx.fillText(t, left + padding, top + padding + i * lineHeight);
       });
       ctx.restore();
    }
@@ -121,8 +136,10 @@
       const box = extractBox(resized);
       if (!box) return;
 
+      const cssW = canvas.clientWidth || canvas.width;
+      const scale = canvas.width / cssW;
       ctx.save();
-      ctx.lineWidth = LINE_WIDTH;
+      ctx.lineWidth = LINE_WIDTH_CSS * scale;
       ctx.strokeStyle = COLORS[lastMatchState] || COLORS.unknown;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
       ctx.restore();
