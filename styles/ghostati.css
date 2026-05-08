@@ -99,14 +99,40 @@ body {
   overflow-y: auto;
 }
 #plugin3dParamsPanel.visible { display: block; }
+#plugin3dParamsPanel.collapsed { max-height: none; padding: 8px 14px; }
+#plugin3dParamsPanel.collapsed .pp-row { display: none; }
+#plugin3dParamsPanel.collapsed .pp-header { margin-bottom: 0; }
 
+#plugin3dParamsPanel .pp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--muted);
+}
+#plugin3dParamsPanel .pp-header:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 #plugin3dParamsPanel .pp-title {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--muted);
-  margin: 0 0 10px;
+  color: inherit;
+  margin: 0;
+}
+#plugin3dParamsPanel .pp-toggle {
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  flex-shrink: 0;
 }
 #plugin3dParamsPanel .pp-row {
   display: flex;

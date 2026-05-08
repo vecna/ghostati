@@ -185,6 +185,16 @@
       document.documentElement.style.setProperty('--pp-h', h + 'px');
    }
 
+   const COLLAPSE_LS_KEY = 'ghostati:plugin3dPanel:collapsed';
+   function isPanelCollapsed() {
+      try { return localStorage.getItem(COLLAPSE_LS_KEY) === '1'; }
+      catch { return false; }
+   }
+   function setPanelCollapsed(v) {
+      try { localStorage.setItem(COLLAPSE_LS_KEY, v ? '1' : '0'); }
+      catch {}
+   }
+
    function renderParamsPanel(id) {
       panel.innerHTML = '';
       const entry = loaded.get(id);
@@ -194,14 +204,37 @@
          syncPanelHeightVar();
          return;
       }
-      const title = document.createElement('div');
+
+      const header = document.createElement('button');
+      header.type = 'button';
+      header.className = 'pp-header';
+      header.setAttribute('aria-label', 'Mostra/nascondi parametri');
+      const title = document.createElement('span');
       title.className = 'pp-title';
       title.textContent = `Parametri — ${entry.name}`;
-      panel.appendChild(title);
+      const toggle = document.createElement('span');
+      toggle.className = 'pp-toggle';
+      toggle.setAttribute('aria-hidden', 'true');
+      const updateToggleIcon = () => {
+         toggle.textContent = panel.classList.contains('collapsed') ? '▴' : '▾';
+      };
+      header.addEventListener('click', () => {
+         const willCollapse = !panel.classList.contains('collapsed');
+         panel.classList.toggle('collapsed', willCollapse);
+         setPanelCollapsed(willCollapse);
+         updateToggleIcon();
+         requestAnimationFrame(syncPanelHeightVar);
+      });
+      header.appendChild(title);
+      header.appendChild(toggle);
+      panel.appendChild(header);
+
       for (const p of entry.module.params) {
          const row = createParamRow(id, p);
          if (row) panel.appendChild(row);
       }
+      panel.classList.toggle('collapsed', isPanelCollapsed());
+      updateToggleIcon();
       panel.classList.add('visible');
       panel.setAttribute('aria-hidden', 'false');
       // L'altezza è disponibile dopo il reflow → richiedi un frame
