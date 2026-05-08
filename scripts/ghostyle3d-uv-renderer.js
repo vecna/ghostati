@@ -1,0 +1,453 @@
+/**
+ * Ghostyle3D UV renderer — modulo condiviso per tutti i plugin 3D.
+ *
+ * I plugin 3D devono solo:
+ *   - dichiarare `params` (schema controlli UI)
+ *   - implementare `paintUV(ctx, paramsValues, helpers)` che disegna in spazio
+ *     UV su un canvas quadrato `textureSize × textureSize` (default 256)
+ *   - opzionalmente esportare `textureSize` (numero) per scegliere la
+ *     risoluzione della texture
+ *   - opzionalmente esportare `region = { include?, exclude? }` per limitare il
+ *     disegno a regioni del volto (gestito automaticamente come post-mask)
+ *
+ * Helpers passati come 3° argomento di paintUV:
+ *   helpers.regionAt(u, v)    → string|null   nome regione del pixel UV [0..1]²
+ *   helpers.labels            → Uint8Array    etichette regione, w*h byte
+ *   helpers.regions           → { name: id }  mappa nome → id (per confronti veloci)
+ *   helpers.regionsList       → string[]      nomi disponibili
+ *
+ * Il framework si occupa di:
+ *   - caricare `data/face_canonical_uv.json` (lazy, una volta)
+ *   - precomputare la label map regionale per ogni textureSize, una volta
+ *   - mantenere una cache della texture per (plugin, hash dei params), così
+ *     `paintUV` viene chiamato solo quando i parametri cambiano
+ *   - per ogni frame, calcolare l'affine UV→screen di ciascuno dei 906
+ *     triangoli della mesh canonica, fare clip + setTransform + drawImage
+ *
+ * Regioni native costruite dalle costanti FACE_LANDMARKS_* di MediaPipe:
+ *   `faceOval`, `eye` (entrambi gli occhi), `eyebrow` (entrambi, area engrossata),
+ *   `lips`, `iris`. Pixel fuori da `faceOval` non hanno regione (regionAt → null).
+ *
+ * TODO backface culling: i triangoli del lato non visibile (volto di profilo)
+ * vengono attualmente disegnati. Un primo tentativo basato sul confronto del
+ * segno del det in spazio UV vs screen ha azzerato il rendering — la
+ * convenzione di orientamento dei triangoli MediaPipe canonical mesh va
+ * verificata sperimentalmente prima di reintrodurre il check.
+ *
+ * Esposto come `window.Ghostati.UvRenderer.render(module, ctx, landmarks, params)`.
+ */
+
+(function () {
+   const UV_PATH = (() => {
+      const rel = window.location.pathname.split('/').slice(0, -1).join('/');
+      return rel + '/data/face_canonical_uv.json';
+   })();
+
+   let UV_DATA = null;
+   let loadPromise = null;
+
+   function ensureLoaded() {
+      if (UV_DATA || loadPromise) return loadPromise;
+      loadPromise = fetch(UV_PATH)
+         .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+         })
+         .then(d => {
+            UV_DATA = d;
+            if (window.Ghostati && Ghostati.log) {
+               Ghostati.log(`UV map caricata (${d.numLandmarks} landmark, ${d.numTriangles} triangoli)`, 'uv-renderer');
+            }
+         })
+         .catch(err => {
+            console.error('[uv-renderer] errore caricamento UV:', err);
+            if (window.Ghostati && Ghostati.log) {
+               Ghostati.log('Errore caricamento UV map: ' + err.message, 'uv-renderer');
+            }
+            loadPromise = null;
+         });
+      return loadPromise;
+   }
+
+   // Cache: ogni modulo plugin ha la sua entry { canvas, key, size }.
+   // WeakMap così non trattiene il modulo se viene scaricato (futuro hot-reload).
+   const cache = new WeakMap();
+
+   // ---- Region label map -------------------------------------------------
+
+   // ID delle regioni. 0 = nessuna regione (pixel fuori dal volto).
+   const REGION_IDS = {
+      skin:    1,
+      eyebrow: 2,
+      eye:     3,
+      lips:    4,
+      iris:    5
+   };
+   const REGION_NAMES = Object.fromEntries(
+      Object.entries(REGION_IDS).map(([n, id]) => [id, n])
+   );
+   const REGION_LIST = Object.keys(REGION_IDS);
+
+   // Cache delle label maps: size → { labels: Uint8Array, size }
+   const labelsBySize = new Map();
+   // Cache delle mask binarie per spec dichiarativo: `${size}|${specHash}` → Canvas
+   const maskCache = new Map();
+
+   // Estrae cicli (loop chiusi e path aperti) da una lista di segmenti
+   // {start, end} costruendo un grafo. Ogni componente connessa diventa una
+   // sequenza ordinata di indici.
+   function extractChains(segments) {
+      const adj = new Map();
+      for (const s of segments) {
+         if (!adj.has(s.start)) adj.set(s.start, []);
+         if (!adj.has(s.end))   adj.set(s.end,   []);
+         adj.get(s.start).push(s.end);
+         adj.get(s.end).push(s.start);
+      }
+      const visited = new Set();
+      const chains = [];
+      for (const start of adj.keys()) {
+         if (visited.has(start)) continue;
+         // Cerca un nodo di grado 1 (estremo di un path) per partire da lì,
+         // altrimenti parti da `start` (loop chiuso).
+         let entry = start;
+         for (const n of adj.keys()) {
+            if (!visited.has(n) && adj.get(n).length === 1) { entry = n; break; }
+         }
+         const chain = [entry];
+         visited.add(entry);
+         let current = entry;
+         let prev = -1;
+         while (true) {
+            const neighbors = adj.get(current).filter(n => n !== prev);
+            const next = neighbors.find(n => !visited.has(n));
+            if (next == null) {
+               // Verifica chiusura: se uno dei vicini è il punto di partenza
+               // e abbiamo almeno 3 nodi, è un loop chiuso.
+               const closing = neighbors.find(n => n === entry);
+               if (closing != null && chain.length >= 3) chain.push(entry);
+               break;
+            }
+            chain.push(next);
+            visited.add(next);
+            prev = current;
+            current = next;
+         }
+         if (chain.length >= 2) chains.push(chain);
+      }
+      return chains;
+   }
+
+   function isClosedChain(chain) {
+      return chain.length >= 4 && chain[0] === chain[chain.length - 1];
+   }
+
+   function fillChainOnCtx(ctx, chain, uv, size) {
+      ctx.beginPath();
+      for (let i = 0; i < chain.length; i++) {
+         const p = uv[chain[i]];
+         if (!p) continue;
+         const x = p[0] * size, y = p[1] * size;
+         if (i === 0) ctx.moveTo(x, y);
+         else         ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+   }
+
+   function strokeChainOnCtx(ctx, chain, uv, size, lineWidth) {
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < chain.length; i++) {
+         const p = uv[chain[i]];
+         if (!p) continue;
+         const x = p[0] * size, y = p[1] * size;
+         if (!started) { ctx.moveTo(x, y); started = true; }
+         else          ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+   }
+
+   // Costruisce la label map per `size`. Ogni regione viene rasterizzata su un
+   // canvas temporaneo separato per evitare il color-mixing dell'anti-aliasing
+   // (un pixel di edge tra eye e skin altrimenti darebbe un ID intermedio
+   // sbagliato). Le regioni interne vengono passate dopo quelle esterne, così
+   // sovrascrivono nel buffer labels finale. Outside-of-faceOval = 0.
+   function buildLabels(size) {
+      const F = window.Ghostati && window.Ghostati.FaceLandmarker;
+      if (!F || !UV_DATA) return null;
+      const uv = UV_DATA.uv;
+
+      const tmp = document.createElement('canvas');
+      tmp.width = size;
+      tmp.height = size;
+      const tctx = tmp.getContext('2d', { willReadFrequently: true });
+      tctx.fillStyle = 'white';
+      tctx.strokeStyle = 'white';
+
+      const STROKE_W = Math.max(4, Math.round(size * 0.04)); // ~4% del lato
+      const labels = new Uint8Array(size * size);
+
+      // Rasterizza i `segments` su `tmp` (in bianco) e marca con `regionId`
+      // ogni pixel del buffer `labels` la cui alpha sul tmp supera 128.
+      function paintAndLabel(regionId, segments) {
+         if (!segments) return;
+         tctx.clearRect(0, 0, size, size);
+         const chains = extractChains(segments);
+         for (const ch of chains) {
+            if (isClosedChain(ch)) fillChainOnCtx(tctx, ch, uv, size);
+            else                   strokeChainOnCtx(tctx, ch, uv, size, STROKE_W);
+         }
+         const img = tctx.getImageData(0, 0, size, size);
+         const data = img.data;
+         for (let i = 3, j = 0; j < labels.length; i += 4, j++) {
+            if (data[i] > 128) labels[j] = regionId;
+         }
+      }
+
+      // Ordine di pittura = ordine di sovrascrittura. Le interne vincono.
+      paintAndLabel(REGION_IDS.skin,    F.FACE_LANDMARKS_FACE_OVAL);
+      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_LEFT_EYEBROW);
+      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_RIGHT_EYEBROW);
+      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_LEFT_EYE);
+      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_RIGHT_EYE);
+      paintAndLabel(REGION_IDS.lips,    F.FACE_LANDMARKS_LIPS);
+      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_LEFT_IRIS);
+      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_RIGHT_IRIS);
+
+      // Diagnostica: conta i pixel etichettati per regione.
+      if (window.Ghostati && Ghostati.log) {
+         const counts = {};
+         for (let i = 0; i < labels.length; i++) {
+            const id = labels[i];
+            counts[id] = (counts[id] || 0) + 1;
+         }
+         const tot = labels.length;
+         const pct = id => ((counts[id] || 0) / tot * 100).toFixed(1);
+         Ghostati.log(
+            `Label map ${size}×${size}: outside ${pct(0)}% · skin ${pct(REGION_IDS.skin)}% ` +
+            `· eyebrow ${pct(REGION_IDS.eyebrow)}% · eye ${pct(REGION_IDS.eye)}% ` +
+            `· lips ${pct(REGION_IDS.lips)}% · iris ${pct(REGION_IDS.iris)}%`,
+            'uv-renderer'
+         );
+      }
+
+      return { labels, size };
+   }
+
+   function ensureLabels(size) {
+      let entry = labelsBySize.get(size);
+      if (entry) return entry;
+      entry = buildLabels(size);
+      if (entry) labelsBySize.set(size, entry);
+      return entry;
+   }
+
+   function buildHelpers(size) {
+      const entry = ensureLabels(size);
+      const labels = entry ? entry.labels : null;
+
+      function regionAt(u, v) {
+         if (!labels) return null;
+         const px = Math.min(size - 1, Math.max(0, Math.floor(u * size)));
+         const py = Math.min(size - 1, Math.max(0, Math.floor(v * size)));
+         const id = labels[py * size + px];
+         return id === 0 ? null : (REGION_NAMES[id] || null);
+      }
+
+      return {
+         regionAt,
+         labels,
+         regions: REGION_IDS,
+         regionsList: REGION_LIST.slice()
+      };
+   }
+
+   // Mask binaria (RGBA con alpha = 255 dove la spec è soddisfatta) per
+   // applicazione automatica via destination-in dopo paintUV.
+   function getDeclarativeMask(size, spec) {
+      if (!spec) return null;
+      const include = Array.isArray(spec.include) ? spec.include
+                    : (typeof spec.include === 'string' ? [spec.include] : null);
+      const exclude = Array.isArray(spec.exclude) ? spec.exclude.slice() : [];
+      if (!include && exclude.length === 0) return null;
+
+      const key = `${size}|inc:${(include || ['*']).slice().sort().join(',')}|exc:${exclude.slice().sort().join(',')}`;
+      const cached = maskCache.get(key);
+      if (cached) return cached;
+
+      const entry = ensureLabels(size);
+      if (!entry) return null;
+      const labels = entry.labels;
+
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const mctx = c.getContext('2d');
+      const img = mctx.createImageData(size, size);
+      const data = img.data;
+
+      const includeIds = include
+         ? new Set(include.map(n => REGION_IDS[n]).filter(Boolean))
+         : null;
+      const excludeIds = new Set(exclude.map(n => REGION_IDS[n]).filter(Boolean));
+
+      let included = 0;
+      for (let i = 0, j = 0; j < labels.length; i += 4, j++) {
+         const id = labels[j];
+         const inIncluded = includeIds ? includeIds.has(id) : true;
+         const inExcluded = excludeIds.has(id);
+         if (inIncluded && !inExcluded) {
+            data[i + 3] = 255;
+            included++;
+         } else {
+            data[i + 3] = 0;
+         }
+      }
+      // Fallback: se la spec non risulta in nessun pixel incluso (label map
+      // costruita male o spec degenere), salta la mask invece di azzerare
+      // tutta la texture. Loggiamo per diagnosi.
+      if (included === 0) {
+         if (window.Ghostati && Ghostati.log) {
+            Ghostati.log(`Mask region degenere (0 px inclusi) per spec ${JSON.stringify(spec)} — skip applicazione`, 'uv-renderer');
+         }
+         maskCache.set(key, null);
+         return null;
+      }
+      mctx.putImageData(img, 0, 0);
+      maskCache.set(key, c);
+      return c;
+   }
+
+   function hashParams(params) {
+      // Stringificazione deterministica: chiavi ordinate, valori numerici troncati.
+      const keys = Object.keys(params || {}).sort();
+      const parts = [];
+      for (const k of keys) {
+         const v = params[k];
+         if (typeof v === 'number') parts.push(`${k}:${v.toFixed(6)}`);
+         else parts.push(`${k}:${JSON.stringify(v)}`);
+      }
+      return parts.join('|');
+   }
+
+   // Proxy che warna in console quando il plugin legge una chiave di params
+   // non dichiarata nello schema. Aiuta a smascherare typo (es. `min_pahse`).
+   // Una sola warning per chiave per non spammare.
+   function makeParamsProxy(module, values) {
+      if (!Array.isArray(module.params)) return values;
+      const declared = new Set(module.params.map(p => p.name));
+      const warned = new Set();
+      return new Proxy(values, {
+         get(target, key) {
+            if (typeof key === 'string' && !declared.has(key) && !warned.has(key)) {
+               warned.add(key);
+               console.warn(`[uv-renderer] plugin legge param non dichiarato: '${key}'`);
+            }
+            return target[key];
+         }
+      });
+   }
+
+   function ensureTexture(module, params) {
+      const size = (typeof module.textureSize === 'number' && module.textureSize > 0)
+         ? Math.round(module.textureSize)
+         : 256;
+      const key = `${size}#${hashParams(params)}`;
+      let entry = cache.get(module);
+      if (!entry || entry.key !== key || entry.size !== size) {
+         if (!entry) {
+            const c = document.createElement('canvas');
+            c.width = size;
+            c.height = size;
+            entry = { canvas: c, ctx: c.getContext('2d'), key: '', size };
+            cache.set(module, entry);
+         } else if (entry.size !== size) {
+            entry.canvas.width = size;
+            entry.canvas.height = size;
+            entry.size = size;
+         }
+         entry.ctx.clearRect(0, 0, size, size);
+         try {
+            const helpers = buildHelpers(size);
+            const safeParams = makeParamsProxy(module, params);
+            module.paintUV(entry.ctx, safeParams, helpers);
+         } catch (err) {
+            console.error('[uv-renderer] paintUV errore:', err);
+         }
+         // Applica mask dichiarativa `region = { include, exclude }` se
+         // dichiarata dal plugin. L'effetto è equivalente a un destination-in.
+         const declarativeMask = getDeclarativeMask(size, module.region);
+         if (declarativeMask) {
+            const prev = entry.ctx.globalCompositeOperation;
+            entry.ctx.globalCompositeOperation = 'destination-in';
+            entry.ctx.drawImage(declarativeMask, 0, 0);
+            entry.ctx.globalCompositeOperation = prev;
+         }
+         entry.key = key;
+      }
+      return entry;
+   }
+
+   function render(module, ctx, landmarks, params) {
+      if (!module || typeof module.paintUV !== 'function') return;
+      if (!UV_DATA) { ensureLoaded(); return; }
+      if (!landmarks || !ctx) return;
+
+      const tex = ensureTexture(module, params || {});
+      const texSize = tex.size;
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      const uv = UV_DATA.uv;
+      const tri = UV_DATA.triangles;
+
+      for (let i = 0; i < tri.length; i++) {
+         const t = tri[i];
+         const ia = t[0], ib = t[1], ic = t[2];
+         const la = landmarks[ia], lb = landmarks[ib], lc = landmarks[ic];
+         if (!la || !lb || !lc) continue;
+         const ua = uv[ia], ub = uv[ib], uc = uv[ic];
+         if (!ua || !ub || !uc) continue;
+
+         const tAx = ua[0] * texSize, tAy = ua[1] * texSize;
+         const tBx = ub[0] * texSize, tBy = ub[1] * texSize;
+         const tCx = uc[0] * texSize, tCy = uc[1] * texSize;
+         const sAx = la.x * w, sAy = la.y * h;
+         const sBx = lb.x * w, sBy = lb.y * h;
+         const sCx = lc.x * w, sCy = lc.y * h;
+
+         // Affine 3-point: M tale che M*(t_i) = s_i per i in {A,B,C}
+         const det = (tAx - tCx) * (tBy - tCy) - (tBx - tCx) * (tAy - tCy);
+         if (Math.abs(det) < 1e-6) continue;
+
+         const inv = 1 / det;
+         const m11 = ((sAx - sCx) * (tBy - tCy) - (sBx - sCx) * (tAy - tCy)) * inv;
+         const m12 = ((sBx - sCx) * (tAx - tCx) - (sAx - sCx) * (tBx - tCx)) * inv;
+         const m13 = sCx - m11 * tCx - m12 * tCy;
+         const m21 = ((sAy - sCy) * (tBy - tCy) - (sBy - sCy) * (tAy - tCy)) * inv;
+         const m22 = ((sBy - sCy) * (tAx - tCx) - (sAy - sCy) * (tBx - tCx)) * inv;
+         const m23 = sCy - m21 * tCx - m22 * tCy;
+
+         ctx.save();
+         ctx.beginPath();
+         ctx.moveTo(sAx, sAy);
+         ctx.lineTo(sBx, sBy);
+         ctx.lineTo(sCx, sCy);
+         ctx.closePath();
+         ctx.clip();
+         // Canvas setTransform(a,b,c,d,e,f) usa la matrice [a c e; b d f; 0 0 1]
+         ctx.setTransform(m11, m21, m12, m22, m13, m23);
+         ctx.drawImage(tex.canvas, 0, 0);
+         ctx.restore();
+      }
+   }
+
+   function ensureNamespace() {
+      if (!window.Ghostati) window.Ghostati = {};
+      window.Ghostati.UvRenderer = { render, ensureLoaded };
+   }
+   ensureNamespace();
+})();

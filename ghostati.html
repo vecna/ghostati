@@ -40,6 +40,8 @@
     <video id="video" autoplay muted playsinline></video>
     <img id="previewImage" alt="preview diagnostica" />
     <canvas id="overlay"></canvas>
+    <canvas id="mesh3dOverlay"></canvas>
+    <canvas id="bboxOverlay"></canvas>
   </div>
 
   <!-- Mobile Floating UI Layers -->
@@ -119,6 +121,11 @@
     </button>
   </div>
 
+  <!-- Plugin 3D parameters panel — visible only when an active 3D plugin declares `params` -->
+  <div id="plugin3dParamsPanel" aria-hidden="true">
+    <!-- Generato dinamicamente da plugins3d-loader.js -->
+  </div>
+
   <!-- Bottom: Logs -->
   <div class="logbox floating-logbox" id="logBox">
     <div class="log-line">In attesa dell’avvio della webcam…</div>
@@ -148,13 +155,21 @@
         <!-- Generati dinamicamente -->
       </div>
 
+      <!-- Ghostyles 3D Section -->
+      <div class="panel-header">
+        <p style="margin-top:0;">Pattern 3D ancorati alla mesh facciale (MediaPipe, 478 landmark).</p>
+      </div>
+      <div class="stack" id="ghostyles3dContainer">
+        <!-- Generati dinamicamente da plugins3d-loader.js -->
+      </div>
+
       <div style="padding: 0 16px 12px;">
         <select id="fpsSelect"
           style="width: 100%; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none;">
-          <option value="30">⚙️ Frequenza Rendering: 30ms (Pesante)</option>
-          <option value="60">⚙️ Frequenza Rendering: 60ms (Veloce)</option>
-          <option value="90">⚙️ Frequenza Rendering: 90ms (Media)</option>
-          <option value="120" selected>⚙️ Frequenza Rendering: 120ms (Ecosostenibile)</option>
+          <option value="30">⚙️ Frequenza analisi: 30ms (Pesante)</option>
+          <option value="60">⚙️ Frequenza analisi: 60ms (Veloce)</option>
+          <option value="90">⚙️ Frequenza analisi: 90ms (Media)</option>
+          <option value="120" selected>⚙️ Frequenza analisi: 120ms (Ecosostenibile)</option>
         </select>
       </div>
 
@@ -198,6 +213,11 @@
   <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="scripts/ghostati.js"></script>
   <script src="scripts/ghostati-mobile-ui.js"></script>
+  <script src="scripts/bbox-overlay.js"></script>
+  <script src="scripts/auto-find-loop.js"></script>
+  <script type="module" src="scripts/mediapipe-loop.js"></script>
+  <script src="scripts/ghostyle3d-uv-renderer.js"></script>
+  <script src="scripts/plugins3d-loader.js"></script>
 </body>
 
 </html>

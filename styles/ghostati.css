@@ -78,6 +78,102 @@ body {
 #video { z-index: 1; }
 #previewImage { z-index: 2; display: none; }
 #overlay { z-index: 3; pointer-events: none; }
+#mesh3dOverlay { z-index: 4; pointer-events: none; }
+#bboxOverlay { z-index: 5; pointer-events: none; }
+
+/* Plugin 3D parameters panel — sotto la logbox (la logbox sale via --pp-h) */
+#plugin3dParamsPanel {
+  position: absolute;
+  bottom: env(safe-area-inset-bottom, 20px);
+  left: env(safe-area-inset-left, 20px);
+  right: 96px;
+  z-index: 10;
+  background: rgba(15, 17, 21, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: none;
+  max-height: 25vh;
+  overflow-y: auto;
+}
+#plugin3dParamsPanel.visible { display: block; }
+#plugin3dParamsPanel.collapsed { max-height: none; padding: 8px 14px; }
+#plugin3dParamsPanel.collapsed .pp-row { display: none; }
+#plugin3dParamsPanel.collapsed .pp-header { margin-bottom: 0; }
+
+#plugin3dParamsPanel .pp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--muted);
+}
+#plugin3dParamsPanel .pp-header:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+#plugin3dParamsPanel .pp-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: inherit;
+  margin: 0;
+}
+#plugin3dParamsPanel .pp-toggle {
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  flex-shrink: 0;
+}
+#plugin3dParamsPanel .pp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+#plugin3dParamsPanel .pp-row:last-child { margin-bottom: 0; }
+#plugin3dParamsPanel .pp-label {
+  flex: 0 0 120px;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+}
+#plugin3dParamsPanel .pp-control { flex: 1; min-width: 0; }
+#plugin3dParamsPanel .pp-value {
+  flex: 0 0 50px;
+  text-align: right;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+#plugin3dParamsPanel input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+#plugin3dParamsPanel select {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+}
+#plugin3dParamsPanel input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
 
 #placeholder {
   z-index: 0;
@@ -235,7 +331,8 @@ body {
 /* --- LOGS --- */
 .floating-logbox {
   position: absolute;
-  bottom: env(safe-area-inset-bottom, 20px);
+  /* bottom dinamico: cresce di --pp-h (px) quando il panel parametri è visibile */
+  bottom: calc(env(safe-area-inset-bottom, 20px) + var(--pp-h, 0px));
   left: env(safe-area-inset-left, 20px);
   right: 80px; /* Space for right sidebar */
   height: 80px;
@@ -273,7 +370,7 @@ body {
 }
 
 @supports not (padding-top: env(safe-area-inset-top)) {
-  .floating-logbox { bottom: 20px; left: 20px; }
+  .floating-logbox { bottom: calc(20px + var(--pp-h, 0px)); left: 20px; }
   .floating-logbox.expanded { top: 20px; bottom: 20px; right: 20px; }
 }
 

@@ -110,6 +110,9 @@ function loadDb() {
 function persistDb() {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
    renderDbStats();
+   ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
+      detail: { count: db.faces.length, nextId: db.nextId }
+   }));
 }
 
 function renderDbStats() {
@@ -209,9 +212,17 @@ function setBusy(isBusy) {
 }
 
 function resizeCanvas() {
+   // Allinea le dimensioni intrinseche del canvas a quelle native del video.
+   // CSS object-fit: cover gestisce il crop visivo per coprire il contenitore,
+   // così le coordinate restituite da face-api/MediaPipe (in pixel del video)
+   // si proiettano 1:1 sul canvas, senza stretching su finestre con aspect
+   // ratio diverso da quello della webcam. Fallback al contenitore prima che
+   // il video abbia dimensioni note (boot pre-permessi camera).
    const rect = els.viewer.getBoundingClientRect();
-   els.overlay.width = Math.max(1, Math.floor(rect.width));
-   els.overlay.height = Math.max(1, Math.floor(rect.height));
+   const w = els.video.videoWidth || Math.max(1, Math.floor(rect.width));
+   const h = els.video.videoHeight || Math.max(1, Math.floor(rect.height));
+   els.overlay.width = w;
+   els.overlay.height = h;
 }
 
 function clearOverlay() {
@@ -231,6 +242,14 @@ function distance(a, b) {
    }
    return Math.sqrt(sum);
 }
+
+function computeMatchState(descriptor) {
+   if (!descriptor || db.faces.length === 0) return 'unknown';
+   const minDist = Math.min(...db.faces.map(e => distance(descriptor, e.descriptor)));
+   return minDist <= MATCH_THRESHOLD ? 'matched' : 'eluded';
+}
+
+const ghostatiEvents = new EventTarget();
 
 function avgPoint(points) {
    const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
@@ -398,7 +417,15 @@ window.Ghostati = {
    expandEyePolygon,
    drawEyeWing,
    drawCheekSweep,
-   drawContourBand
+   drawContourBand,
+   events: ghostatiEvents,
+   getDb: () => structuredClone(db),
+   getActiveEffect: () => activeEffect,
+   getLastResult: () => lastKnownEffectResult,
+   getMatchThreshold: () => MATCH_THRESHOLD,
+   computeMatchState,
+   compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
+   detectorOptions: DETECTOR_OPTIONS
 };
 
 const loadedGhostyles = new Map();
@@ -582,16 +609,24 @@ function drawResult(result) {
 }
 
 async function runEffectPass() {
-   if (!activeEffect || isSystemBusy || effectInferenceInFlight || els.video.readyState < 2) return;
+   if (isSystemBusy || effectInferenceInFlight || els.video.readyState < 2) return;
    effectInferenceInFlight = true;
    try {
-      const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS).withFaceLandmarks();
+      const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
+      const result = activeEffect ? await detector.withFaceLandmarks() : await detector;
+
       if (!result) {
          lastKnownEffectResult = null;
-         clearOverlay();
-         return;
+         if (activeEffect) clearOverlay();
+      } else if (activeEffect) {
+         drawEffectOverlay(result, false);
+      } else {
+         lastKnownEffectResult = result;
       }
-      drawEffectOverlay(result, false);
+
+      ghostatiEvents.dispatchEvent(new CustomEvent('detection', {
+         detail: { result: result || null, activeEffect }
+      }));
    } catch (err) {
       console.error(err);
    } finally {
@@ -600,10 +635,6 @@ async function runEffectPass() {
 }
 
 function effectLoop(ts = 0) {
-   if (!activeEffect) {
-      effectLoopHandle = null;
-      return;
-   }
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - lastEffectRun > currentDelay) {
       lastEffectRun = ts;
@@ -624,6 +655,7 @@ function stopEffectLoop() {
 }
 
 function deactivateEffect({ silent = false } = {}) {
+   const previousEffect = activeEffect;
    if (activeEffect) {
       const style = loadedGhostyles.get(activeEffect);
       if (style && style.module.onClear) {
@@ -631,7 +663,11 @@ function deactivateEffect({ silent = false } = {}) {
       }
    }
    activeEffect = null;
-   stopEffectLoop();
+   if (previousEffect) {
+      ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
+         detail: { activeEffect: null, previous: previousEffect }
+      }));
+   }
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.classList.remove('active'));
    els.scanBtn.style.background = '';
@@ -658,7 +694,11 @@ function toggleEffect(effect, button) {
       // wait for complete removal then continue
    }
 
+   const previousEffect = activeEffect;
    activeEffect = effect;
+   ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
+      detail: { activeEffect: effect, previous: previousEffect }
+   }));
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
    els.previewImage.style.display = 'none';
@@ -688,8 +728,13 @@ async function scanFace() {
    const age = Math.round(result.age);
    const gender = result.gender || 'n/d';
    const confidence = typeof result.genderProbability === 'number' ? ` (${Math.round(result.genderProbability * 100)}%)` : '';
-   setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Overlay biometrico aggiornato.`);
-   
+   const score = result.detection.score;
+   setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: computeMatchState(result.descriptor), source: 'scan', score }
+   }));
+
    if (nudgeStep === 1) { nudgeStep = 2; updateNudging(); }
 }
 
@@ -707,7 +752,12 @@ async function saveFace() {
       savedAt: new Date().toISOString()
    });
    persistDb();
-   setLog(`Impronta biometrica salvata con ID ${id}. Archivio locale aggiornato.`);
+   const score = result.detection.score;
+   setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: computeMatchState(result.descriptor), source: 'save', score }
+   }));
 
    if (nudgeStep === 2) { nudgeStep = 3; updateNudging(); }
 }
@@ -719,25 +769,89 @@ async function findFace() {
       return;
    }
 
-   const result = await detectCurrentFace(true);
-   if (!result) return;
+   const liveResult = await detectCurrentFace(true);
+   if (!liveResult) return;
    triggerOverlayFadeout();
 
-   const matches = db.faces
-      .map(entry => ({ id: entry.id, distance: distance(result.descriptor, entry.descriptor) }))
-      .filter(entry => entry.distance <= MATCH_THRESHOLD)
+   const liveScore = liveResult.detection.score;
+   const liveDistances = db.faces
+      .map(entry => ({ id: entry.id, distance: distance(liveResult.descriptor, entry.descriptor) }))
       .sort((a, b) => a.distance - b.distance);
+   const liveMinDist = liveDistances[0].distance;
+   const liveMinId = liveDistances[0].id;
 
-   if (!matches.length) {
-      setLog(`Nessuna corrispondenza trovata sotto soglia ${MATCH_THRESHOLD.toFixed(2)}.`);
-      return;
+   // Se c'è un plugin attivo, calcola anche le metriche post-makeup. Con retry weak
+   // dentro compositeAndDetect, abbiamo quasi sempre un descrittore (anche di bassa
+   // confidenza) da cui estrarre obfMinDist e obfScore. weakDetection ci ricorda che
+   // la prima detection (strict) è fallita.
+   let obfScore = null;
+   let obfMinDist = null;
+   let obfMinId = null;
+   let weakDetection = false;
+   let detectionTotallyFailed = false;
+   if (hasActivePlugin()) {
+      const composite = await compositeAndDetect(liveResult);
+      if (composite.obfuscatedResult) {
+         obfScore = composite.obfuscatedResult.detection.score;
+         const obfDistances = db.faces
+            .map(e => ({ id: e.id, distance: distance(composite.obfuscatedResult.descriptor, e.descriptor) }))
+            .sort((a, b) => a.distance - b.distance);
+         obfMinDist = obfDistances[0].distance;
+         obfMinId = obfDistances[0].id;
+         weakDetection = !!composite.weakDetection;
+      } else {
+         detectionTotallyFailed = true;
+      }
    }
 
-   const summary = matches.map(m => `${m.id} (${m.distance.toFixed(3)})`).join(', ');
-   setLog(`Corrispondenze trovate: ${summary}.`);
+   // Stato/match decision: con plugin il giudizio è basato sulla strict detection
+   // (weakDetection → eluso a prescindere dalla distanza, perché face-api stessa
+   // non si fida del volto). Senza plugin, semplicemente confronto liveMinDist.
+   let state, headline;
+   if (detectionTotallyFailed) {
+      state = 'eluded';
+      headline = `Rilevatore ingannato dal makeup: face-api non trova un volto nel composito.`;
+   } else if (weakDetection) {
+      state = 'eluded';
+      headline = `Detection sul composito forzata a confidenza bassa (face-api non vede chiaramente un volto).`;
+   } else {
+      const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
+      const useId = obfMinDist != null ? obfMinId : liveMinId;
+      if (useDist <= MATCH_THRESHOLD) {
+         state = 'matched';
+         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${MATCH_THRESHOLD.toFixed(2)}).`;
+      } else {
+         state = 'eluded';
+         headline = `Nessuna corrispondenza sotto soglia ${MATCH_THRESHOLD.toFixed(2)}.`;
+      }
+   }
+
+   const distLog = obfMinDist != null
+      ? `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`
+      : `distanza live: ${liveMinDist.toFixed(3)}`;
+   setLog(`${headline} ${distLog}.`);
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: {
+         state,
+         source: 'find',
+         distance: obfMinDist != null ? obfMinDist : liveMinDist,
+         matchedId: state === 'matched' ? (obfMinDist != null ? obfMinId : liveMinId) : null,
+         score: liveScore,
+         obfuscatedScore: obfScore,
+         liveMinDist,
+         obfMinDist,
+         weakDetection
+      }
+   }));
 }
 
 async function startCamera() {
+   if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+      const httpsHint = !window.isSecureContext ? ' La pagina deve essere servita via HTTPS o da localhost (su mobile l\'IP locale non basta).' : '';
+      setLog('Webcam non disponibile in questo contesto.' + httpsHint);
+      throw new Error('mediaDevices unavailable (insecure context?)');
+   }
    const stream = await navigator.mediaDevices.getUserMedia({
       video: {
          width: { ideal: 1920 },
@@ -765,6 +879,7 @@ async function startCamera() {
    setStatus('live', 'webcam attiva');
    setLog('Webcam attiva. Premi l\'icona bersaglio per la scansione o scegli un effetto.');
    resizeCanvas();
+   startEffectLoop();
 }
 
 async function loadModels() {
@@ -781,6 +896,9 @@ async function loadModels() {
 function clearDb() {
    db = { nextId: 0, faces: [] };
    persistDb();
+   ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { state: 'unknown', source: 'clear' }
+   }));
    setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
 }
 
@@ -793,13 +911,14 @@ function handleError(err, fallbackMessage) {
    setLog(fallbackMessage + detail);
 }
 
-async function testMakeupEfficacy() {
-   const result = await detectCurrentFace(false);
-   if (!result) {
-      setLog('Nessun volto di base trovato. Avvicinati alla webcam.');
-      return;
-   }
-
+// Costruisce un canvas col compositing video + ghostyle 2D + plugin 3D (via evento)
+// e ci esegue una detection face-api con landmarks + descriptor. Ritorna
+// {canvas, obfuscatedResult, weakDetection}.
+// Se la detection con la soglia normale fallisce (`scoreThreshold: 0.5`), ritenta
+// con una rilassata (0.1) per estrarre comunque metriche numeriche dal composito —
+// utile come "indicatore di efficacia" del makeup anche oltre la soglia di rilevamento.
+// `weakDetection` segnala quando si è dovuto fare il fallback.
+async function compositeAndDetect(liveResult) {
    const canvas = document.createElement('canvas');
    canvas.width = els.overlay.width;
    canvas.height = els.overlay.height;
@@ -812,44 +931,115 @@ async function testMakeupEfficacy() {
       ctx.save();
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const resized = faceapi.resizeResults(result, { width: canvas.width, height: canvas.height });
+      const resized = faceapi.resizeResults(liveResult, { width: canvas.width, height: canvas.height });
       style.module.onDraw(ctx, resized.landmarks, resized.detection.box);
       ctx.restore();
    }
+
+   ghostatiEvents.dispatchEvent(new CustomEvent('beforeEfficacyComposite', {
+      detail: { canvas, ctx, liveResult }
+   }));
+
+   let obfuscatedResult = await faceapi.detectSingleFace(canvas, DETECTOR_OPTIONS)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+   let weakDetection = false;
+   if (!obfuscatedResult) {
+      const weakOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.1 });
+      obfuscatedResult = await faceapi.detectSingleFace(canvas, weakOpts)
+         .withFaceLandmarks()
+         .withFaceDescriptor();
+      weakDetection = !!obfuscatedResult;
+   }
+
+   return { canvas, obfuscatedResult, weakDetection };
+}
+
+function hasActivePlugin() {
+   if (activeEffect) return true;
+   const get3d = window.Ghostati && window.Ghostati.getActiveEffect3d;
+   return typeof get3d === 'function' && !!get3d();
+}
+
+async function testMakeupEfficacy() {
+   const result = await detectCurrentFace(false);
+   if (!result) {
+      setLog('Nessun volto di base trovato. Avvicinati alla webcam.');
+      return;
+   }
+
+   const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(result);
 
    lastCompositedCanvas = canvas;
    els.copyMakeupBtn.disabled = false;
 
    setLog('Analisi in corso... sottopongo il compositing a face-api');
 
-   const obfuscatedResult = await faceapi.detectSingleFace(canvas, DETECTOR_OPTIONS)
-      .withFaceLandmarks()
-      .withFaceDescriptor();
+   const liveScore = result.detection.score;
+   const liveMinDist = db.faces.length > 0
+      ? Math.min(...db.faces.map(e => distance(result.descriptor, e.descriptor)))
+      : null;
+   const obfScore = obfuscatedResult ? obfuscatedResult.detection.score : null;
+   const obfMinDist = obfuscatedResult && db.faces.length > 0
+      ? Math.min(...db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
+      : null;
 
-   if (!obfuscatedResult) {
+   // Suffix metriche da appendere ai messaggi
+   const distLog = (() => {
       if (db.faces.length === 0) {
-         setLog('Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! (Salva un volto nel DB per testare il riconoscimento).');
-      } else {
-         setLog('Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l\'algoritmo di rilevamento.');
+         // Senza DB la metrica è self-vs-post (non ha senso "min DB")
+         if (obfuscatedResult) {
+            const selfDist = distance(result.descriptor, obfuscatedResult.descriptor);
+            return `distanza self pre→post: ${selfDist.toFixed(3)}`;
+         }
+         return 'distanza self pre→post: post-makeup non rilevato';
       }
+      return obfMinDist != null
+         ? `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`
+         : `distanza live: ${liveMinDist.toFixed(3)}`;
+   })();
+
+   // Decisione di stato analoga a findFace: weakDetection o detection totalmente fallita → eluso
+   if (!obfuscatedResult) {
+      const state = db.faces.length === 0 ? 'unknown' : 'eluded';
+      const headline = db.faces.length === 0
+         ? `Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.`
+         : `Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l'algoritmo di rilevamento.`;
+      setLog(`${headline} ${distLog}.`);
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', score: liveScore, obfuscatedScore: null, liveMinDist, obfMinDist: null, weakDetection: false }
+      }));
+      return;
+   }
+
+   if (weakDetection) {
+      const state = db.faces.length === 0 ? 'unknown' : 'eluded';
+      setLog(`Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto. ${distLog}.`);
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: true }
+      }));
       return;
    }
 
    if (db.faces.length === 0) {
       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      if (dist > MATCH_THRESHOLD) {
-         setLog(`Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base (distanza: ${dist.toFixed(3)}). Salva un volto nel DB per testare contro i salvataggi!`);
-      } else {
-         setLog(`Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta (distanza: ${dist.toFixed(3)} <= ${MATCH_THRESHOLD.toFixed(2)}).`);
-      }
+      const state = dist > MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = dist > MATCH_THRESHOLD
+         ? `Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!`
+         : `Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta.`;
+      setLog(`${headline} distanza self pre→post: ${dist.toFixed(3)}.`);
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
+      }));
    } else {
-      const dbMatches = db.faces.map(entry => distance(obfuscatedResult.descriptor, entry.descriptor));
-      const minDist = Math.min(...dbMatches);
-      if (minDist > MATCH_THRESHOLD) {
-         setLog(`Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile (distanza minima DB: ${minDist.toFixed(3)}).`);
-      } else {
-         setLog(`Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio (distanza minima DB: ${minDist.toFixed(3)} <= ${MATCH_THRESHOLD.toFixed(2)}). Aggiungi geometrie.`);
-      }
+      const state = obfMinDist > MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = obfMinDist > MATCH_THRESHOLD
+         ? `Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile.`
+         : `Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.`;
+      setLog(`${headline} ${distLog}.`);
+      ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: { state, source: 'efficacy', distance: obfMinDist, score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: false }
+      }));
    }
 }
 
@@ -947,7 +1137,7 @@ async function init() {
    els.scanBtn.addEventListener('click', async () => {
       setBusy(true);
       try {
-         if (activeEffect) {
+         if (hasActivePlugin()) {
             if (nudgeStep === 4) { nudgeStep = 5; updateNudging(); }
             await testMakeupEfficacy();
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
@@ -1045,6 +1235,7 @@ async function init() {
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);
    updateNudging();
+   ghostatiEvents.dispatchEvent(new CustomEvent('ready', { detail: {} }));
 }
 
 init();
