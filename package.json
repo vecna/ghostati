@@ -1,0 +1,21 @@
+{
+  "name": "setup-comprehensive-testing-framework",
+  "version": "1.0.0",
+  "description": "**Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**",
+  "main": "index.js",
+  "scripts": {
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "http-server": "^14.1.1",
+    "jsdom": "^29.1.1",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
+  }
+}
