@@ -258,7 +258,7 @@ h1 {
   margin: 0;
   line-height: 0.88;
   letter-spacing: -0.055em;
-  font-size: clamp(4.2rem, 11vw, 10rem);
+  font-size: clamp(3.2rem, 11vw, 8rem);
   white-space: nowrap;
   text-align: center;
   user-select: none;
