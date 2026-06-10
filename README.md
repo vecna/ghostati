@@ -1,3 +1,6 @@
+## Status
+![Unit Test Coverage](https://img.shields.io/badge/coverage-16.78%25-lightgrey)
+
 # ghòstati | Face Lab
 
 **Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**
@@ -9,6 +12,8 @@
 **ghòstati** is an experimental platform and diagnostic tool designed to counter facial recognition algorithms. By applying specific makeup patterns (inspired by the CV Dazzle concept), users can explore how computer vision models interpret facial landmarks and attempt to anonymize their digital footprint in real time. 
 
 The project features a fully modular, plugin-based architecture, allowing any developer to write custom AR makeup scripts ("Ghostyles") and test their efficiacy against recognition models directly in the browser via their webcam.
+
+
 
 ## Features
 
@@ -53,3 +58,36 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 ---
 *For the Italian version, please see [README.it.md](README.it.md).*
+
+
+
+
+
+
+
+
+
+**Last commit:** `f0c279c` – Add comprehensive testing framework, unit and e2e tests with detailed comments
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Recent changes
+- `f0c279c` Add comprehensive testing framework, unit and e2e tests with detailed comments
+- `c2abf8c` piccola differenza che comunque verrà sovrascritta presto dal restyling
+- `b9da329` disclaimer iniziale migliorato
+- `d5e5766` Merge pull request #4 from edne/new-features
+- `0485fff` Font overlay
