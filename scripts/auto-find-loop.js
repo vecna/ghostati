@@ -91,20 +91,20 @@
          }
 
          const threshold = G.getMatchThreshold();
-         let state;
+         let detectionState;
          if (detectionTotallyFailed || weakDetection) {
-            state = 'eluded';
+            detectionState = 'eluded';
          } else {
             const useDist = obfMinDist != null ? obfMinDist : live.distance;
-            state = useDist <= threshold ? 'matched' : 'eluded';
+            detectionState = useDist <= threshold ? 'matched' : 'eluded';
          }
-         const matchedId = state === 'matched'
+         const matchedId = detectionState === 'matched'
             ? (obfMinDist != null ? obfMinId : live.id)
             : null;
 
          G.events.dispatchEvent(new CustomEvent('matchStateChanged', {
             detail: {
-               state,
+               detectionState,
                source: 'auto',
                distance: obfMinDist != null ? obfMinDist : live.distance,
                matchedId,

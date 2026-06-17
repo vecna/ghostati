@@ -41,38 +41,34 @@ const els = {
    fpsSelect: document.getElementById('fpsSelect')
 };
 
-let overlayFadeTimeout = null;
 function triggerOverlayFadeout() {
    els.overlay.style.transition = 'none';
    els.overlay.style.opacity = '1';
    void els.overlay.offsetHeight; // force reflow
    els.overlay.style.transition = 'opacity 2s ease-in-out';
 
-   if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
-   overlayFadeTimeout = setTimeout(() => {
+   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
+   state.overlayFadeTimeout = setTimeout(() => {
       els.overlay.style.opacity = '0';
    }, 5000);
 }
 
-let isMirrored = false;
-let currentFacingMode = 'user';
-
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
    els.mirrorToggle.addEventListener('click', () => {
-      isMirrored = !isMirrored;
-      els.video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-      els.overlay.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-      els.mirrorToggle.classList.toggle('mirrored', isMirrored);
-      els.mirrorToggle.textContent = isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
+      state.isMirrored = !state.isMirrored;
+      els.video.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      els.overlay.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      els.mirrorToggle.classList.toggle('mirrored', state.isMirrored);
+      els.mirrorToggle.textContent = state.isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
    });
 }
 
 // Switch Camera logic
 if (els.switchCameraBtn) {
    els.switchCameraBtn.addEventListener('click', async () => {
-      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-      setLog(`Cambio fotocamera... (${currentFacingMode})`);
+      state.currentFacingMode = state.currentFacingMode === 'user' ? 'environment' : 'user';
+      setLog(`Cambio fotocamera... (${state.currentFacingMode})`);
       if (els.video.srcObject) {
          els.video.srcObject.getTracks().forEach(track => track.stop());
       }
@@ -83,15 +79,6 @@ if (els.switchCameraBtn) {
       }
    });
 }
-
-let db = loadDb();
-let activeEffect = null;
-let effectLoopHandle = null;
-let effectInferenceInFlight = false;
-let lastEffectRun = 0;
-let isSystemBusy = false;
-let lastKnownEffectResult = null;
-let lastCompositedCanvas = null;
 
 function loadDb() {
    try {
@@ -107,34 +94,64 @@ function loadDb() {
    }
 }
 
+const ghostatiEvents = new EventTarget();
+
+// DEBUG: intercetta tutti gli errori non catturati nei listener
+window.addEventListener('unhandledrejection', e => {
+   console.error('[unhandledrejection]', e.reason);
+});
+
+// DEBUG: log di tutti gli eventi del bus
+const _origDispatch = ghostatiEvents.dispatchEvent.bind(ghostatiEvents);
+ghostatiEvents.dispatchEvent = function(event) {
+   if(!(event.type === "landmarks3d" || event.type === "detection"))
+      console.debug(`[event:${event.type}]`, event.detail);
+   return _origDispatch(event);
+};
+
+const state = {
+   db: loadDb(),
+   activeEffect: null,
+   effectLoopHandle: null,
+   effectInferenceInFlight: false,
+   lastEffectRun: 0,
+   isSystemBusy: false,
+   lastKnownEffectResult: null,
+   lastCompositedCanvas: null,
+   isMirrored: false,
+   currentFacingMode: 'user',
+   logsArchive: [],
+   visibleLogStartIndex: 0,
+   overlayFadeTimeout: null,
+   isLogExpanded: false,
+   nudgeStep: localStorage.getItem('ghostati-nudge-done') ? 6 : 1,
+}
+
 function persistDb() {
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
    renderDbStats();
    ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
-      detail: { count: db.faces.length, nextId: db.nextId }
+      detail: { count: state.db.faces.length, nextId: state.db.nextId }
    }));
 }
 
 function renderDbStats() {
-   els.dbCount.textContent = String(db.faces.length);
-   els.nextId.textContent = String(db.nextId);
+   els.dbCount.textContent = String(state.db.faces.length);
+   els.nextId.textContent = String(state.db.nextId);
    els.thresholdLabel.textContent = MATCH_THRESHOLD.toFixed(2);
-   
+
    if (els.dbCountBadge) {
-      els.dbCountBadge.textContent = String(db.faces.length);
-      els.dbCountBadge.style.display = db.faces.length > 0 ? 'inline-block' : 'none';
+      els.dbCountBadge.textContent = String(state.db.faces.length);
+      els.dbCountBadge.style.display = state.db.faces.length > 0 ? 'inline-block' : 'none';
    }
 }
 
 function updateEffectStats() {
-   const style = loadedGhostyles.get(activeEffect);
+   const style = loadedGhostyles.get(state.activeEffect);
    els.effectName.textContent = style ? style.name : 'nessuno';
-   els.effectTracking.textContent = activeEffect ? 'on' : 'off';
+   els.effectTracking.textContent = state.activeEffect ? 'on' : 'off';
 }
 
-let logsArchive = [];
-window.visibleLogStartIndex = 0;
-let isLogExpanded = false;
 
 function formatTime() {
    const now = new Date();
@@ -143,20 +160,20 @@ function formatTime() {
 
 function updateLogDisplay() {
    els.logBox.innerHTML = '';
-   
-   if (isLogExpanded) {
+
+   if (state.isLogExpanded) {
       els.logBox.classList.add('expanded');
-      const startIdx = Math.max(0, logsArchive.length - 100);
-      for (let i = startIdx; i < logsArchive.length; i++) {
-         const clone = logsArchive[i].cloneNode(true);
+      const startIdx = Math.max(0, state.logsArchive.length - 100);
+      for (let i = startIdx; i < state.logsArchive.length; i++) {
+         const clone = state.logsArchive[i].cloneNode(true);
          els.logBox.appendChild(clone);
       }
       els.logBox.scrollTop = els.logBox.scrollHeight;
    } else {
       els.logBox.classList.remove('expanded');
       let renderedCount = 0;
-      for (let i = logsArchive.length - 1; i >= window.visibleLogStartIndex && renderedCount < 4; i--) {
-         const clone = logsArchive[i].cloneNode(true);
+      for (let i = state.logsArchive.length - 1; i >= state.visibleLogStartIndex && renderedCount < 4; i--) {
+         const clone = state.logsArchive[i].cloneNode(true);
          els.logBox.insertBefore(clone, els.logBox.firstChild);
          renderedCount++;
       }
@@ -185,12 +202,12 @@ function setLog(message, sourcePlugin = null) {
    textSpan.textContent = message;
    line.appendChild(textSpan);
 
-   logsArchive.push(line);
-   if (logsArchive.length > 100) {
-      logsArchive.shift();
-      if (window.visibleLogStartIndex > 0) window.visibleLogStartIndex--;
+   state.logsArchive.push(line);
+   if (state.logsArchive.length > 100) {
+      state.logsArchive.shift();
+      if (state.visibleLogStartIndex > 0) state.visibleLogStartIndex--;
    }
-   
+
    updateLogDisplay();
 }
 
@@ -202,9 +219,9 @@ function setStatus(kind, text) {
 }
 
 function setBusy(isBusy) {
-   isSystemBusy = isBusy;
+   state.isSystemBusy = isBusy;
    [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
-      if (btn === els.copyMakeupBtn && !lastCompositedCanvas) btn.disabled = true;
+      if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
       else btn.disabled = isBusy;
    });
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
@@ -230,7 +247,7 @@ function clearOverlay() {
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
    els.overlay.style.transition = 'none';
    els.overlay.style.opacity = '1';
-   if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
+   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
 function distance(a, b) {
@@ -244,12 +261,12 @@ function distance(a, b) {
 }
 
 function computeMatchState(descriptor) {
-   if (!descriptor || db.faces.length === 0) return 'unknown';
-   const minDist = Math.min(...db.faces.map(e => distance(descriptor, e.descriptor)));
+   if (!descriptor || state.db.faces.length === 0) return 'unknown';
+   const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
    return minDist <= MATCH_THRESHOLD ? 'matched' : 'eluded';
 }
 
-const ghostatiEvents = new EventTarget();
+
 
 function avgPoint(points) {
    const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
@@ -306,7 +323,7 @@ function drawLabel(ctx, text, x, y) {
    const width = ctx.measureText(text).width + padX * 2;
    const height = 30;
 
-   if (typeof isMirrored !== 'undefined' && isMirrored) {
+   if (state.isMirrored) {
       ctx.translate(x + width / 2, y - height / 2);
       ctx.scale(-1, 1);
       ctx.translate(-(x + width / 2), -(y - height / 2));
@@ -381,9 +398,12 @@ function drawContourBand(ctx, pts, label) {
    drawLabel(ctx, label, mid.x + 10, mid.y - 6);
 }
 
-let nudgeStep = localStorage.getItem('ghostati-nudge-done') ? 6 : 1;
-
 function updateNudging() {
+   console.log("nudging - Temporaneamente disabilitato - step", state.nudgeStep);
+}
+
+/*
+{
    if (nudgeStep > 5) return;
    
    document.querySelectorAll('.nudge-target').forEach(el => el.classList.remove('nudge-target'));
@@ -397,12 +417,13 @@ function updateNudging() {
    }
    if (nudgeStep === 4) els.scanBtn.classList.add('nudge-target');
    if (nudgeStep === 5 && !els.copyMakeupBtn.disabled) els.copyMakeupBtn.classList.add('nudge-target');
-}
+} 
+   */
 
 window.Ghostati = {
    log: (message, sourcePlugin) => setLog(message, sourcePlugin),
    clearVisibleLogs: () => {
-      window.visibleLogStartIndex = logsArchive.length;
+      state.visibleLogStartIndex = state.logsArchive.length;
       updateLogDisplay();
    },
    distance,
@@ -419,9 +440,9 @@ window.Ghostati = {
    drawCheekSweep,
    drawContourBand,
    events: ghostatiEvents,
-   getDb: () => structuredClone(db),
-   getActiveEffect: () => activeEffect,
-   getLastResult: () => lastKnownEffectResult,
+   getDb: () => structuredClone(state.db),
+   getActiveEffect: () => state.activeEffect,
+   getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => MATCH_THRESHOLD,
    computeMatchState,
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
@@ -533,7 +554,7 @@ function drawDetectionScaffold(ctx, resized) {
    const startX = box.x;
    const startY = Math.max(16, box.y - boxHeight - 8);
 
-   if (typeof isMirrored !== 'undefined' && isMirrored) {
+   if (state.isMirrored) {
       ctx.translate(startX + boxWidth / 2, startY + boxHeight / 2);
       ctx.scale(-1, 1);
       ctx.translate(-(startX + boxWidth / 2), -(startY + boxHeight / 2));
@@ -559,8 +580,8 @@ function drawEffectOverlay(result, includeDetectionScaffold = false) {
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
    const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
    if (includeDetectionScaffold) drawDetectionScaffold(ctx, resized);
-   if (activeEffect) {
-      const style = loadedGhostyles.get(activeEffect);
+   if (state.activeEffect) {
+      const style = loadedGhostyles.get(state.activeEffect);
       if (style && style.module.onDraw) {
          ctx.save();
          ctx.lineCap = 'round';
@@ -569,7 +590,7 @@ function drawEffectOverlay(result, includeDetectionScaffold = false) {
          ctx.restore();
       }
    }
-   lastKnownEffectResult = result;
+   state.lastKnownEffectResult = result;
 }
 
 async function detectCurrentFace(drawOverlay = true) {
@@ -580,7 +601,7 @@ async function detectCurrentFace(drawOverlay = true) {
       .withFaceDescriptor();
 
    if (!result) {
-      lastKnownEffectResult = null;
+      state.lastKnownEffectResult = null;
       setLog('Nessun volto rilevato nella webcam.');
       return null;
    }
@@ -595,8 +616,8 @@ function drawResult(result) {
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
    const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
    drawDetectionScaffold(ctx, resized);
-   if (activeEffect) {
-      const style = loadedGhostyles.get(activeEffect);
+   if (state.activeEffect) {
+      const style = loadedGhostyles.get(state.activeEffect);
       if (style && style.module.onDraw) {
          ctx.save();
          ctx.lineCap = 'round';
@@ -605,64 +626,64 @@ function drawResult(result) {
          ctx.restore();
       }
    }
-   lastKnownEffectResult = result;
+   state.lastKnownEffectResult = result;
 }
 
 async function runEffectPass() {
-   if (isSystemBusy || effectInferenceInFlight || els.video.readyState < 2) return;
-   effectInferenceInFlight = true;
+   if (state.isSystemBusy || state.effectInferenceInFlight || els.video.readyState < 2) return;
+   state.effectInferenceInFlight = true;
    try {
       const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
-      const result = activeEffect ? await detector.withFaceLandmarks() : await detector;
+      const result = state.activeEffect ? await detector.withFaceLandmarks() : await detector;
 
       if (!result) {
-         lastKnownEffectResult = null;
-         if (activeEffect) clearOverlay();
-      } else if (activeEffect) {
+         state.lastKnownEffectResult = null;
+         if (state.activeEffect) clearOverlay();
+      } else if (state.activeEffect) {
          drawEffectOverlay(result, false);
       } else {
-         lastKnownEffectResult = result;
+         state.lastKnownEffectResult = result;
       }
 
       ghostatiEvents.dispatchEvent(new CustomEvent('detection', {
-         detail: { result: result || null, activeEffect }
+         detail: { result: result || null, activeEffect: state.activeEffect }
       }));
    } catch (err) {
       console.error(err);
    } finally {
-      effectInferenceInFlight = false;
+      state.effectInferenceInFlight = false;
    }
 }
 
 function effectLoop(ts = 0) {
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
-   if (ts - lastEffectRun > currentDelay) {
-      lastEffectRun = ts;
+   if (ts - state.lastEffectRun > currentDelay) {
+      state.lastEffectRun = ts;
       runEffectPass();
    }
-   effectLoopHandle = requestAnimationFrame(effectLoop);
+   state.effectLoopHandle = requestAnimationFrame(effectLoop);
 }
 
 function startEffectLoop() {
-   if (effectLoopHandle) cancelAnimationFrame(effectLoopHandle);
-   effectLoopHandle = requestAnimationFrame(effectLoop);
+   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
+   state.effectLoopHandle = requestAnimationFrame(effectLoop);
 }
 
 function stopEffectLoop() {
-   if (effectLoopHandle) cancelAnimationFrame(effectLoopHandle);
-   effectLoopHandle = null;
-   effectInferenceInFlight = false;
+   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
+   state.effectLoopHandle = null;
+   state.effectInferenceInFlight = false;
 }
 
 function deactivateEffect({ silent = false } = {}) {
-   const previousEffect = activeEffect;
-   if (activeEffect) {
-      const style = loadedGhostyles.get(activeEffect);
+   const previousEffect = state.activeEffect;
+   if (state.activeEffect) {
+      const style = loadedGhostyles.get(state.activeEffect);
       if (style && style.module.onClear) {
          style.module.onClear(els.overlay.getContext('2d'));
       }
    }
-   activeEffect = null;
+   state.activeEffect = null;
    if (previousEffect) {
       ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
          detail: { activeEffect: null, previous: previousEffect }
@@ -675,27 +696,28 @@ function deactivateEffect({ silent = false } = {}) {
    els.scanBtn.style.color = '';
 
    updateEffectStats();
-   lastKnownEffectResult = null;
-   lastCompositedCanvas = null;
+   state.lastKnownEffectResult = null;
+   state.lastCompositedCanvas = null;
    els.copyMakeupBtn.disabled = true;
    clearOverlay();
    if (!silent) setLog('Guida makeup disattivata. Webcam ripristinata senza overlay.');
 }
 
 function toggleEffect(effect, button) {
-   if (activeEffect === effect) {
+   console.log(`toggleEffect, active: ${state.activeEffect} new effect ${effect} button ${button}`);
+
+   if (state.activeEffect === effect) {
       deactivateEffect();
       return;
    }
 
-   if (activeEffect) {
-      const styleId = activeEffect;
+   if (state.activeEffect) {
       deactivateEffect({ silent: true });
       // wait for complete removal then continue
    }
 
-   const previousEffect = activeEffect;
-   activeEffect = effect;
+   const previousEffect = state.activeEffect;
+   state.activeEffect = effect;
    ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
       detail: { activeEffect: effect, previous: previousEffect }
    }));
@@ -705,6 +727,7 @@ function toggleEffect(effect, button) {
    els.previewImage.removeAttribute('src');
    updateEffectStats();
 
+   console.log('Loading Ghostyles', effect);
    const style = loadedGhostyles.get(effect);
    setLog(`Guida makeup attiva: ${style ? style.name : effect}. Cerca un volto nella webcam per vedere dove applicarlo.`);
 
@@ -712,9 +735,9 @@ function toggleEffect(effect, button) {
    els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
    els.scanBtn.style.color = '#fff';
 
-   if (nudgeStep === 3) { nudgeStep = 4; updateNudging(); }
+   if (state.nudgeStep === 3) { state.nudgeStep = 4; updateNudging(); }
 
-   if (overlayFadeTimeout) clearTimeout(overlayFadeTimeout);
+   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
    els.overlay.style.transition = 'none';
    els.overlay.style.opacity = '1';
 
@@ -732,19 +755,19 @@ async function scanFace() {
    setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
 
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { state: computeMatchState(result.descriptor), source: 'scan', score }
+      detail: { detectionState: computeMatchState(result.descriptor), source: 'scan', score }
    }));
 
-   if (nudgeStep === 1) { nudgeStep = 2; updateNudging(); }
+   if (state.nudgeStep === 1) { state.nudgeStep = 2; updateNudging(); }
 }
 
 async function saveFace() {
    const result = await detectCurrentFace(true);
    if (!result) return;
    triggerOverlayFadeout();
-   const id = db.nextId;
-   db.nextId += 1;
-   db.faces.push({
+   const id = state.db.nextId;
+   state.db.nextId += 1;
+   state.db.faces.push({
       id,
       descriptor: Array.from(result.descriptor),
       age: Math.round(result.age),
@@ -756,29 +779,31 @@ async function saveFace() {
    setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
 
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { state: computeMatchState(result.descriptor), source: 'save', score }
+      detail: { detectionState: computeMatchState(result.descriptor), source: 'save', score }
    }));
 
-   if (nudgeStep === 2) { nudgeStep = 3; updateNudging(); }
+   if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
 }
 
 async function findFace() {
-   if (db.faces.length === 0) {
+   if (state.db.faces.length === 0) {
       setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
       clearOverlay();
       return;
    }
 
+   console.log(`Faccie disponibili ${state.db.faces}`);
    const liveResult = await detectCurrentFace(true);
    if (!liveResult) return;
    triggerOverlayFadeout();
 
    const liveScore = liveResult.detection.score;
-   const liveDistances = db.faces
+   const liveDistances = state.db.faces
       .map(entry => ({ id: entry.id, distance: distance(liveResult.descriptor, entry.descriptor) }))
       .sort((a, b) => a.distance - b.distance);
    const liveMinDist = liveDistances[0].distance;
    const liveMinId = liveDistances[0].id;
+
 
    // Se c'è un plugin attivo, calcola anche le metriche post-makeup. Con retry weak
    // dentro compositeAndDetect, abbiamo quasi sempre un descrittore (anche di bassa
@@ -793,7 +818,7 @@ async function findFace() {
       const composite = await compositeAndDetect(liveResult);
       if (composite.obfuscatedResult) {
          obfScore = composite.obfuscatedResult.detection.score;
-         const obfDistances = db.faces
+         const obfDistances = state.db.faces
             .map(e => ({ id: e.id, distance: distance(composite.obfuscatedResult.descriptor, e.descriptor) }))
             .sort((a, b) => a.distance - b.distance);
          obfMinDist = obfDistances[0].distance;
@@ -807,21 +832,21 @@ async function findFace() {
    // Stato/match decision: con plugin il giudizio è basato sulla strict detection
    // (weakDetection → eluso a prescindere dalla distanza, perché face-api stessa
    // non si fida del volto). Senza plugin, semplicemente confronto liveMinDist.
-   let state, headline;
+   let detectionState, headline;
    if (detectionTotallyFailed) {
-      state = 'eluded';
+      detectionState = 'eluded';
       headline = `Rilevatore ingannato dal makeup: face-api non trova un volto nel composito.`;
    } else if (weakDetection) {
-      state = 'eluded';
+      detectionState = 'eluded';
       headline = `Detection sul composito forzata a confidenza bassa (face-api non vede chiaramente un volto).`;
    } else {
       const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
       const useId = obfMinDist != null ? obfMinId : liveMinId;
       if (useDist <= MATCH_THRESHOLD) {
-         state = 'matched';
+         detectionState = 'matched';
          headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${MATCH_THRESHOLD.toFixed(2)}).`;
       } else {
-         state = 'eluded';
+         detectionState = 'eluded';
          headline = `Nessuna corrispondenza sotto soglia ${MATCH_THRESHOLD.toFixed(2)}.`;
       }
    }
@@ -833,10 +858,10 @@ async function findFace() {
 
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: {
-         state,
+         detectionState,
          source: 'find',
          distance: obfMinDist != null ? obfMinDist : liveMinDist,
-         matchedId: state === 'matched' ? (obfMinDist != null ? obfMinId : liveMinId) : null,
+         matchedId: detectionState === 'matched' ? (obfMinDist != null ? obfMinId : liveMinId) : null,
          score: liveScore,
          obfuscatedScore: obfScore,
          liveMinDist,
@@ -856,19 +881,19 @@ async function startCamera() {
       video: {
          width: { ideal: 1920 },
          height: { ideal: 1080 },
-         facingMode: currentFacingMode
+         facingMode: state.currentFacingMode
       },
       audio: false
    });
    els.video.srcObject = stream;
-   
+
    // Auto mirror based on facingMode
-   isMirrored = currentFacingMode === 'user';
-   els.video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-   els.overlay.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+   state.isMirrored = state.currentFacingMode === 'user';
+   els.video.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+   els.overlay.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
    if (els.mirrorToggle) {
-      els.mirrorToggle.classList.toggle('mirrored', isMirrored);
-      els.mirrorToggle.textContent = isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
+      els.mirrorToggle.classList.toggle('mirrored', state.isMirrored);
+      els.mirrorToggle.textContent = state.isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
    }
 
    await new Promise(resolve => {
@@ -894,12 +919,13 @@ async function loadModels() {
 }
 
 function clearDb() {
-   db = { nextId: 0, faces: [] };
+   state.db = { nextId: 0, faces: [] };
    persistDb();
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { state: 'unknown', source: 'clear' }
+      detail: { detectionState: 'unknown', source: 'clear' }
    }));
    setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
+   renderDbStats();
 }
 
 function handleError(err, fallbackMessage) {
@@ -926,7 +952,7 @@ async function compositeAndDetect(liveResult) {
 
    ctx.drawImage(els.video, 0, 0, canvas.width, canvas.height);
 
-   const style = loadedGhostyles.get(activeEffect);
+   const style = loadedGhostyles.get(state.activeEffect);
    if (style && style.module.onDraw) {
       ctx.save();
       ctx.lineCap = 'round';
@@ -956,7 +982,7 @@ async function compositeAndDetect(liveResult) {
 }
 
 function hasActivePlugin() {
-   if (activeEffect) return true;
+   if (state.activeEffect) return true;
    const get3d = window.Ghostati && window.Ghostati.getActiveEffect3d;
    return typeof get3d === 'function' && !!get3d();
 }
@@ -970,23 +996,23 @@ async function testMakeupEfficacy() {
 
    const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(result);
 
-   lastCompositedCanvas = canvas;
+   state.lastCompositedCanvas = canvas;
    els.copyMakeupBtn.disabled = false;
 
    setLog('Analisi in corso... sottopongo il compositing a face-api');
 
    const liveScore = result.detection.score;
-   const liveMinDist = db.faces.length > 0
-      ? Math.min(...db.faces.map(e => distance(result.descriptor, e.descriptor)))
+   const liveMinDist = state.db.faces.length > 0
+      ? Math.min(...state.db.faces.map(e => distance(result.descriptor, e.descriptor)))
       : null;
    const obfScore = obfuscatedResult ? obfuscatedResult.detection.score : null;
-   const obfMinDist = obfuscatedResult && db.faces.length > 0
-      ? Math.min(...db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
+   const obfMinDist = obfuscatedResult && state.db.faces.length > 0
+      ? Math.min(...state.db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
       : null;
 
    // Suffix metriche da appendere ai messaggi
    const distLog = (() => {
-      if (db.faces.length === 0) {
+      if (state.db.faces.length === 0) {
          // Senza DB la metrica è self-vs-post (non ha senso "min DB")
          if (obfuscatedResult) {
             const selfDist = distance(result.descriptor, obfuscatedResult.descriptor);
@@ -1001,44 +1027,52 @@ async function testMakeupEfficacy() {
 
    // Decisione di stato analoga a findFace: weakDetection o detection totalmente fallita → eluso
    if (!obfuscatedResult) {
-      const state = db.faces.length === 0 ? 'unknown' : 'eluded';
-      const headline = db.faces.length === 0
+      let detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
+      const headline = state.db.faces.length === 0
          ? `Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.`
          : `Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l'algoritmo di rilevamento.`;
       setLog(`${headline} ${distLog}.`);
       ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { state, source: 'efficacy', score: liveScore, obfuscatedScore: null, liveMinDist, obfMinDist: null, weakDetection: false }
+         detail: {
+            detectionState,
+            source: 'efficacy',
+            score: liveScore,
+            obfuscatedScore: null,
+            liveMinDist,
+            obfMinDist: null,
+            weakDetection: false
+         }
       }));
       return;
    }
 
    if (weakDetection) {
-      const state = db.faces.length === 0 ? 'unknown' : 'eluded';
+      const detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
       setLog(`Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto. ${distLog}.`);
       ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { state, source: 'efficacy', score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: true }
+         detail: { detectionState, source: 'efficacy', score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: true }
       }));
       return;
    }
 
-   if (db.faces.length === 0) {
+   if (state.db.faces.length === 0) {
       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      const state = dist > MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const detectionState = dist > MATCH_THRESHOLD ? 'eluded' : 'matched';
       const headline = dist > MATCH_THRESHOLD
          ? `Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!`
          : `Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta.`;
       setLog(`${headline} distanza self pre→post: ${dist.toFixed(3)}.`);
       ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { state, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
+         detail: { detectionState, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
       }));
    } else {
-      const state = obfMinDist > MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const detectionState = obfMinDist > MATCH_THRESHOLD ? 'eluded' : 'matched';
       const headline = obfMinDist > MATCH_THRESHOLD
          ? `Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile.`
          : `Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.`;
       setLog(`${headline} ${distLog}.`);
       ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { state, source: 'efficacy', distance: obfMinDist, score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: false }
+         detail: { detectionState, source: 'efficacy', distance: obfMinDist, score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: false }
       }));
    }
 }
@@ -1051,39 +1085,39 @@ async function init() {
 
    if (els.logBox) {
       els.logBox.addEventListener('click', () => {
-         isLogExpanded = !isLogExpanded;
+         state.isLogExpanded = !state.isLogExpanded;
          updateLogDisplay();
       });
    }
 
    els.copyMakeupBtn.addEventListener('click', async () => {
-      if (!lastCompositedCanvas) return;
+      if (!state.lastCompositedCanvas) return;
       try {
          const exportCanvas = document.createElement('canvas');
          const headerHeight = 44;
          const footerHeight = 50;
-         exportCanvas.width = lastCompositedCanvas.width;
-         exportCanvas.height = lastCompositedCanvas.height + headerHeight + footerHeight;
+         exportCanvas.width = state.lastCompositedCanvas.width;
+         exportCanvas.height = state.lastCompositedCanvas.height + headerHeight + footerHeight;
          const ctx = exportCanvas.getContext('2d');
 
          ctx.fillStyle = '#0f1115';
          ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-         if (isMirrored) {
+         if (state.isMirrored) {
             ctx.save();
             ctx.translate(exportCanvas.width, 0);
             ctx.scale(-1, 1);
-            ctx.drawImage(lastCompositedCanvas, 0, headerHeight);
+            ctx.drawImage(state.lastCompositedCanvas, 0, headerHeight);
             ctx.restore();
          } else {
-            ctx.drawImage(lastCompositedCanvas, 0, headerHeight);
+            ctx.drawImage(state.lastCompositedCanvas, 0, headerHeight);
          }
 
          ctx.fillStyle = '#eef2ff';
          ctx.textAlign = 'center';
          ctx.textBaseline = 'middle';
 
-         const style = loadedGhostyles.get(activeEffect);
+         const style = loadedGhostyles.get(state.activeEffect);
          const pluginName = style ? style.name : 'Unknown Plugin';
          ctx.font = 'bold 14px Inter, sans-serif';
          ctx.fillText(`github.com/vecna/antagonistrucco | Modulo: ${pluginName} | URL: https://sindacato.nina.watch/ghostati/`, exportCanvas.width / 2, headerHeight / 2);
@@ -1105,7 +1139,7 @@ async function init() {
                      text: 'Il mio camouflage anti-riconoscimento!',
                      files: [file]
                   }).then(() => setLog('Immagine condivisa con successo!'))
-                    .catch(err => console.error('Share failed', err));
+                     .catch(err => console.error('Share failed', err));
                } else {
                   setLog('Impossibile copiare l\'immagine (permessi mancanti o Share API non supportata).');
                }
@@ -1114,11 +1148,11 @@ async function init() {
             if (navigator.clipboard && navigator.clipboard.write) {
                try {
                   navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-                  .then(() => setLog('Immagine con referto diagnostico copiata negli appunti!'))
-                  .catch(err => {
-                     console.error('Clipboard write fallito, provo fallback', err);
-                     attemptShare();
-                  });
+                     .then(() => setLog('Immagine con referto diagnostico copiata negli appunti!'))
+                     .catch(err => {
+                        console.error('Clipboard write fallito, provo fallback', err);
+                        attemptShare();
+                     });
                } catch (err) {
                   console.error(err);
                   attemptShare();
@@ -1126,7 +1160,7 @@ async function init() {
             } else {
                attemptShare();
             }
-            if (nudgeStep === 5) { nudgeStep = 6; localStorage.setItem('ghostati-nudge-done', 'true'); updateNudging(); }
+            if (state.nudgeStep === 5) { state.nudgeStep = 6; localStorage.setItem('ghostati-nudge-done', 'true'); updateNudging(); }
          });
       } catch (err) {
          console.error(err);
@@ -1138,7 +1172,7 @@ async function init() {
       setBusy(true);
       try {
          if (hasActivePlugin()) {
-            if (nudgeStep === 4) { nudgeStep = 5; updateNudging(); }
+            if (state.nudgeStep === 4) { state.nudgeStep = 5; updateNudging(); }
             await testMakeupEfficacy();
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
          } else {
@@ -1148,7 +1182,7 @@ async function init() {
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
       finally {
          setBusy(false);
-         if (activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop();
       }
    });
 
@@ -1158,7 +1192,7 @@ async function init() {
       catch (err) { handleError(err, 'Errore durante il salvataggio del volto.'); }
       finally {
          setBusy(false);
-         if (activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop();
       }
    });
 
@@ -1168,7 +1202,7 @@ async function init() {
       catch (err) { handleError(err, 'Errore durante la ricerca del volto.'); }
       finally {
          setBusy(false);
-         if (activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop();
       }
    });
 
@@ -1187,7 +1221,7 @@ async function init() {
       }
    });
    els.clearOverlayBtn.addEventListener('click', () => {
-      if (activeEffect) deactivateEffect({ silent: true });
+      if (state.activeEffect) deactivateEffect({ silent: true });
       clearOverlay();
       setLog('Overlay pulito.');
    });
