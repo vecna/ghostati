@@ -8,6 +8,7 @@
 ![ghòstati](facerec-transparency.png)
 
 ## Overview
+![Unit Test Coverage](https://img.shields.io/badge/coverage-20.84%25-lightgrey)
 
 **ghòstati** is an experimental platform and diagnostic tool designed to counter facial recognition algorithms. By applying specific makeup patterns (inspired by the CV Dazzle concept), users can explore how computer vision models interpret facial landmarks and attempt to anonymize their digital footprint in real time. 
 
@@ -67,7 +68,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `f0c279c` – Add comprehensive testing framework, unit and e2e tests with detailed comments
+
+**Last commit:** `15d7ccf` – Add comprehensive testing framework, unit and e2e tests with coverage
+
+
 
 
 
@@ -86,7 +90,7 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `f0c279c` Add comprehensive testing framework, unit and e2e tests with detailed comments
+- `15d7ccf` Add comprehensive testing framework, unit and e2e tests with coverage
 - `c2abf8c` piccola differenza che comunque verrà sovrascritta presto dal restyling
 - `b9da329` disclaimer iniziale migliorato
 - `d5e5766` Merge pull request #4 from edne/new-features
