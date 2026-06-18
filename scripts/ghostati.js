@@ -1,3 +1,6 @@
+/* 
+import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, formatTime } from './utils.js'; */
+
 const MODEL_URLS = {
    tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
    landmarks: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_landmark_68',
@@ -6,7 +9,6 @@ const MODEL_URLS = {
 };
 
 const STORAGE_KEY = 'local-face-lab-db-v1';
-const MATCH_THRESHOLD = 0.58;
 const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
    inputSize: 416,
    scoreThreshold: 0.5
@@ -80,20 +82,6 @@ if (els.switchCameraBtn) {
    });
 }
 
-function loadDb() {
-   try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { nextId: 0, faces: [] };
-      const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.faces) || typeof parsed.nextId !== 'number') {
-         return { nextId: 0, faces: [] };
-      }
-      return parsed;
-   } catch {
-      return { nextId: 0, faces: [] };
-   }
-}
-
 const ghostatiEvents = new EventTarget();
 
 // DEBUG: intercetta tutti gli errori non catturati nei listener
@@ -103,8 +91,10 @@ window.addEventListener('unhandledrejection', e => {
 
 // DEBUG: log di tutti gli eventi del bus
 const _origDispatch = ghostatiEvents.dispatchEvent.bind(ghostatiEvents);
-ghostatiEvents.dispatchEvent = function(event) {
-   if(!(event.type === "landmarks3d" || event.type === "detection"))
+ghostatiEvents.dispatchEvent = function (event) {
+   if (!(event.type === "landmarks3d" ||
+      event.type === "detection" ||
+      event.type === "matchStateChanged"))
       console.debug(`[event:${event.type}]`, event.detail);
    return _origDispatch(event);
 };
@@ -125,37 +115,14 @@ const state = {
    overlayFadeTimeout: null,
    isLogExpanded: false,
    nudgeStep: localStorage.getItem('ghostati-nudge-done') ? 6 : 1,
+   MATCH_THRESHOLD: 0.58,
 }
 
-function persistDb() {
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
-   renderDbStats();
-   ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
-      detail: { count: state.db.faces.length, nextId: state.db.nextId }
-   }));
-}
-
-function renderDbStats() {
-   els.dbCount.textContent = String(state.db.faces.length);
-   els.nextId.textContent = String(state.db.nextId);
-   els.thresholdLabel.textContent = MATCH_THRESHOLD.toFixed(2);
-
-   if (els.dbCountBadge) {
-      els.dbCountBadge.textContent = String(state.db.faces.length);
-      els.dbCountBadge.style.display = state.db.faces.length > 0 ? 'inline-block' : 'none';
-   }
-}
 
 function updateEffectStats() {
    const style = loadedGhostyles.get(state.activeEffect);
    els.effectName.textContent = style ? style.name : 'nessuno';
    els.effectTracking.textContent = state.activeEffect ? 'on' : 'off';
-}
-
-
-function formatTime() {
-   const now = new Date();
-   return now.toTimeString().split(' ')[0]; // Returns HH:MM:SS
 }
 
 function updateLogDisplay() {
@@ -250,154 +217,6 @@ function clearOverlay() {
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
-function distance(a, b) {
-   if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
-   let sum = 0;
-   for (let i = 0; i < a.length; i += 1) {
-      const d = a[i] - b[i];
-      sum += d * d;
-   }
-   return Math.sqrt(sum);
-}
-
-function computeMatchState(descriptor) {
-   if (!descriptor || state.db.faces.length === 0) return 'unknown';
-   const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
-   return minDist <= MATCH_THRESHOLD ? 'matched' : 'eluded';
-}
-
-
-
-function avgPoint(points) {
-   const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
-   return { x: total.x / points.length, y: total.y / points.length };
-}
-
-function lerp(a, b, t) {
-   return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-}
-
-function scaleFrom(center, point, scale) {
-   return { x: center.x + (point.x - center.x) * scale, y: center.y + (point.y - center.y) * scale };
-}
-
-function point(x, y) {
-   return { x, y };
-}
-
-function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null, lineWidth = 2) {
-   if (!points.length) return;
-   ctx.beginPath();
-   ctx.moveTo(points[0].x, points[0].y);
-   for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i].x, points[i].y);
-   ctx.closePath();
-   if (fillStyle) {
-      ctx.fillStyle = fillStyle;
-      ctx.fill();
-   }
-   if (strokeStyle) {
-      ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = strokeStyle;
-      ctx.stroke();
-   }
-}
-
-function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = false) {
-   if (!points.length) return;
-   ctx.save();
-   ctx.beginPath();
-   ctx.moveTo(points[0].x, points[0].y);
-   for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i].x, points[i].y);
-   ctx.lineWidth = lineWidth;
-   ctx.strokeStyle = strokeStyle;
-   if (dashed) ctx.setLineDash([10, 8]);
-   ctx.stroke();
-   ctx.restore();
-}
-
-function drawLabel(ctx, text, x, y) {
-   ctx.save();
-   ctx.font = '700 14px Inter, system-ui, sans-serif';
-   const padX = 10;
-   const padY = 7;
-   const width = ctx.measureText(text).width + padX * 2;
-   const height = 30;
-
-   if (state.isMirrored) {
-      ctx.translate(x + width / 2, y - height / 2);
-      ctx.scale(-1, 1);
-      ctx.translate(-(x + width / 2), -(y - height / 2));
-   }
-
-   ctx.fillStyle = 'rgba(15, 17, 21, 0.78)';
-   ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-   ctx.lineWidth = 1;
-   roundRect(ctx, x, y - height, width, height, 12);
-   ctx.fill();
-   ctx.stroke();
-   ctx.fillStyle = 'rgba(238, 242, 255, 0.96)';
-   ctx.fillText(text, x + padX, y - 10);
-   ctx.restore();
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-   ctx.beginPath();
-   ctx.moveTo(x + r, y);
-   ctx.arcTo(x + w, y, x + w, y + h, r);
-   ctx.arcTo(x + w, y + h, x, y + h, r);
-   ctx.arcTo(x, y + h, x, y, r);
-   ctx.arcTo(x, y, x + w, y, r);
-   ctx.closePath();
-}
-
-function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
-   const center = avgPoint(eye);
-   const topBrow = eyebrow.map((b, idx) => {
-      const eyeRef = eye[Math.min(idx + 1, eye.length - 1)] || eye[eye.length - 1];
-      return lerp(eyeRef, b, eyebrowLift);
-   });
-   const expandedEye = eye.map(pt => scaleFrom(center, pt, scale));
-   return [...topBrow, expandedEye[3], expandedEye[4], expandedEye[5], expandedEye[0]];
-}
-
-function drawEyeWing(ctx, eye, eyebrow, label, tone) {
-   const eyeShape = expandEyePolygon(eye, eyebrow, tone.scale, tone.brow);
-   drawClosedPath(ctx, eyeShape, tone.fill, tone.stroke, 2.2);
-   const outerCorner = tone.side === 'left'
-      ? eye.reduce((best, p) => (p.x < best.x ? p : best), eye[0])
-      : eye.reduce((best, p) => (p.x > best.x ? p : best), eye[0]);
-   const tailTop = point(outerCorner.x + tone.tailX, outerCorner.y - tone.tailY);
-   const tailLow = point(outerCorner.x + tone.tailX * 0.7, outerCorner.y + tone.tailY * 0.12);
-   drawClosedPath(ctx, [outerCorner, tailTop, tailLow], tone.fill, tone.stroke, 2.2);
-   const sorted = [...eye].sort((a, b) => a.x - b.x);
-   const linePts = tone.side === 'left' ? [sorted[2], sorted[1], sorted[0], tailTop] : [sorted[sorted.length - 3], sorted[sorted.length - 2], sorted[sorted.length - 1], tailTop];
-   drawOpenPath(ctx, linePts, tone.line, 3.2);
-   drawLabel(ctx, label, tailTop.x + (tone.side === 'left' ? -52 : 10), tailTop.y - 10);
-}
-
-function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, label, fill, stroke) {
-   const upper = lerp(anchor, noseSide, 0.42);
-   const lower = lerp(mouthCorner, jawPoint, 0.36);
-   const side = lerp(anchor, jawPoint, 0.54);
-   const cheek = [
-      upper,
-      lerp(anchor, side, 0.45),
-      side,
-      lower,
-      lerp(lower, mouthCorner, 0.55),
-      lerp(mouthCorner, noseSide, 0.42)
-   ];
-   drawClosedPath(ctx, cheek, fill, stroke, 1.8);
-   drawLabel(ctx, label, side.x - 20, side.y - 12);
-}
-
-function drawContourBand(ctx, pts, label) {
-   drawOpenPath(ctx, pts, 'rgba(193, 154, 107, 0.95)', 7, true);
-   drawOpenPath(ctx, pts, 'rgba(90, 54, 33, 0.22)', 16);
-   const mid = pts[Math.floor(pts.length / 2)];
-   drawLabel(ctx, label, mid.x + 10, mid.y - 6);
-}
-
 function updateNudging() {
    console.log("nudging - Temporaneamente disabilitato - step", state.nudgeStep);
 }
@@ -426,6 +245,7 @@ window.Ghostati = {
       state.visibleLogStartIndex = state.logsArchive.length;
       updateLogDisplay();
    },
+   /* queste le funzioni utili nei plugin */
    distance,
    avgPoint,
    lerp,
@@ -439,12 +259,13 @@ window.Ghostati = {
    drawEyeWing,
    drawCheekSweep,
    drawContourBand,
+   /* fine delle funzioni usate nei plugin, ora implementate in utils.js */
    events: ghostatiEvents,
    getDb: () => structuredClone(state.db),
    getActiveEffect: () => state.activeEffect,
    getLastResult: () => state.lastKnownEffectResult,
-   getMatchThreshold: () => MATCH_THRESHOLD,
-   computeMatchState,
+   getMatchThreshold: () => state.MATCH_THRESHOLD,
+   _computeMatchState: (descriptor) => computeMatchState(descriptor, state.db, state.MATCH_THRESHOLD),
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
    detectorOptions: DETECTOR_OPTIONS
 };
@@ -579,6 +400,12 @@ function drawEffectOverlay(result, includeDetectionScaffold = false) {
    const ctx = els.overlay.getContext('2d');
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
    const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
+   if (!resized.detection) {
+      console.log("drawEffectOverlay: no detection?", resized);
+      return
+   } else {
+      console.log("drawEffectOverlay: detection OK", resized.detection);
+   }
    if (includeDetectionScaffold) drawDetectionScaffold(ctx, resized);
    if (state.activeEffect) {
       const style = loadedGhostyles.get(state.activeEffect);
@@ -755,7 +582,7 @@ async function scanFace() {
    setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
 
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: computeMatchState(result.descriptor), source: 'scan', score }
+      detail: { detectionState: Ghostati._computeMatchState(result.descriptor), source: 'scan', score }
    }));
 
    if (state.nudgeStep === 1) { state.nudgeStep = 2; updateNudging(); }
@@ -774,12 +601,13 @@ async function saveFace() {
       gender: result.gender || null,
       savedAt: new Date().toISOString()
    });
-   persistDb();
+   persistDb(state);
+   renderDbStats(state, els);
    const score = result.detection.score;
    setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
 
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: computeMatchState(result.descriptor), source: 'save', score }
+      detail: { detectionState: Ghostati._computeMatchState(result.descriptor), source: 'save', score }
    }));
 
    if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
@@ -792,7 +620,7 @@ async function findFace() {
       return;
    }
 
-   console.log(`Faccie disponibili ${state.db.faces}`);
+   console.log("Faccie nel DB:", state.db.faces);
    const liveResult = await detectCurrentFace(true);
    if (!liveResult) return;
    triggerOverlayFadeout();
@@ -842,12 +670,12 @@ async function findFace() {
    } else {
       const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
       const useId = obfMinDist != null ? obfMinId : liveMinId;
-      if (useDist <= MATCH_THRESHOLD) {
+      if (useDist <= state.MATCH_THRESHOLD) {
          detectionState = 'matched';
-         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${MATCH_THRESHOLD.toFixed(2)}).`;
+         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${state.MATCH_THRESHOLD.toFixed(2)}).`;
       } else {
          detectionState = 'eluded';
-         headline = `Nessuna corrispondenza sotto soglia ${MATCH_THRESHOLD.toFixed(2)}.`;
+         headline = `Nessuna corrispondenza sotto soglia ${state.MATCH_THRESHOLD.toFixed(2)}.`;
       }
    }
 
@@ -920,12 +748,12 @@ async function loadModels() {
 
 function clearDb() {
    state.db = { nextId: 0, faces: [] };
-   persistDb();
+   persistDb(state);
    ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: 'unknown', source: 'clear' }
    }));
    setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
-   renderDbStats();
+   renderDbStats(state, els);
 }
 
 function handleError(err, fallbackMessage) {
@@ -1057,8 +885,8 @@ async function testMakeupEfficacy() {
 
    if (state.db.faces.length === 0) {
       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      const detectionState = dist > MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = dist > MATCH_THRESHOLD
+      const detectionState = dist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = dist > state.MATCH_THRESHOLD
          ? `Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!`
          : `Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta.`;
       setLog(`${headline} distanza self pre→post: ${dist.toFixed(3)}.`);
@@ -1066,8 +894,8 @@ async function testMakeupEfficacy() {
          detail: { detectionState, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
       }));
    } else {
-      const detectionState = obfMinDist > MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = obfMinDist > MATCH_THRESHOLD
+      const detectionState = obfMinDist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = obfMinDist > state.MATCH_THRESHOLD
          ? `Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile.`
          : `Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.`;
       setLog(`${headline} ${distLog}.`);
@@ -1078,7 +906,7 @@ async function testMakeupEfficacy() {
 }
 
 async function init() {
-   renderDbStats();
+   renderDbStats(state, els);
    updateEffectStats();
    resizeCanvas();
    window.addEventListener('resize', resizeCanvas);
