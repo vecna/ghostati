@@ -15,7 +15,7 @@ const path = require('path');
 const execSync = require('child_process').execSync;
 
 // ---------- Config ----------
-const README_PATH = path.resolve(__dirname, '..', 'README.md');
+const README_PATH = path.resolve(__dirname, 'README.md');
 const COVERAGE_BADGE_URL = (() => {
   const cov = getCoverage();
   if (cov != null) {
@@ -29,7 +29,7 @@ const CHANGELOG_COMMITS = 5; // how many recent commits to list
 // ---------------------------
 // Helper to compute coverage percentage from the JSON report produced by Vitest.
 function getCoverage() {
-  const coverageRoot = path.resolve(__dirname, '..', 'coverage');
+  const coverageRoot = path.resolve(__dirname, 'coverage');
   const jsonPath = path.join(coverageRoot, 'coverage-final.json');
 
   // If the JSON report does not exist, fall back to null.
@@ -87,10 +87,18 @@ let readme = fs.readFileSync(README_PATH, 'utf8');
 // ------------------------------------------------------------------
 // 3️⃣  Replace/Insert the badge line (just after the title)
 // ------------------------------------------------------------------
-readme = readme.replace(
-  /(##+\s+.*\n)(?!\!\[Unit\ Test\ Coverage\])/,
-  `$1![Unit Test Coverage](${COVERAGE_BADGE_URL})\n`
-);
+const coverageBadgeLine = `![Unit Test Coverage](${COVERAGE_BADGE_URL})`;
+
+// Ensure there is exactly one coverage badge line by removing all old ones first.
+readme = readme.replace(/^\s*!\[Unit Test Coverage\]\([^)]+\)\s*\n?/gm, '');
+
+// Re-insert a single badge right after the first heading.
+if (/^#{1,6}\s+.*$/m.test(readme)) {
+  readme = readme.replace(/^#{1,6}\s+.*$/m, (heading) => `${heading}\n${coverageBadgeLine}`);
+} else {
+  // Fallback for malformed README files without headings.
+  readme = `${coverageBadgeLine}\n\n${readme}`;
+}
 
 // ------------------------------------------------------------------
 // 4️⃣  Insert a “Last commit” line

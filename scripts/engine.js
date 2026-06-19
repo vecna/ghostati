@@ -225,7 +225,7 @@ export async function scanFace() {
    setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
 
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: Ghostati._computeMatchState(result.descriptor), source: 'scan', score }
+      detail: { detectionState: Ghostati.computeMatchState(result.descriptor), source: 'scan', score }
    }));
 
    if (state.nudgeStep === 1) { state.nudgeStep = 2; updateNudging(); }
@@ -250,7 +250,7 @@ export async function saveFace() {
    setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
 
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: window.Ghostati._computeMatchState(result.descriptor), source: 'save', score }
+      detail: { detectionState: window.Ghostati.computeMatchState(result.descriptor), source: 'save', score }
    }));
 
    if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
@@ -436,7 +436,6 @@ export function hasActivePlugin() {
    const G = window.Ghostati;
    const a2d = typeof G.getActiveEffect === 'function' && G.getActiveEffect();
    const a3d = typeof G.getActiveEffect3d === 'function' && G.getActiveEffect3d();
-   let retv = !!(a2d || a3d);
-   console.log("btw hasActivePlugin debug:", retv, state.activeEffect);
-   return retv;
+   return !!(a2d || a3d);
+   // state.activeEffect = string with the effect name
 }
