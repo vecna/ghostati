@@ -1,8 +1,8 @@
-import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog } from './utils.js';
+import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
-import { startCamera, resizeCanvas, startEffectLoop, triggerOverlayFadeout } from './camera.js';
+import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
 
 const MODEL_URLS = {
    tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
@@ -98,8 +98,6 @@ export function setBusy(isBusy) {
    previewBtns.forEach(btn => btn.disabled = isBusy);
 }
 
-
-
 export function clearOverlay() {
    const ctx = els.overlay.getContext('2d');
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
@@ -109,26 +107,20 @@ export function clearOverlay() {
 }
 
 export function updateNudging() {
-   console.log("nudging - Temporaneamente disabilitato - step", state.nudgeStep);
-}
-
-/*
-{
-   if (nudgeStep > 5) return;
+   if (state.nudgeStep > 5) return;
    
    document.querySelectorAll('.nudge-target').forEach(el => el.classList.remove('nudge-target'));
    
-   if (nudgeStep === 1) els.scanBtn.classList.add('nudge-target');
-   if (nudgeStep === 2) els.saveBtn.classList.add('nudge-target');
-   if (nudgeStep === 3) {
+   if (state.nudgeStep === 1) els.scanBtn.classList.add('nudge-target');
+   if (state.nudgeStep === 2) els.saveBtn.classList.add('nudge-target');
+   if (state.nudgeStep === 3) {
       const toggleBtn = document.getElementById('toggleSettingsBtn');
       if (toggleBtn) toggleBtn.classList.add('nudge-target');
       els.ghostylesContainer.querySelectorAll('.preview-btn').forEach(btn => btn.classList.add('nudge-target'));
    }
-   if (nudgeStep === 4) els.scanBtn.classList.add('nudge-target');
-   if (nudgeStep === 5 && !els.copyMakeupBtn.disabled) els.copyMakeupBtn.classList.add('nudge-target');
+   if (state.nudgeStep === 4) els.scanBtn.classList.add('nudge-target');
+   if (state.nudgeStep === 5 && !els.copyMakeupBtn.disabled) els.copyMakeupBtn.classList.add('nudge-target');
 } 
-   */
 
 window.Ghostati = {
    log: (message, sourcePlugin) => setLog(message, sourcePlugin),
@@ -497,6 +489,7 @@ async function init() {
       return;
    }
 
+   /*
    // DEBUG: intercetta tutti gli errori non catturati nei listener
    window.addEventListener('unhandledrejection', e => {
       console.error('[unhandledrejection]', e.reason);
@@ -511,6 +504,7 @@ async function init() {
          console.debug(`[event:${event.type}]`, event.detail);
       return _origDispatch(event);
    };
+   */
 
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);

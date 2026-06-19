@@ -39,7 +39,7 @@
 
 window.addEventListener('ghostatiReady', render3DUV, { once: true });
 
-function rendered3DUV() {
+function render3DUV() {
    const UV_PATH = (() => {
       const rel = window.location.pathname.split('/').slice(0, -1).join('/');
       return rel + '/data/face_canonical_uv.json';

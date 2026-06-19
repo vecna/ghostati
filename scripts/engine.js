@@ -43,8 +43,13 @@ export async function compositeAndDetect(liveResult) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       const resized = faceapi.resizeResults(liveResult, { width: canvas.width, height: canvas.height });
-      style.module.onDraw(ctx, resized.landmarks, resized.detection.box);
-      ctx.restore();
+
+      if (!resized.detection) {
+         console.log('resized.detection non disponibile:', resized);
+      } else {
+         style.module.onDraw(ctx, resized.landmarks, resized.detection.box);
+         ctx.restore();
+      }
    }
 
    state.ghostatiEvents.dispatchEvent(new CustomEvent('beforeEfficacyComposite', {
@@ -100,10 +105,8 @@ export function drawEffectOverlay(result, includeDetectionScaffold = false) {
    const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
    if (!resized.detection) {
       console.log("drawEffectOverlay: no detection?", resized);
-      // messo questo log perché a volte era undefined?
-      return
-   } else {
-      console.log("drawEffectOverlay: detection OK", resized.detection);
+      // messo questo log perché a volte è undefined?
+      return;
    }
    if (includeDetectionScaffold) drawDetectionScaffold(resized);
    if (state.activeEffect) {
@@ -231,7 +234,7 @@ export async function scanFace() {
 export async function saveFace() {
    const result = await detectCurrentFace(true);
    if (!result) return;
-   triggerOverlayFadeout(els);
+   triggerOverlayFadeout();
    const id = state.db.nextId;
    state.db.nextId += 1;
    state.db.faces.push({

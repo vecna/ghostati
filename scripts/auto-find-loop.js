@@ -15,6 +15,9 @@
  * detection può richiedere ~100-200ms), il tick successivo viene saltato.
  */
 
+import { hasActivePlugin } from './engine.js';
+import { state } from './state.js';
+
 window.addEventListener('ghostatiReady', autoFindLoop, { once: true });
 
 function autoFindLoop() {

@@ -153,7 +153,7 @@ export function formatTime() {
    return now.toTimeString().split(' ')[0]; // Returns HH:MM:SS
 }
 
-function updateLogDisplay() {
+export function updateLogDisplay() {
    els.logBox.innerHTML = '';
 
    if (state.isLogExpanded) {

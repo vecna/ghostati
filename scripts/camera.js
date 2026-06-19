@@ -65,7 +65,6 @@ export function triggerOverlayFadeout() {
    }, 5000);
 }
 
-
 export function effectLoop(ts = 0) {
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - state.lastEffectRun > currentDelay) {
