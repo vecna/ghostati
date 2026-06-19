@@ -15,7 +15,7 @@ if (!context) {
   throw new Error('Canvas 2D context is not available.');
 }
 
-const state = {
+const effectState = {
   unlocked: false,
   revealRatio: 0,
   pointerX: 0,
@@ -38,27 +38,27 @@ function clamp(value, min = 0, max = 1) {
 }
 
 function updateUnlockState() {
-  const shouldUnlock = state.revealRatio >= SETTINGS.unlockThreshold;
-  if (shouldUnlock === state.unlocked) {
+  const shouldUnlock = effectState.revealRatio >= SETTINGS.unlockThreshold;
+  if (shouldUnlock === effectState.unlocked) {
     return;
   }
 
-  state.unlocked = shouldUnlock;
+  effectState.unlocked = shouldUnlock;
   hero.classList.toggle('is-unlocked', shouldUnlock);
   topbar?.classList.toggle('is-unlocked', shouldUnlock);
   link.setAttribute('aria-disabled', String(!shouldUnlock));
   link.tabIndex = shouldUnlock ? 0 : -1;
 
-  if (state.unlockBlinkTimeout) {
-    clearTimeout(state.unlockBlinkTimeout);
-    state.unlockBlinkTimeout = null;
+  if (effectState.unlockBlinkTimeout) {
+    clearTimeout(effectState.unlockBlinkTimeout);
+    effectState.unlockBlinkTimeout = null;
   }
 
   if (shouldUnlock) {
     hero.classList.add('just-unlocked');
-    state.unlockBlinkTimeout = window.setTimeout(() => {
+    effectState.unlockBlinkTimeout = window.setTimeout(() => {
       hero.classList.remove('just-unlocked');
-      state.unlockBlinkTimeout = null;
+      effectState.unlockBlinkTimeout = null;
     }, 1400);
     return;
   }
@@ -71,7 +71,7 @@ function updateProgressDisplay() {
     return;
   }
 
-  const percentage = Math.round(clamp(state.revealRatio) * 100);
+  const percentage = Math.round(clamp(effectState.revealRatio) * 100);
   progressDisplay.textContent = `${percentage}%`;
 }
 
@@ -81,7 +81,8 @@ function fillVeil() {
   context.fillRect(0, 0, veil.width, veil.height);
 }
 
-function resizeCanvas(preserveReveal = true) {
+function indexResize(preserveReveal = true) {
+  console.log("check: quando è usato? serve davvero? è uguale a camera.resizeCanvas?")
   const bounds = hero.getBoundingClientRect();
   const width = Math.max(1, Math.floor(bounds.width));
   const height = Math.max(1, Math.floor(bounds.height));
@@ -152,46 +153,46 @@ function updateRevealRatio() {
     }
   }
 
-  state.revealRatio = sampled ? clamp(transparent / sampled) : 0;
+  effectState.revealRatio = sampled ? clamp(transparent / sampled) : 0;
   updateProgressDisplay();
   updateUnlockState();
 }
 
 function runInteractionFrame() {
-  state.interactionQueued = false;
-  if (!state.hasPointer) {
+  effectState.interactionQueued = false;
+  if (!effectState.hasPointer) {
     return;
   }
 
-  eraseAt(state.pointerX, state.pointerY);
+  eraseAt(effectState.pointerX, effectState.pointerY);
   updateRevealRatio();
 }
 
 function queueInteractionFrame() {
-  if (state.interactionQueued) {
+  if (effectState.interactionQueued) {
     return;
   }
 
-  state.interactionQueued = true;
+  effectState.interactionQueued = true;
   requestAnimationFrame(runInteractionFrame);
 }
 
 function queueResize() {
-  if (state.resizeQueued) {
+  if (effectState.resizeQueued) {
     return;
   }
 
-  state.resizeQueued = true;
+  effectState.resizeQueued = true;
   requestAnimationFrame(() => {
-    state.resizeQueued = false;
-    resizeCanvas(true);
+    effectState.resizeQueued = false;
+    indexResize(true);
   });
 }
 
 function handlePointerMove(clientX, clientY) {
-  state.pointerX = clientX;
-  state.pointerY = clientY;
-  state.hasPointer = true;
+  effectState.pointerX = clientX;
+  effectState.pointerY = clientY;
+  effectState.hasPointer = true;
   queueInteractionFrame();
 }
 
@@ -256,13 +257,13 @@ window.addEventListener('keydown', (event) => {
     menuToggle?.setAttribute('aria-expanded', 'false');
   }
 
-  if (event.key === 'Enter' && !state.unlocked) {
+  if (event.key === 'Enter' && !effectState.unlocked) {
     event.preventDefault();
   }
 });
 
 link.addEventListener('click', (event) => {
-  if (!state.unlocked) {
+  if (!effectState.unlocked) {
     event.preventDefault();
   }
 });
@@ -291,6 +292,6 @@ window.addEventListener('pointerdown', (event) => {
   menuToggle?.setAttribute('aria-expanded', 'false');
 });
 
-resizeCanvas(false);
+indexResize(false);
 updateProgressDisplay();
 updateUnlockState();

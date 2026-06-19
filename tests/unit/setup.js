@@ -1,6 +1,39 @@
 import { vi } from 'vitest';
 
-// Mock the HTML needed by ghostati.js
+// 1. Mock localStorage first before everything else to avoid JSDOM opaque origin SecurityError
+const store = {};
+const localStorageMock = {
+  getItem: vi.fn((key) => store[key] || null),
+  setItem: vi.fn((key, value) => { store[key] = String(value); }),
+  clear: vi.fn(() => { for (const k in store) delete store[k]; }),
+  removeItem: vi.fn((key) => { delete store[key]; }),
+  length: 0,
+  key: vi.fn((index) => Object.keys(store)[index] || null)
+};
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  configurable: true,
+  writable: true
+});
+Object.defineProperty(globalThis, 'localStorage', {
+  value: localStorageMock,
+  configurable: true,
+  writable: true
+});
+
+// Mock sessionStorage as well
+Object.defineProperty(window, 'sessionStorage', {
+  value: localStorageMock,
+  configurable: true,
+  writable: true
+});
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: localStorageMock,
+  configurable: true,
+  writable: true
+});
+
+// 2. Setup the DOM structure before scripts evaluate
 document.body.innerHTML = `
   <div class="viewer fullscreen" id="viewer">
     <span id="statusDot"></span><span id="statusText"></span>
@@ -34,7 +67,7 @@ document.body.innerHTML = `
   <select id="fpsSelect"><option value="120" selected></option></select>
 `;
 
-// Define missing properties on canvas for jsdom
+// 3. Define canvas prototype mock
 HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   clearRect: vi.fn(),
   save: vi.fn(),
@@ -49,12 +82,21 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   measureText: vi.fn(() => ({ width: 10 })),
   fillText: vi.fn(),
   arc: vi.fn(),
-  setLineDash: vi.fn()
+  setLineDash: vi.fn(),
+  translate: vi.fn(),
+  scale: vi.fn(),
+  arcTo: vi.fn()
 }));
 
-// Mock faceapi
+// 4. Mock faceapi
 window.faceapi = {
   TinyFaceDetectorOptions: vi.fn(),
+  nets: {
+    tinyFaceDetector: { loadFromUri: vi.fn(() => Promise.resolve()) },
+    faceLandmark68Net: { loadFromUri: vi.fn(() => Promise.resolve()) },
+    faceRecognitionNet: { loadFromUri: vi.fn(() => Promise.resolve()) },
+    ageGenderNet: { loadFromUri: vi.fn(() => Promise.resolve()) }
+  },
   detectSingleFace: vi.fn(() => ({
     withFaceLandmarks: vi.fn(() => ({
       withAgeAndGender: vi.fn(() => ({
@@ -64,15 +106,3 @@ window.faceapi = {
   })),
   resizeResults: vi.fn((res) => res),
 };
-
-// Mock localStorage
-const localStorageMock = (function() {
-  let store = {};
-  return {
-    getItem(key) { return store[key] || null; },
-    setItem(key, value) { store[key] = value.toString(); },
-    clear() { store = {}; },
-    removeItem(key) { delete store[key]; }
-  };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });

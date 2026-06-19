@@ -1,25 +1,18 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import '../../scripts/ghostati.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import '../../scripts/main.js';
+import { state } from '../../scripts/state.js';
 
-describe('Ghostati Utils & Core Logic', () => {
+describe('Ghostati utils and state logic', () => {
   let Ghostati;
 
   beforeEach(() => {
-    // Reset localStorage before each test
     window.localStorage.clear();
-    // Re-initialize DB by calling the internal functions if possible, 
-    // or we can test purely state-independent functions first.
+    state.db = { nextId: 0, faces: [] };
+    state.MATCH_THRESHOLD = 0.58;
     Ghostati = window.Ghostati;
-    // Mock CustomEvent
-    window.CustomEvent = class CustomEvent {
-      constructor(type, detail) {
-        this.type = type;
-        this.detail = detail;
-      }
-    };
   });
 
-  describe('Math Utils', () => {
+  describe('Math utilities', () => {
     it('should correctly calculate distance between two descriptors', () => {
       const a = [0.1, 0.2, 0.3];
       const b = [0.1, 0.5, 0.3];
@@ -55,21 +48,17 @@ describe('Ghostati Utils & Core Logic', () => {
     });
   });
 
-  describe('State and DB', () => {
-    it('should initialize empty DB', () => {
-      const db = Ghostati.getDb();
-      expect(db).toBeDefined();
+  describe('State and API accessors', () => {
+    it('should expose threshold through the public API', () => {
+      expect(Ghostati.getMatchThreshold()).toBeCloseTo(0.58);
     });
 
-    it('should compute match state as unknown when DB is empty', () => {
-      const state = Ghostati.computeMatchState([0.1, 0.2]);
-      expect(state).toBe('unknown');
-    });
-
-    // To properly test saveFace and findFace, we'd need to mock the button clicks or call internal functions
-    // Since we exported some helpers in Ghostati, let's test what's exposed.
-    it('should expose the current match threshold', () => {
-      expect(Ghostati.getMatchThreshold()).toBe(0.58);
+    it('should return a cloned DB snapshot', () => {
+      state.db.faces = [{ id: 1, descriptor: [0.1, 0.2] }];
+      const copy = Ghostati.getDb();
+      expect(copy.faces.length).toBe(1);
+      copy.faces.push({ id: 2, descriptor: [0.4, 0.5] });
+      expect(Ghostati.getDb().faces.length).toBe(1);
     });
   });
 });

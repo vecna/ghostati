@@ -10,7 +10,9 @@
  * Convenzione cromatica: rosso = identificato, verde = eluso, grigio = ignoto.
  */
 
-(function () {
+window.addEventListener('ghostatiReady', boxOverlayLoop, { once: true });
+
+function boxOverlayLoop() {
    const COLORS = {
       matched: 'rgba(255, 122, 122, 0.95)',
       eluded:  'rgba(61, 220, 151, 0.95)',
@@ -149,7 +151,7 @@
 
    Ghostati.events.addEventListener('matchStateChanged', (e) => {
       if (!e.detail) return;
-      if (e.detail.state) lastMatchState = e.detail.state;
+      if (e.detail.detectionState) lastMatchState = e.detail.detectionState;
       // scan/save non portano distanze: aggiorno solo quando le chiavi sono presenti.
       if ('liveMinDist' in e.detail) lastLiveMinDist = e.detail.liveMinDist;
       if ('obfMinDist' in e.detail) lastObfMinDist = e.detail.obfMinDist;
@@ -162,4 +164,4 @@
          lastObfMinDist = null;
       }
    });
-})();
+}

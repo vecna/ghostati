@@ -15,11 +15,16 @@
  * detection può richiedere ~100-200ms), il tick successivo viene saltato.
  */
 
-(function () {
+import { hasActivePlugin } from './engine.js';
+import { state } from './state.js';
+
+window.addEventListener('ghostatiReady', autoFindLoop, { once: true });
+
+function autoFindLoop() {
    const INTERVAL_MS = 2000;
 
    const G = window.Ghostati;
-   if (!G || !G.events || typeof G.compositeAndDetect !== 'function' || !G.detectorOptions) {
+   if (!G || !G.events || typeof G._compositeAndDetect !== 'function' || !G.detectorOptions) {
       console.warn('[auto-find-loop] dipendenze mancanti, skip init');
       return;
    }
@@ -34,12 +39,6 @@
    }
 
    let inFlight = false;
-
-   function hasActivePlugin() {
-      const a2d = typeof G.getActiveEffect === 'function' && G.getActiveEffect();
-      const a3d = typeof G.getActiveEffect3d === 'function' && G.getActiveEffect3d();
-      return !!(a2d || a3d);
-   }
 
    function minDistanceTo(descriptor, faces) {
       let bestDist = Infinity;
@@ -77,8 +76,8 @@
          let weakDetection = false;
          let detectionTotallyFailed = false;
 
-         if (hasActivePlugin()) {
-            const composite = await G.compositeAndDetect(liveResult);
+         if (hasActivePlugin(state)) {
+            const composite = await G._compositeAndDetect(liveResult);
             if (composite && composite.obfuscatedResult) {
                obfScore = composite.obfuscatedResult.detection.score;
                const obf = minDistanceTo(composite.obfuscatedResult.descriptor, db.faces);
@@ -91,20 +90,20 @@
          }
 
          const threshold = G.getMatchThreshold();
-         let state;
+         let detectionState;
          if (detectionTotallyFailed || weakDetection) {
-            state = 'eluded';
+            detectionState = 'eluded';
          } else {
             const useDist = obfMinDist != null ? obfMinDist : live.distance;
-            state = useDist <= threshold ? 'matched' : 'eluded';
+            detectionState = useDist <= threshold ? 'matched' : 'eluded';
          }
-         const matchedId = state === 'matched'
+         const matchedId = detectionState === 'matched'
             ? (obfMinDist != null ? obfMinId : live.id)
             : null;
 
          G.events.dispatchEvent(new CustomEvent('matchStateChanged', {
             detail: {
-               state,
+               detectionState,
                source: 'auto',
                distance: obfMinDist != null ? obfMinDist : live.distance,
                matchedId,
@@ -123,4 +122,5 @@
    }
 
    setInterval(tick, INTERVAL_MS);
-})();
+}
+

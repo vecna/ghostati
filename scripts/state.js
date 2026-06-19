@@ -1,0 +1,21 @@
+
+export const state = {
+   db: null, // initialized after loading via db.loadDb(),
+   activeEffect: null,
+   effectLoopHandle: null,
+   effectInferenceInFlight: false,
+   lastEffectRun: 0,
+   isSystemBusy: false,
+   lastKnownEffectResult: null,
+   lastCompositedCanvas: null,
+   isMirrored: false,
+   currentFacingMode: 'user',
+   logsArchive: [],
+   visibleLogStartIndex: 0,
+   overlayFadeTimeout: null,
+   isLogExpanded: false,
+   nudgeStep: localStorage.getItem('ghostati-nudge-done') ? 6 : 1,
+   MATCH_THRESHOLD: 0.58,
+   ghostatiEvents: new EventTarget(),
+   loadedGhostyles: new Map(),
+}
