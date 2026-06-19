@@ -33,7 +33,9 @@
  *   effectChanged3d  { active, previous }
  */
 
-(function () {
+window.addEventListener('ghostatiReady', plugins3dLoader, { once: true });
+
+function plugins3dLoader() {
    const canvas = document.getElementById('mesh3dOverlay');
    const overlayEl = document.getElementById('overlay');
    const container = document.getElementById('ghostyles3dContainer');
@@ -496,4 +498,4 @@
       await loadFromManifest();
       renderReloadButton();
    })();
-})();
+}

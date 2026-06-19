@@ -516,6 +516,10 @@ async function init() {
    setBusy(false);
    updateNudging();
    state.ghostatiEvents.dispatchEvent(new CustomEvent('ready', { detail: {} }));
+
+   // Questo evento segnala ai file con i loop, che l'ambiente è pronto, e troveranno
+   // state, els, e window.Ghostati pronti.
+   window.dispatchEvent(new CustomEvent('ghostatiReady'));
 }
 
 init();

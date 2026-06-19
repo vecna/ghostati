@@ -15,7 +15,9 @@
  * detection può richiedere ~100-200ms), il tick successivo viene saltato.
  */
 
-(function () {
+window.addEventListener('ghostatiReady', autoFindLoop, { once: true });
+
+function autoFindLoop() {
    const INTERVAL_MS = 2000;
 
    const G = window.Ghostati;
@@ -117,4 +119,5 @@
    }
 
    setInterval(tick, INTERVAL_MS);
-})();
+}
+

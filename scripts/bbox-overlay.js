@@ -10,7 +10,9 @@
  * Convenzione cromatica: rosso = identificato, verde = eluso, grigio = ignoto.
  */
 
-(function () {
+window.addEventListener('ghostatiReady', boxOverlayLoop, { once: true });
+
+function boxOverlayLoop() {
    const COLORS = {
       matched: 'rgba(255, 122, 122, 0.95)',
       eluded:  'rgba(61, 220, 151, 0.95)',
@@ -162,4 +164,4 @@
          lastObfMinDist = null;
       }
    });
-})();
+}
