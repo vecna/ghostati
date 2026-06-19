@@ -26,7 +26,7 @@ test.describe('Ghostati Face Matching E2E', () => {
 
     // 2. Wait for the application to initialize the (fake) webcam.
     // The logBox should contain "Webcam attiva" once initialization completes.
-    await expect(page.locator('#logBox')).toContainText('Webcam attiva', { timeout: 45000 });
+    await expect(page.locator('#logBox')).toContainText('MediaPipe FaceLandmarker pronto', { timeout: 45000 });
 
     // 3. Trigger a face scan by clicking the Scan button.
     await page.click('#scanBtn');
@@ -46,6 +46,6 @@ test.describe('Ghostati Face Matching E2E', () => {
     await page.click('#findBtn');
 
     // 8. Verify that a match is reported in the log.
-    await expect(page.locator('#logBox')).toContainText('TROVATO MATCH');
+    await expect(page.locator('#logBox')).toContainText('Corrispondenza trovata');
   });
 });

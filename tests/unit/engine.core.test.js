@@ -126,7 +126,7 @@ describe('engine core exports', () => {
     state.ghostatiEvents = new EventTarget();
 
     window.Ghostati = {
-      _computeMatchState: vi.fn(() => 'matched')
+      computeMatchState: vi.fn(() => 'matched')
     };
     globalThis.Ghostati = window.Ghostati;
 
