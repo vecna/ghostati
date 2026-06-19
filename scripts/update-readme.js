@@ -25,23 +25,48 @@ const COVERAGE_BADGE_URL = (() => {
   return 'https://img.shields.io/badge/coverage-UNKNOWN-lightgrey';
 })();
 const CHANGELOG_COMMITS = 5; // how many recent commits to list
+
 // ---------------------------
-// Helper to compute coverage percentage from various sources
+// Helper to compute coverage percentage from the JSON report produced by Vitest.
 function getCoverage() {
-  const coverageRoot = path.resolve(__dirname, '..', 'coverage'); 
-  // use lcov.info file
-  const lcovPath = path.join(coverageRoot, 'lcov.info');
-  if (fs.existsSync(lcovPath)) {
-    const lcov = fs.readFileSync(lcovPath, 'utf8');
-    const linesMatch = lcov.match(/LF:(\d+)/);
-    const hitsMatch = lcov.match(/LH:(\d+)/);
-    if (linesMatch && hitsMatch) {
-      const total = parseInt(linesMatch[1], 10);
-      const hit = parseInt(hitsMatch[1], 10);
-      if (total) return (hit / total) * 100;
+  const coverageRoot = path.resolve(__dirname, '..', 'coverage');
+  const jsonPath = path.join(coverageRoot, 'coverage-final.json');
+
+  // If the JSON report does not exist, fall back to null.
+  if (!fs.existsSync(jsonPath)) return null;
+
+  // The JSON format contains an object keyed by file paths.
+  // Each file entry has a `statementMap` (all statements) and an `f` map
+  // of execution counts.  The sum of the statementMap entries is the total
+  // number of statements, and the sum of the `f` values is the number of
+  // statements actually executed.
+  const raw = fs.readFileSync(jsonPath, 'utf8');
+  let report;
+  try {
+    report = JSON.parse(raw);
+  } catch {
+    // If parsing fails we cannot determine coverage.
+    return null;
+  }
+
+  let total = 0;
+  let covered = 0;
+
+  for (const file of Object.values(report)) {
+    // `statementMap` contains every statement in the file.
+    const statements = file.statementMap ? Object.keys(file.statementMap).length : 0;
+    total += statements;
+
+    // `s` maps statement IDs to execution counts.
+    if (file.s) {
+      for (const count of Object.values(file.s)) {
+        if (count > 0) covered += 1;
+      }
     }
   }
-  return null;
+
+  if (!total) return null;
+  return (covered / total) * 100;
 }
 
 // Helper to run a git command and get trimmed stdout

@@ -148,8 +148,8 @@ window.Ghostati = {
    getActiveEffect: () => state.activeEffect,
    getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => state.MATCH_THRESHOLD,
-   _computeMatchState: (descriptor) => computeMatchState(state, descriptor),
-   _compositeAndDetect: (liveResult) => compositeAndDetect(state, liveResult),
+   computeMatchState: (descriptor) => computeMatchState(descriptor),
+   compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
    detectorOptions: DETECTOR_OPTIONS
 };
 

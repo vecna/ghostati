@@ -13,7 +13,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import '../../scripts/ghostati.js';
+import '../../scripts/main.js';
+import { state } from '../../scripts/state.js';
+
+function getDbSnapshot() {
+  return structuredClone(state.db);
+}
+
+const Ghostati = window.Ghostati;
 
 /** Helper to create a mock CanvasRenderingContext2D with spy functions. */
 function createMockContext() {
@@ -36,6 +43,11 @@ function createMockContext() {
 }
 
 describe('Ghostati mathematical utilities', () => {
+  beforeEach(() => {
+    state.db = { nextId: 0, faces: [] };
+    state.MATCH_THRESHOLD = 0.58;
+  });
+
   it('distance returns Euclidean distance for equal-length vectors', () => {
     const a = [0, 0, 0];
     const b = [3, 4, 0];
@@ -126,16 +138,16 @@ describe('Ghostati higher‑level utilities', () => {
   });
 
   it('getDb returns a deep clone of internal DB state', () => {
-    // Ensure DB is initially empty.
-    const db1 = Ghostati.getDb();
+    state.db = { nextId: 0, faces: [] };
+    const db1 = getDbSnapshot();
     expect(db1.faces).toBeInstanceOf(Array);
     // Mutate returned object should not affect internal state.
     db1.faces.push({ id: 999 });
-    const db2 = Ghostati.getDb();
+    const db2 = getDbSnapshot();
     expect(db2.faces.find(f => f.id === 999)).toBeUndefined();
   });
 
   it('getMatchThreshold returns the configured constant', () => {
-    expect(Ghostati.getMatchThreshold()).toBeCloseTo(0.58);
+    expect(state.MATCH_THRESHOLD).toBeCloseTo(0.58);
   });
 });

@@ -1,5 +1,4 @@
 import { state } from './state.js';
-import { els } from './main.js';
 
 export function distance(a, b) {
    if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
@@ -14,7 +13,6 @@ export function distance(a, b) {
 export function computeMatchState(descriptor) {
    if (!descriptor || state.db.faces.length === 0) return 'unknown';
    const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
-   console.log("utils.computeMatchState:", minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded');
    return minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded';
 }
 
@@ -154,26 +152,29 @@ export function formatTime() {
 }
 
 export function updateLogDisplay() {
-   els.logBox.innerHTML = '';
+   const logBox = document.getElementById('logBox');
+   if (!logBox) return;
+   logBox.innerHTML = '';
 
    if (state.isLogExpanded) {
-      els.logBox.classList.add('expanded');
+      logBox.classList.add('expanded');
       const startIdx = Math.max(0, state.logsArchive.length - 100);
       for (let i = startIdx; i < state.logsArchive.length; i++) {
          const clone = state.logsArchive[i].cloneNode(true);
-         els.logBox.appendChild(clone);
+         logBox.appendChild(clone);
       }
-      els.logBox.scrollTop = els.logBox.scrollHeight;
+      logBox.scrollTop = logBox.scrollHeight;
    } else {
-      els.logBox.classList.remove('expanded');
+      logBox.classList.remove('expanded');
       let renderedCount = 0;
       for (let i = state.logsArchive.length - 1; i >= state.visibleLogStartIndex && renderedCount < 4; i--) {
          const clone = state.logsArchive[i].cloneNode(true);
-         els.logBox.insertBefore(clone, els.logBox.firstChild);
+         logBox.insertBefore(clone, logBox.firstChild);
          renderedCount++;
       }
    }
 }
+
 
 export function setLog(message, sourcePlugin = null) {
    const line = document.createElement('div');
