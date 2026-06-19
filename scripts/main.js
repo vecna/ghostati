@@ -1,5 +1,8 @@
-/* 
-import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, formatTime } from './utils.js'; */
+import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog } from './utils.js';
+import { state } from './state.js';
+import { loadDb, renderDbStats, clearDb } from './db.js';
+import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
+import { startCamera, resizeCanvas, startEffectLoop, triggerOverlayFadeout } from './camera.js';
 
 const MODEL_URLS = {
    tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
@@ -8,13 +11,12 @@ const MODEL_URLS = {
    ageGender: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/age_gender_model'
 };
 
-const STORAGE_KEY = 'local-face-lab-db-v1';
-const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
+export const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
    inputSize: 416,
    scoreThreshold: 0.5
 });
 
-const els = {
+export const els = {
    video: document.getElementById('video'),
    overlay: document.getElementById('overlay'),
    viewer: document.getElementById('viewer'),
@@ -72,109 +74,21 @@ if (els.switchCameraBtn) {
    });
 }
 
-// DEBUG: intercetta tutti gli errori non catturati nei listener
-window.addEventListener('unhandledrejection', e => {
-   console.error('[unhandledrejection]', e.reason);
-});
-
-const state = {
-   db: loadDb(),
-   activeEffect: null,
-   effectLoopHandle: null,
-   effectInferenceInFlight: false,
-   lastEffectRun: 0,
-   isSystemBusy: false,
-   lastKnownEffectResult: null,
-   lastCompositedCanvas: null,
-   isMirrored: false,
-   currentFacingMode: 'user',
-   logsArchive: [],
-   visibleLogStartIndex: 0,
-   overlayFadeTimeout: null,
-   isLogExpanded: false,
-   nudgeStep: localStorage.getItem('ghostati-nudge-done') ? 6 : 1,
-   MATCH_THRESHOLD: 0.58,
-   ghostatiEvents: new EventTarget(),
-   loadedGhostyles: new Map(),
-}
-
-// DEBUG: log di tutti gli eventi del bus
-const _origDispatch = state.ghostatiEvents.dispatchEvent.bind(state.ghostatiEvents);
-state.ghostatiEvents.dispatchEvent = function (event) {
-   if (!(event.type === "landmarks3d" ||
-      event.type === "detection" ||
-      event.type === "matchStateChanged"))
-      console.debug(`[event:${event.type}]`, event.detail);
-   return _origDispatch(event);
-};
-
 function updateEffectStats() {
    const style = state.loadedGhostyles.get(state.activeEffect);
    els.effectName.textContent = style ? style.name : 'nessuno';
    els.effectTracking.textContent = state.activeEffect ? 'on' : 'off';
 }
 
-function updateLogDisplay() {
-   els.logBox.innerHTML = '';
 
-   if (state.isLogExpanded) {
-      els.logBox.classList.add('expanded');
-      const startIdx = Math.max(0, state.logsArchive.length - 100);
-      for (let i = startIdx; i < state.logsArchive.length; i++) {
-         const clone = state.logsArchive[i].cloneNode(true);
-         els.logBox.appendChild(clone);
-      }
-      els.logBox.scrollTop = els.logBox.scrollHeight;
-   } else {
-      els.logBox.classList.remove('expanded');
-      let renderedCount = 0;
-      for (let i = state.logsArchive.length - 1; i >= state.visibleLogStartIndex && renderedCount < 4; i--) {
-         const clone = state.logsArchive[i].cloneNode(true);
-         els.logBox.insertBefore(clone, els.logBox.firstChild);
-         renderedCount++;
-      }
-   }
-}
-
-function setLog(message, sourcePlugin = null) {
-   const line = document.createElement('div');
-   line.className = 'log-line';
-
-   const timeSpan = document.createElement('span');
-   timeSpan.style.color = 'var(--muted)';
-   timeSpan.style.marginRight = '8px';
-   timeSpan.textContent = `[${formatTime()}]`;
-   line.appendChild(timeSpan);
-
-   if (sourcePlugin) {
-      const span = document.createElement('span');
-      span.style.color = 'var(--accent-2)';
-      span.style.fontWeight = '800';
-      span.style.marginRight = '8px';
-      span.textContent = `[${sourcePlugin.toUpperCase()}]`;
-      line.appendChild(span);
-   }
-   const textSpan = document.createElement('span');
-   textSpan.textContent = message;
-   line.appendChild(textSpan);
-
-   state.logsArchive.push(line);
-   if (state.logsArchive.length > 100) {
-      state.logsArchive.shift();
-      if (state.visibleLogStartIndex > 0) state.visibleLogStartIndex--;
-   }
-
-   updateLogDisplay();
-}
-
-function setStatus(kind, text) {
+export function setStatus(kind, text) {
    els.statusDot.className = 'status-dot';
    if (kind === 'live') els.statusDot.classList.add('live');
    if (kind === 'error') els.statusDot.classList.add('error');
    els.statusText.textContent = text;
 }
 
-function setBusy(isBusy) {
+export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
    [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
       if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
@@ -186,7 +100,7 @@ function setBusy(isBusy) {
 
 
 
-function clearOverlay() {
+export function clearOverlay() {
    const ctx = els.overlay.getContext('2d');
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
    els.overlay.style.transition = 'none';
@@ -194,7 +108,7 @@ function clearOverlay() {
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
-function updateNudging() {
+export function updateNudging() {
    console.log("nudging - Temporaneamente disabilitato - step", state.nudgeStep);
 }
 
@@ -381,16 +295,6 @@ async function loadModels() {
    ]);
 }
 
-function clearDb() {
-   state.db = { nextId: 0, faces: [] };
-   persistDb(state);
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: 'unknown', source: 'clear' }
-   }));
-   setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
-   renderDbStats(state, els);
-}
-
 function handleError(err, fallbackMessage) {
    console.log('Errore:', fallbackMessage);
    console.error(err);
@@ -400,9 +304,8 @@ function handleError(err, fallbackMessage) {
    setLog(fallbackMessage + detail);
 }
 
-
-
 async function init() {
+   state.db = loadDb();
    renderDbStats(state, els);
    updateEffectStats();
    resizeCanvas(els);
@@ -536,13 +439,13 @@ async function init() {
 
    els.clearDbBtn.addEventListener('click', () => {
       const svgIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-      if (els.clearDbBtn.textContent === 'Conferma azzeramento?') {
-         clearDb();
+      if (els.clearDbBtn.textContent === 'Conferma?') {
+         clearDb(state, els);
          els.clearDbBtn.innerHTML = svgIcon;
       } else {
-         els.clearDbBtn.textContent = 'Conferma azzeramento?';
+         els.clearDbBtn.textContent = 'Conferma?';
          setTimeout(() => {
-            if (els.clearDbBtn.textContent === 'Conferma azzeramento?') {
+            if (els.clearDbBtn.textContent === 'Conferma?') {
                els.clearDbBtn.innerHTML = svgIcon;
             }
          }, 4000);
@@ -593,6 +496,21 @@ async function init() {
       handleError(err, 'Impossibile inizializzare webcam: verifica i permessi camera per ' + window.location.origin);
       return;
    }
+
+   // DEBUG: intercetta tutti gli errori non catturati nei listener
+   window.addEventListener('unhandledrejection', e => {
+      console.error('[unhandledrejection]', e.reason);
+   });
+
+   // DEBUG: log di tutti gli eventi del bus
+   const _origDispatch = state.ghostatiEvents.dispatchEvent.bind(state.ghostatiEvents);
+   state.ghostatiEvents.dispatchEvent = function (event) {
+      if (!(event.type === "landmarks3d" ||
+         event.type === "detection" ||
+         event.type === "matchStateChanged"))
+         console.debug(`[event:${event.type}]`, event.detail);
+      return _origDispatch(event);
+   };
 
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);

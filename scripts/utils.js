@@ -1,5 +1,7 @@
+import { state } from './state.js';
+import { els } from './main.js';
 
-function distance(a, b) {
+export function distance(a, b) {
    if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
    let sum = 0;
    for (let i = 0; i < a.length; i += 1) {
@@ -9,31 +11,31 @@ function distance(a, b) {
    return Math.sqrt(sum);
 }
 
-function computeMatchState(stateo, descriptor) {
-   if (!descriptor || stateo.db.faces.length === 0) return 'unknown';
-   const minDist = Math.min(...stateo.db.faces.map(e => distance(descriptor, e.descriptor)));
-   console.log("utils.computeMatchState:", minDist <= stateo.MATCH_THRESHOLD ? 'matched' : 'eluded');
-   return minDist <= stateo.MATCH_THRESHOLD ? 'matched' : 'eluded';
+export function computeMatchState(descriptor) {
+   if (!descriptor || state.db.faces.length === 0) return 'unknown';
+   const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
+   console.log("utils.computeMatchState:", minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded');
+   return minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded';
 }
 
-function avgPoint(points) {
+export function avgPoint(points) {
    const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
    return { x: total.x / points.length, y: total.y / points.length };
 }
 
-function lerp(a, b, t) {
+export function lerp(a, b, t) {
    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
-function scaleFrom(center, point, scale) {
+export function scaleFrom(center, point, scale) {
    return { x: center.x + (point.x - center.x) * scale, y: center.y + (point.y - center.y) * scale };
 }
 
-function point(x, y) {
+export function point(x, y) {
    return { x, y };
 }
 
-function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null, lineWidth = 2) {
+export function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null, lineWidth = 2) {
    if (!points.length) return;
    ctx.beginPath();
    ctx.moveTo(points[0].x, points[0].y);
@@ -50,7 +52,7 @@ function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null, lineW
    }
 }
 
-function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = false) {
+export function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = false) {
    if (!points.length) return;
    ctx.save();
    ctx.beginPath();
@@ -63,7 +65,7 @@ function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = false) {
    ctx.restore();
 }
 
-function drawLabel(ctx, text, x, y) {
+export function drawLabel(ctx, text, x, y) {
    ctx.save();
    ctx.font = '700 14px Inter, system-ui, sans-serif';
    const padX = 10;
@@ -88,7 +90,7 @@ function drawLabel(ctx, text, x, y) {
    ctx.restore();
 }
 
-function roundRect(ctx, x, y, w, h, r) {
+export function roundRect(ctx, x, y, w, h, r) {
    ctx.beginPath();
    ctx.moveTo(x + r, y);
    ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -98,7 +100,7 @@ function roundRect(ctx, x, y, w, h, r) {
    ctx.closePath();
 }
 
-function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
+export function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
    const center = avgPoint(eye);
    const topBrow = eyebrow.map((b, idx) => {
       const eyeRef = eye[Math.min(idx + 1, eye.length - 1)] || eye[eye.length - 1];
@@ -108,7 +110,7 @@ function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
    return [...topBrow, expandedEye[3], expandedEye[4], expandedEye[5], expandedEye[0]];
 }
 
-function drawEyeWing(ctx, eye, eyebrow, label, tone) {
+export function drawEyeWing(ctx, eye, eyebrow, label, tone) {
    const eyeShape = expandEyePolygon(eye, eyebrow, tone.scale, tone.brow);
    drawClosedPath(ctx, eyeShape, tone.fill, tone.stroke, 2.2);
    const outerCorner = tone.side === 'left'
@@ -123,7 +125,7 @@ function drawEyeWing(ctx, eye, eyebrow, label, tone) {
    drawLabel(ctx, label, tailTop.x + (tone.side === 'left' ? -52 : 10), tailTop.y - 10);
 }
 
-function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, label, fill, stroke) {
+export function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, label, fill, stroke) {
    const upper = lerp(anchor, noseSide, 0.42);
    const lower = lerp(mouthCorner, jawPoint, 0.36);
    const side = lerp(anchor, jawPoint, 0.54);
@@ -139,14 +141,67 @@ function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, label, fil
    drawLabel(ctx, label, side.x - 20, side.y - 12);
 }
 
-function drawContourBand(ctx, pts, label) {
+export function drawContourBand(ctx, pts, label) {
    drawOpenPath(ctx, pts, 'rgba(193, 154, 107, 0.95)', 7, true);
    drawOpenPath(ctx, pts, 'rgba(90, 54, 33, 0.22)', 16);
    const mid = pts[Math.floor(pts.length / 2)];
    drawLabel(ctx, label, mid.x + 10, mid.y - 6);
 }
 
-function formatTime() {
+export function formatTime() {
    const now = new Date();
    return now.toTimeString().split(' ')[0]; // Returns HH:MM:SS
+}
+
+function updateLogDisplay() {
+   els.logBox.innerHTML = '';
+
+   if (state.isLogExpanded) {
+      els.logBox.classList.add('expanded');
+      const startIdx = Math.max(0, state.logsArchive.length - 100);
+      for (let i = startIdx; i < state.logsArchive.length; i++) {
+         const clone = state.logsArchive[i].cloneNode(true);
+         els.logBox.appendChild(clone);
+      }
+      els.logBox.scrollTop = els.logBox.scrollHeight;
+   } else {
+      els.logBox.classList.remove('expanded');
+      let renderedCount = 0;
+      for (let i = state.logsArchive.length - 1; i >= state.visibleLogStartIndex && renderedCount < 4; i--) {
+         const clone = state.logsArchive[i].cloneNode(true);
+         els.logBox.insertBefore(clone, els.logBox.firstChild);
+         renderedCount++;
+      }
+   }
+}
+
+export function setLog(message, sourcePlugin = null) {
+   const line = document.createElement('div');
+   line.className = 'log-line';
+
+   const timeSpan = document.createElement('span');
+   timeSpan.style.color = 'var(--muted)';
+   timeSpan.style.marginRight = '8px';
+   timeSpan.textContent = `[${formatTime()}]`;
+   line.appendChild(timeSpan);
+
+   if (sourcePlugin) {
+      const span = document.createElement('span');
+      span.style.color = 'var(--accent-2)';
+      span.style.fontWeight = '800';
+      span.style.marginRight = '8px';
+      span.textContent = `[${sourcePlugin.toUpperCase()}]`;
+      line.appendChild(span);
+   }
+   const textSpan = document.createElement('span');
+   textSpan.textContent = message;
+   line.appendChild(textSpan);
+
+   state.logsArchive.push(line);
+   if (state.logsArchive.length > 100) {
+      state.logsArchive.shift();
+      if (state.visibleLogStartIndex > 0) state.visibleLogStartIndex--;
+   }
+
+   updateLogDisplay();
 }

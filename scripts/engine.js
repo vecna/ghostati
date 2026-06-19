@@ -1,18 +1,24 @@
+import { state } from './state.js';
+import { els, clearOverlay, updateNudging, DETECTOR_OPTIONS } from './main.js';
+import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
+import { triggerOverlayFadeout, resizeCanvas } from './camera.js';
+import { persistDb, renderDbStats } from './db.js';
+import { setLog } from './utils.js';
 
-async function detectCurrentFace(stateo, elso, drawOverlay) {
+export async function detectCurrentFace(drawOverlay) {
    clearOverlay();
-   const result = await faceapi.detectSingleFace(elso.video, DETECTOR_OPTIONS)
+   const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS)
       .withFaceLandmarks()
       .withAgeAndGender()
       .withFaceDescriptor();
 
    if (!result) {
-      stateo.lastKnownEffectResult = null;
+      state.lastKnownEffectResult = null;
       setLog('Nessun volto rilevato nella webcam.');
       return null;
    }
 
-   if (drawOverlay) drawResult(stateo, elso, result);
+   if (drawOverlay) drawResult(result);
    return result;
 }
 
@@ -23,7 +29,7 @@ async function detectCurrentFace(stateo, elso, drawOverlay) {
 // con una rilassata (0.1) per estrarre comunque metriche numeriche dal composito —
 // utile come "indicatore di efficacia" del makeup anche oltre la soglia di rilevamento.
 // `weakDetection` segnala quando si è dovuto fare il fallback.
-async function compositeAndDetect(stateo, liveResult) {
+export async function compositeAndDetect(liveResult) {
    const canvas = document.createElement('canvas');
    canvas.width = els.overlay.width;
    canvas.height = els.overlay.height;
@@ -31,7 +37,7 @@ async function compositeAndDetect(stateo, liveResult) {
 
    ctx.drawImage(els.video, 0, 0, canvas.width, canvas.height);
 
-   const style = stateo.loadedGhostyles.get(stateo.activeEffect);
+   const style = state.loadedGhostyles.get(state.activeEffect);
    if (style && style.module.onDraw) {
       ctx.save();
       ctx.lineCap = 'round';
@@ -41,7 +47,7 @@ async function compositeAndDetect(stateo, liveResult) {
       ctx.restore();
    }
 
-   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('beforeEfficacyComposite', {
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('beforeEfficacyComposite', {
       detail: { canvas, ctx, liveResult }
    }));
 
@@ -61,37 +67,37 @@ async function compositeAndDetect(stateo, liveResult) {
 }
 
 
-async function runEffectPass(stateo, elso) {
-   if (stateo.isSystemBusy || stateo.effectInferenceInFlight || els.video.readyState < 2) return;
-   stateo.effectInferenceInFlight = true;
+export async function runEffectPass() {
+   if (state.isSystemBusy || state.effectInferenceInFlight || els.video.readyState < 2) return;
+   state.effectInferenceInFlight = true;
    try {
       const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
-      const result = stateo.activeEffect ? await detector.withFaceLandmarks() : await detector;
+      const result = state.activeEffect ? await detector.withFaceLandmarks() : await detector;
 
       if (!result) {
-         stateo.lastKnownEffectResult = null;
-         if (stateo.activeEffect) clearOverlay();
-      } else if (stateo.activeEffect) {
-         drawEffectOverlay(stateo, elso, result, false);
+         state.lastKnownEffectResult = null;
+         if (state.activeEffect) clearOverlay();
+      } else if (state.activeEffect) {
+         drawEffectOverlay(result, false);
       } else {
-         stateo.lastKnownEffectResult = result;
+         state.lastKnownEffectResult = result;
       }
 
-      stateo.ghostatiEvents.dispatchEvent(new CustomEvent('detection', {
-         detail: { result: result || null, activeEffect: stateo.activeEffect }
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('detection', {
+         detail: { result: result || null, activeEffect: state.activeEffect }
       }));
    } catch (err) {
       console.error(err);
    } finally {
-      stateo.effectInferenceInFlight = false;
+      state.effectInferenceInFlight = false;
    }
 }
 
-function drawEffectOverlay(stateo, elso, result, includeDetectionScaffold = false) {
-   resizeCanvas(elso);
-   const ctx = elso.overlay.getContext('2d');
-   ctx.clearRect(0, 0, elso.overlay.width, elso.overlay.height);
-   const resized = faceapi.resizeResults(result, { width: elso.overlay.width, height: elso.overlay.height });
+export function drawEffectOverlay(result, includeDetectionScaffold = false) {
+   resizeCanvas(els);
+   const ctx = els.overlay.getContext('2d');
+   ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
+   const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
    if (!resized.detection) {
       console.log("drawEffectOverlay: no detection?", resized);
       // messo questo log perché a volte era undefined?
@@ -99,9 +105,9 @@ function drawEffectOverlay(stateo, elso, result, includeDetectionScaffold = fals
    } else {
       console.log("drawEffectOverlay: detection OK", resized.detection);
    }
-   if (includeDetectionScaffold) drawDetectionScaffold(stateo, ctx, resized);
-   if (stateo.activeEffect) {
-      const style = stateo.loadedGhostyles.get(stateo.activeEffect);
+   if (includeDetectionScaffold) drawDetectionScaffold(resized);
+   if (state.activeEffect) {
+      const style = state.loadedGhostyles.get(state.activeEffect);
       if (style && style.module.onDraw) {
          ctx.save();
          ctx.lineCap = 'round';
@@ -110,10 +116,10 @@ function drawEffectOverlay(stateo, elso, result, includeDetectionScaffold = fals
          ctx.restore();
       }
    }
-   stateo.lastKnownEffectResult = result;
+   state.lastKnownEffectResult = result;
 }
 
-function drawDetectionScaffold(stateo, ctx, resized) {
+export function drawDetectionScaffold(ctx, resized) {
    const box = resized.detection.box;
    const landmarks = resized.landmarks;
    const leftEye = landmarks.getLeftEye();
@@ -165,7 +171,7 @@ function drawDetectionScaffold(stateo, ctx, resized) {
    const startX = box.x;
    const startY = Math.max(16, box.y - boxHeight - 8);
 
-   if (stateo.isMirrored) {
+   if (state.isMirrored) {
       ctx.translate(startX + boxWidth / 2, startY + boxHeight / 2);
       ctx.scale(-1, 1);
       ctx.translate(-(startX + boxWidth / 2), -(startY + boxHeight / 2));
@@ -185,14 +191,14 @@ function drawDetectionScaffold(stateo, ctx, resized) {
    ctx.restore();
 }
 
-function drawResult(stateo, elso, result) {
-   resizeCanvas(elso);
-   const ctx = elso.overlay.getContext('2d');
-   ctx.clearRect(0, 0, elso.overlay.width, elso.overlay.height);
-   const resized = faceapi.resizeResults(result, { width: elso.overlay.width, height: elso.overlay.height });
-   drawDetectionScaffold(stateo, ctx, resized);
-   if (stateo.activeEffect) {
-      const style = stateo.loadedGhostyles.get(stateo.activeEffect);
+export function drawResult(result) {
+   resizeCanvas(els);
+   const ctx = els.overlay.getContext('2d');
+   ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
+   const resized = faceapi.resizeResults(result, { width: els.overlay.width, height: els.overlay.height });
+   drawDetectionScaffold(ctx, resized);
+   if (state.activeEffect) {
+      const style = state.loadedGhostyles.get(state.activeEffect);
       if (style && style.module.onDraw) {
          ctx.save();
          ctx.lineCap = 'round';
@@ -201,66 +207,66 @@ function drawResult(stateo, elso, result) {
          ctx.restore();
       }
    }
-   stateo.lastKnownEffectResult = result;
+   state.lastKnownEffectResult = result;
 }
 
 
-async function scanFace(stateo, elso) {
-   const result = await detectCurrentFace(stateo, elso, true);
+export async function scanFace() {
+   const result = await detectCurrentFace(true);
    if (!result) return;
-   triggerOverlayFadeout(stateo, elso);
+   triggerOverlayFadeout();
    const age = Math.round(result.age);
    const gender = result.gender || 'n/d';
    const confidence = typeof result.genderProbability === 'number' ? ` (${Math.round(result.genderProbability * 100)}%)` : '';
    const score = result.detection.score;
    setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
 
-   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: Ghostati._computeMatchState(result.descriptor), source: 'scan', score }
    }));
 
-   if (stateo.nudgeStep === 1) { stateo.nudgeStep = 2; updateNudging(); }
+   if (state.nudgeStep === 1) { state.nudgeStep = 2; updateNudging(); }
 }
 
-async function saveFace(stateo, elso) {
-   const result = await detectCurrentFace(stateo, elso, true);
+export async function saveFace() {
+   const result = await detectCurrentFace(true);
    if (!result) return;
-   triggerOverlayFadeout(stateo, elso);
-   const id = stateo.db.nextId;
-   stateo.db.nextId += 1;
-   stateo.db.faces.push({
+   triggerOverlayFadeout(els);
+   const id = state.db.nextId;
+   state.db.nextId += 1;
+   state.db.faces.push({
       id,
       descriptor: Array.from(result.descriptor),
       age: Math.round(result.age),
       gender: result.gender || null,
       savedAt: new Date().toISOString()
    });
-   persistDb(stateo);
-   renderDbStats(stateo, elso);
+   persistDb();
+   renderDbStats();
    const score = result.detection.score;
    setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
 
-   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: window.Ghostati._computeMatchState(result.descriptor), source: 'save', score }
    }));
 
    if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
 }
 
-async function findFace(stateo, elso) {
-   if (stateo.db.faces.length === 0) {
+export async function findFace() {
+   if (state.db.faces.length === 0) {
       setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
       clearOverlay();
       return;
    }
 
-   console.log("Faccie nel DB:", stateo.db.faces);
-   const liveResult = await detectCurrentFace(stateo, elso, true);
+   console.log("Faccie nel DB:", state.db.faces);
+   const liveResult = await detectCurrentFace(true);
    if (!liveResult) return;
-   triggerOverlayFadeout(stateo, elso);
+   triggerOverlayFadeout();
 
    const liveScore = liveResult.detection.score;
-   const liveDistances = stateo.db.faces
+   const liveDistances = state.db.faces
       .map(entry => ({ id: entry.id, distance: distance(liveResult.descriptor, entry.descriptor) }))
       .sort((a, b) => a.distance - b.distance);
    const liveMinDist = liveDistances[0].distance;
@@ -276,11 +282,11 @@ async function findFace(stateo, elso) {
    let obfMinId = null;
    let weakDetection = false;
    let detectionTotallyFailed = false;
-   if (hasActivePlugin(stateo)) {
-      const composite = await compositeAndDetect(stateo, liveResult);
+   if (hasActivePlugin()) {
+      const composite = await compositeAndDetect(liveResult);
       if (composite.obfuscatedResult) {
          obfScore = composite.obfuscatedResult.detection.score;
-         const obfDistances = stateo.db.faces
+         const obfDistances = state.db.faces
             .map(e => ({ id: e.id, distance: distance(composite.obfuscatedResult.descriptor, e.descriptor) }))
             .sort((a, b) => a.distance - b.distance);
          obfMinDist = obfDistances[0].distance;
@@ -304,12 +310,12 @@ async function findFace(stateo, elso) {
    } else {
       const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
       const useId = obfMinDist != null ? obfMinId : liveMinId;
-      if (useDist <= stateo.MATCH_THRESHOLD) {
+      if (useDist <= state.MATCH_THRESHOLD) {
          detectionState = 'matched';
-         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${stateo.MATCH_THRESHOLD.toFixed(2)}).`;
+         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${state.MATCH_THRESHOLD.toFixed(2)}).`;
       } else {
          detectionState = 'eluded';
-         headline = `Nessuna corrispondenza sotto soglia ${stateo.MATCH_THRESHOLD.toFixed(2)}.`;
+         headline = `Nessuna corrispondenza sotto soglia ${state.MATCH_THRESHOLD.toFixed(2)}.`;
       }
    }
 
@@ -318,7 +324,7 @@ async function findFace(stateo, elso) {
       : `distanza live: ${liveMinDist.toFixed(3)}`;
    setLog(`${headline} ${distLog}.`);
 
-   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: {
          detectionState,
          source: 'find',
@@ -333,32 +339,32 @@ async function findFace(stateo, elso) {
    }));
 }
 
-async function testMakeupEfficacy(stateo, elso) {
-   const result = await detectCurrentFace(stateo, elso, false);
+export async function testMakeupEfficacy() {
+   const result = await detectCurrentFace(false);
    if (!result) {
       setLog('Nessun volto di base trovato. Avvicinati alla webcam.');
       return;
    }
 
-   const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(stateo, elso, result);
+   const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(result);
 
-   stateo.lastCompositedCanvas = canvas;
-   elso.copyMakeupBtn.disabled = false;
+   state.lastCompositedCanvas = canvas;
+   els.copyMakeupBtn.disabled = false;
 
    setLog('Analisi in corso... sottopongo il compositing a face-api');
 
    const liveScore = result.detection.score;
-   const liveMinDist = stateo.db.faces.length > 0
-      ? Math.min(...stateo.db.faces.map(e => distance(result.descriptor, e.descriptor)))
+   const liveMinDist = state.db.faces.length > 0
+      ? Math.min(...state.db.faces.map(e => distance(result.descriptor, e.descriptor)))
       : null;
    const obfScore = obfuscatedResult ? obfuscatedResult.detection.score : null;
-   const obfMinDist = obfuscatedResult && stateo.db.faces.length > 0
-      ? Math.min(...stateo.db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
+   const obfMinDist = obfuscatedResult && state.db.faces.length > 0
+      ? Math.min(...state.db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
       : null;
 
    // Suffix metriche da appendere ai messaggi
    const distLog = (() => {
-      if (stateo.db.faces.length === 0) {
+      if (state.db.faces.length === 0) {
          // Senza DB la metrica è self-vs-post (non ha senso "min DB")
          if (obfuscatedResult) {
             const selfDist = distance(result.descriptor, obfuscatedResult.descriptor);
@@ -373,12 +379,12 @@ async function testMakeupEfficacy(stateo, elso) {
 
    // Decisione di stato analoga a findFace: weakDetection o detection totalmente fallita → eluso
    if (!obfuscatedResult) {
-      let detectionState = stateo.db.faces.length === 0 ? 'unknown' : 'eluded';
-      const headline = stateo.db.faces.length === 0
+      let detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
+      const headline = state.db.faces.length === 0
          ? `Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.`
          : `Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l'algoritmo di rilevamento.`;
       setLog(`${headline} ${distLog}.`);
-      stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
          detail: {
             detectionState,
             source: 'efficacy',
@@ -393,41 +399,41 @@ async function testMakeupEfficacy(stateo, elso) {
    }
 
    if (weakDetection) {
-      const detectionState = stateo.db.faces.length === 0 ? 'unknown' : 'eluded';
+      const detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
       setLog(`Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto. ${distLog}.`);
-      stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
          detail: { detectionState, source: 'efficacy', score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: true }
       }));
       return;
    }
 
-   if (stateo.db.faces.length === 0) {
+   if (state.db.faces.length === 0) {
       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      const detectionState = dist > stateo.MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = dist > stateo.MATCH_THRESHOLD
+      const detectionState = dist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = dist > state.MATCH_THRESHOLD
          ? `Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!`
          : `Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta.`;
       setLog(`${headline} distanza self pre→post: ${dist.toFixed(3)}.`);
-      stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
          detail: { detectionState, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
       }));
    } else {
-      const detectionState = obfMinDist > stateo.MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = obfMinDist > stateo.MATCH_THRESHOLD
+      const detectionState = obfMinDist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
+      const headline = obfMinDist > state.MATCH_THRESHOLD
          ? `Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile.`
          : `Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.`;
       setLog(`${headline} ${distLog}.`);
-      stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
          detail: { detectionState, source: 'efficacy', distance: obfMinDist, score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: false }
       }));
    }
 }
 
-function hasActivePlugin(stateo) {
+export function hasActivePlugin() {
    const G = window.Ghostati;
    const a2d = typeof G.getActiveEffect === 'function' && G.getActiveEffect();
    const a3d = typeof G.getActiveEffect3d === 'function' && G.getActiveEffect3d();
    let retv = !!(a2d || a3d);
-   console.log("btw hasActivePlugin debug:", retv, stateo.activeEffect);
+   console.log("btw hasActivePlugin debug:", retv, state.activeEffect);
    return retv;
 }

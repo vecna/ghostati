@@ -1,5 +1,10 @@
+import { els } from './main.js';
+import { state } from './state.js';
+import { setLog } from './utils.js';
 
-function loadDb() {
+export const STORAGE_KEY = 'local-face-lab-db-v1';
+
+export function loadDb() {
    try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return { nextId: 0, faces: [] };
@@ -13,22 +18,32 @@ function loadDb() {
    }
 }
 
-function persistDb(stateo) {
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(stateo.db));
-   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
+export function persistDb() {
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
       detail: {
-         count: stateo.db.faces.length,
-         nextId: stateo.db.nextId
+         count: state.db.faces.length,
+         nextId: state.db.nextId
       }
    }));
 }
 
-function renderDbStats(stateo, elso) {
-   elso.dbCount.textContent = String(stateo.db.faces.length);
-   elso.nextId.textContent = String(stateo.db.nextId);
-   elso.thresholdLabel.textContent = stateo.MATCH_THRESHOLD.toFixed(2);
+export function renderDbStats() {
+   els.dbCount.textContent = String(state.db.faces.length);
+   els.nextId.textContent = String(state.db.nextId);
+   els.thresholdLabel.textContent = state.MATCH_THRESHOLD.toFixed(2);
 
-   elso.dbCountBadge.textContent = String(stateo.db.faces.length);
-   // elso.dbCountBadge.style.display = stateo.db.faces.length > 0 ? 'inline-block' : 'none';
-   elso.dbCountBadge.style.display = 'inline-block'; // sempre, anche quando è 0.
+   els.dbCountBadge.textContent = String(state.db.faces.length);
+   // els.dbCountBadge.style.display = state.db.faces.length > 0 ? 'inline-block' : 'none';
+   els.dbCountBadge.style.display = 'inline-block'; // sempre, anche quando è 0.
+}
+
+export function clearDb() {
+   state.db = { nextId: 0, faces: [] };
+   persistDb();
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { detectionState: 'unknown', source: 'clear' }
+   }));
+   setLog('Archivio locale cancellato. Il contatore ID riparte da 0.');
+   renderDbStats();
 }
