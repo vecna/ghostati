@@ -19,7 +19,7 @@
    const INTERVAL_MS = 2000;
 
    const G = window.Ghostati;
-   if (!G || !G.events || typeof G.compositeAndDetect !== 'function' || !G.detectorOptions) {
+   if (!G || !G.events || typeof G._compositeAndDetect !== 'function' || !G.detectorOptions) {
       console.warn('[auto-find-loop] dipendenze mancanti, skip init');
       return;
    }
@@ -34,12 +34,6 @@
    }
 
    let inFlight = false;
-
-   function hasActivePlugin() {
-      const a2d = typeof G.getActiveEffect === 'function' && G.getActiveEffect();
-      const a3d = typeof G.getActiveEffect3d === 'function' && G.getActiveEffect3d();
-      return !!(a2d || a3d);
-   }
 
    function minDistanceTo(descriptor, faces) {
       let bestDist = Infinity;
@@ -77,8 +71,8 @@
          let weakDetection = false;
          let detectionTotallyFailed = false;
 
-         if (hasActivePlugin()) {
-            const composite = await G.compositeAndDetect(liveResult);
+         if (hasActivePlugin(state)) {
+            const composite = await G._compositeAndDetect(liveResult);
             if (composite && composite.obfuscatedResult) {
                obfScore = composite.obfuscatedResult.detection.score;
                const obf = minDistanceTo(composite.obfuscatedResult.descriptor, db.faces);

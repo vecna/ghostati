@@ -15,7 +15,7 @@ function loadDb() {
 
 function persistDb(stateo) {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateo.db));
-   ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
+   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
       detail: {
          count: stateo.db.faces.length,
          nextId: stateo.db.nextId

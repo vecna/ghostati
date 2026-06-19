@@ -9,11 +9,11 @@ function distance(a, b) {
    return Math.sqrt(sum);
 }
 
-function computeMatchState(descriptor, dbobj, match_threshold) {
-   if (!descriptor || dbobj.faces.length === 0) return 'unknown';
-   const minDist = Math.min(...dbobj.faces.map(e => distance(descriptor, e.descriptor)));
-   console.log("utils.computeMatchState:", minDist <= match_threshold ? 'matched' : 'eluded');
-   return minDist <= match_threshold ? 'matched' : 'eluded';
+function computeMatchState(stateo, descriptor) {
+   if (!descriptor || stateo.db.faces.length === 0) return 'unknown';
+   const minDist = Math.min(...stateo.db.faces.map(e => distance(descriptor, e.descriptor)));
+   console.log("utils.computeMatchState:", minDist <= stateo.MATCH_THRESHOLD ? 'matched' : 'eluded');
+   return minDist <= stateo.MATCH_THRESHOLD ? 'matched' : 'eluded';
 }
 
 function avgPoint(points) {
