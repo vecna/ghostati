@@ -38,27 +38,27 @@ function clamp(value, min = 0, max = 1) {
 }
 
 function updateUnlockState() {
-  const shouldUnlock = effecteffectState.revealRatio >= SETTINGS.unlockThreshold;
-  if (shouldUnlock === effecteffectState.unlocked) {
+  const shouldUnlock = effectState.revealRatio >= SETTINGS.unlockThreshold;
+  if (shouldUnlock === effectState.unlocked) {
     return;
   }
 
-  effecteffectState.unlocked = shouldUnlock;
+  effectState.unlocked = shouldUnlock;
   hero.classList.toggle('is-unlocked', shouldUnlock);
   topbar?.classList.toggle('is-unlocked', shouldUnlock);
   link.setAttribute('aria-disabled', String(!shouldUnlock));
   link.tabIndex = shouldUnlock ? 0 : -1;
 
-  if (effecteffectState.unlockBlinkTimeout) {
-    clearTimeout(effecteffectState.unlockBlinkTimeout);
-    effecteffectState.unlockBlinkTimeout = null;
+  if (effectState.unlockBlinkTimeout) {
+    clearTimeout(effectState.unlockBlinkTimeout);
+    effectState.unlockBlinkTimeout = null;
   }
 
   if (shouldUnlock) {
     hero.classList.add('just-unlocked');
-    effecteffectState.unlockBlinkTimeout = window.setTimeout(() => {
+    effectState.unlockBlinkTimeout = window.setTimeout(() => {
       hero.classList.remove('just-unlocked');
-      effecteffectState.unlockBlinkTimeout = null;
+      effectState.unlockBlinkTimeout = null;
     }, 1400);
     return;
   }
@@ -71,7 +71,7 @@ function updateProgressDisplay() {
     return;
   }
 
-  const percentage = Math.round(clamp(effecteffectState.revealRatio) * 100);
+  const percentage = Math.round(clamp(effectState.revealRatio) * 100);
   progressDisplay.textContent = `${percentage}%`;
 }
 
