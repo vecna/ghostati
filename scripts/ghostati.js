@@ -43,17 +43,7 @@ const els = {
    fpsSelect: document.getElementById('fpsSelect')
 };
 
-function triggerOverlayFadeout() {
-   els.overlay.style.transition = 'none';
-   els.overlay.style.opacity = '1';
-   void els.overlay.offsetHeight; // force reflow
-   els.overlay.style.transition = 'opacity 2s ease-in-out';
 
-   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
-   state.overlayFadeTimeout = setTimeout(() => {
-      els.overlay.style.opacity = '0';
-   }, 5000);
-}
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
@@ -75,7 +65,7 @@ if (els.switchCameraBtn) {
          els.video.srcObject.getTracks().forEach(track => track.stop());
       }
       try {
-         await startCamera();
+         await startCamera(state, els);
       } catch (err) {
          handleError(err, 'Errore nel cambio fotocamera.');
       }
@@ -194,19 +184,7 @@ function setBusy(isBusy) {
    previewBtns.forEach(btn => btn.disabled = isBusy);
 }
 
-function resizeCanvas() {
-   // Allinea le dimensioni intrinseche del canvas a quelle native del video.
-   // CSS object-fit: cover gestisce il crop visivo per coprire il contenitore,
-   // così le coordinate restituite da face-api/MediaPipe (in pixel del video)
-   // si proiettano 1:1 sul canvas, senza stretching su finestre con aspect
-   // ratio diverso da quello della webcam. Fallback al contenitore prima che
-   // il video abbia dimensioni note (boot pre-permessi camera).
-   const rect = els.viewer.getBoundingClientRect();
-   const w = els.video.videoWidth || Math.max(1, Math.floor(rect.width));
-   const h = els.video.videoHeight || Math.max(1, Math.floor(rect.height));
-   els.overlay.width = w;
-   els.overlay.height = h;
-}
+
 
 function clearOverlay() {
    const ctx = els.overlay.getContext('2d');
@@ -322,26 +300,6 @@ async function loadGhostyle(url, expectedName = null) {
 
 
 
-function effectLoop(ts = 0) {
-   const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
-   if (ts - state.lastEffectRun > currentDelay) {
-      state.lastEffectRun = ts;
-      runEffectPass(state, els);
-   }
-   state.effectLoopHandle = requestAnimationFrame(effectLoop);
-}
-
-function startEffectLoop() {
-   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
-   state.effectLoopHandle = requestAnimationFrame(effectLoop);
-}
-
-function stopEffectLoop() {
-   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
-   state.effectLoopHandle = null;
-   state.effectInferenceInFlight = false;
-}
-
 function deactivateEffect({ silent = false } = {}) {
    const previousEffect = state.activeEffect;
    if (state.activeEffect) {
@@ -408,70 +366,9 @@ function toggleEffect(effect, button) {
    els.overlay.style.transition = 'none';
    els.overlay.style.opacity = '1';
 
-   startEffectLoop();
+   startEffectLoop(state, els);
 }
 
-async function saveFace() {
-   const result = await detectCurrentFace(state, els, true);
-   if (!result) return;
-   triggerOverlayFadeout();
-   const id = state.db.nextId;
-   state.db.nextId += 1;
-   state.db.faces.push({
-      id,
-      descriptor: Array.from(result.descriptor),
-      age: Math.round(result.age),
-      gender: result.gender || null,
-      savedAt: new Date().toISOString()
-   });
-   persistDb(state);
-   renderDbStats(state, els);
-   const score = result.detection.score;
-   setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
-
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: Ghostati._computeMatchState(result.descriptor), source: 'save', score }
-   }));
-
-   if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
-}
-
-
-async function startCamera() {
-   if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-      const httpsHint = !window.isSecureContext ? ' La pagina deve essere servita via HTTPS o da localhost (su mobile l\'IP locale non basta).' : '';
-      setLog('Webcam non disponibile in questo contesto.' + httpsHint);
-      throw new Error('mediaDevices unavailable (insecure context?)');
-   }
-   const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-         width: { ideal: 1920 },
-         height: { ideal: 1080 },
-         facingMode: state.currentFacingMode
-      },
-      audio: false
-   });
-   els.video.srcObject = stream;
-
-   // Auto mirror based on facingMode
-   state.isMirrored = state.currentFacingMode === 'user';
-   els.video.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-   els.overlay.style.transform = state.isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
-   if (els.mirrorToggle) {
-      els.mirrorToggle.classList.toggle('mirrored', state.isMirrored);
-      els.mirrorToggle.textContent = state.isMirrored ? 'Webcam speculare: ON' : 'Mirror webcam';
-   }
-
-   await new Promise(resolve => {
-      els.video.onloadedmetadata = () => resolve();
-   });
-   await els.video.play();
-   els.placeholder.style.display = 'none';
-   setStatus('live', 'webcam attiva');
-   setLog('Webcam attiva. Premi l\'icona bersaglio per la scansione o scegli un effetto.');
-   resizeCanvas();
-   startEffectLoop();
-}
 
 async function loadModels() {
    setStatus('init', 'caricamento modelli');
@@ -508,8 +405,11 @@ function handleError(err, fallbackMessage) {
 async function init() {
    renderDbStats(state, els);
    updateEffectStats();
-   resizeCanvas();
-   window.addEventListener('resize', resizeCanvas);
+   resizeCanvas(els);
+
+   window.addEventListener('resize', function () {
+      resizeCanvas(els);
+   });
 
    if (els.logBox) {
       els.logBox.addEventListener('click', () => {
@@ -610,17 +510,17 @@ async function init() {
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
       finally {
          setBusy(false);
-         if (state.activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop(state, els);
       }
    });
 
    els.saveBtn.addEventListener('click', async () => {
       setBusy(true);
-      try { await saveFace(); }
+      try { await saveFace(state, els); }
       catch (err) { handleError(err, 'Errore durante il salvataggio del volto.'); }
       finally {
          setBusy(false);
-         if (state.activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop(state, els);
       }
    });
 
@@ -630,7 +530,7 @@ async function init() {
       catch (err) { handleError(err, 'Errore durante la ricerca del volto.'); }
       finally {
          setBusy(false);
-         if (state.activeEffect) startEffectLoop();
+         if (state.activeEffect) startEffectLoop(state, els);
       }
    });
 
@@ -688,7 +588,7 @@ async function init() {
 
    setLog('Inizializzazione completata. Avvio webcam in corso...');
    try {
-      await startCamera();
+      await startCamera(state, els);
    } catch (err) {
       handleError(err, 'Impossibile inizializzare webcam: verifica i permessi camera per ' + window.location.origin);
       return;

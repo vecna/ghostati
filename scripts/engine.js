@@ -88,7 +88,7 @@ async function runEffectPass(stateo, elso) {
 }
 
 function drawEffectOverlay(stateo, elso, result, includeDetectionScaffold = false) {
-   resizeCanvas();
+   resizeCanvas(elso);
    const ctx = elso.overlay.getContext('2d');
    ctx.clearRect(0, 0, elso.overlay.width, elso.overlay.height);
    const resized = faceapi.resizeResults(result, { width: elso.overlay.width, height: elso.overlay.height });
@@ -186,7 +186,7 @@ function drawDetectionScaffold(stateo, ctx, resized) {
 }
 
 function drawResult(stateo, elso, result) {
-   resizeCanvas();
+   resizeCanvas(elso);
    const ctx = elso.overlay.getContext('2d');
    ctx.clearRect(0, 0, elso.overlay.width, elso.overlay.height);
    const resized = faceapi.resizeResults(result, { width: elso.overlay.width, height: elso.overlay.height });
@@ -208,7 +208,7 @@ function drawResult(stateo, elso, result) {
 async function scanFace(stateo, elso) {
    const result = await detectCurrentFace(stateo, elso, true);
    if (!result) return;
-   triggerOverlayFadeout();
+   triggerOverlayFadeout(stateo, elso);
    const age = Math.round(result.age);
    const gender = result.gender || 'n/d';
    const confidence = typeof result.genderProbability === 'number' ? ` (${Math.round(result.genderProbability * 100)}%)` : '';
@@ -222,6 +222,31 @@ async function scanFace(stateo, elso) {
    if (stateo.nudgeStep === 1) { stateo.nudgeStep = 2; updateNudging(); }
 }
 
+async function saveFace(stateo, elso) {
+   const result = await detectCurrentFace(stateo, elso, true);
+   if (!result) return;
+   triggerOverlayFadeout(stateo, elso);
+   const id = stateo.db.nextId;
+   stateo.db.nextId += 1;
+   stateo.db.faces.push({
+      id,
+      descriptor: Array.from(result.descriptor),
+      age: Math.round(result.age),
+      gender: result.gender || null,
+      savedAt: new Date().toISOString()
+   });
+   persistDb(stateo);
+   renderDbStats(stateo, elso);
+   const score = result.detection.score;
+   setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
+
+   stateo.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+      detail: { detectionState: window.Ghostati._computeMatchState(result.descriptor), source: 'save', score }
+   }));
+
+   if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
+}
+
 async function findFace(stateo, elso) {
    if (stateo.db.faces.length === 0) {
       setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
@@ -232,7 +257,7 @@ async function findFace(stateo, elso) {
    console.log("Faccie nel DB:", stateo.db.faces);
    const liveResult = await detectCurrentFace(stateo, elso, true);
    if (!liveResult) return;
-   triggerOverlayFadeout();
+   triggerOverlayFadeout(stateo, elso);
 
    const liveScore = liveResult.detection.score;
    const liveDistances = stateo.db.faces

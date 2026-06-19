@@ -81,7 +81,8 @@ function fillVeil() {
   context.fillRect(0, 0, veil.width, veil.height);
 }
 
-function resizeCanvas(preserveReveal = true) {
+function indexResize(preserveReveal = true) {
+  console.log("check: quando è usato? serve davvero? è uguale a camera.resizeCanvas?")
   const bounds = hero.getBoundingClientRect();
   const width = Math.max(1, Math.floor(bounds.width));
   const height = Math.max(1, Math.floor(bounds.height));
@@ -184,7 +185,7 @@ function queueResize() {
   effectState.resizeQueued = true;
   requestAnimationFrame(() => {
     effectState.resizeQueued = false;
-    resizeCanvas(true);
+    indexResize(true);
   });
 }
 
@@ -291,6 +292,6 @@ window.addEventListener('pointerdown', (event) => {
   menuToggle?.setAttribute('aria-expanded', 'false');
 });
 
-resizeCanvas(false);
+indexResize(false);
 updateProgressDisplay();
 updateUnlockState();
