@@ -3,49 +3,8 @@ import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
 import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
-
-const MODEL_URLS = {
-   tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
-   landmarks: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_landmark_68',
-   recognition: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_recognition',
-   ageGender: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/age_gender_model'
-};
-
-export const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
-   inputSize: 416,
-   scoreThreshold: 0.5
-});
-
-export const els = {
-   video: document.getElementById('video'),
-   overlay: document.getElementById('overlay'),
-   viewer: document.getElementById('viewer'),
-   placeholder: document.getElementById('placeholder'),
-   previewImage: document.getElementById('previewImage'),
-   logBox: document.getElementById('logBox'),
-   statusDot: document.getElementById('statusDot'),
-   statusText: document.getElementById('statusText'),
-   dbCount: document.getElementById('dbCount'),
-   nextId: document.getElementById('nextId'),
-   thresholdLabel: document.getElementById('thresholdLabel'),
-   effectName: document.getElementById('effectName'),
-   effectTracking: document.getElementById('effectTracking'),
-   scanBtn: document.getElementById('scanBtn'),
-   copyMakeupBtn: document.getElementById('copyMakeupBtn'),
-   saveBtn: document.getElementById('saveBtn'),
-   findBtn: document.getElementById('findBtn'),
-   clearDbBtn: document.getElementById('clearDbBtn'),
-   clearOverlayBtn: document.getElementById('clearOverlayBtn'),
-   ghostylesContainer: document.getElementById('ghostylesContainer'),
-   remoteGhostyleUrl: document.getElementById('remoteGhostyleUrl'),
-   loadRemoteGhostyleBtn: document.getElementById('loadRemoteGhostyleBtn'),
-   mirrorToggle: document.getElementById('mirrorToggle'), // Left for fallback, but managed by JS via camera direction
-   switchCameraBtn: document.getElementById('switchCameraBtn'),
-   dbCountBadge: document.getElementById('dbCountBadge'),
-   fpsSelect: document.getElementById('fpsSelect')
-};
-
-
+import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
+import { els, setStatus, clearOverlay, updateNudging } from './dom.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
@@ -79,48 +38,6 @@ function updateEffectStats() {
    els.effectName.textContent = style ? style.name : 'nessuno';
    els.effectTracking.textContent = state.activeEffect ? 'on' : 'off';
 }
-
-
-export function setStatus(kind, text) {
-   els.statusDot.className = 'status-dot';
-   if (kind === 'live') els.statusDot.classList.add('live');
-   if (kind === 'error') els.statusDot.classList.add('error');
-   els.statusText.textContent = text;
-}
-
-export function setBusy(isBusy) {
-   state.isSystemBusy = isBusy;
-   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
-      if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
-      else btn.disabled = isBusy;
-   });
-   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
-   previewBtns.forEach(btn => btn.disabled = isBusy);
-}
-
-export function clearOverlay() {
-   const ctx = els.overlay.getContext('2d');
-   ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
-   els.overlay.style.transition = 'none';
-   els.overlay.style.opacity = '1';
-   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
-}
-
-export function updateNudging() {
-   if (state.nudgeStep > 5) return;
-   
-   document.querySelectorAll('.nudge-target').forEach(el => el.classList.remove('nudge-target'));
-   
-   if (state.nudgeStep === 1) els.scanBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 2) els.saveBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 3) {
-      const toggleBtn = document.getElementById('toggleSettingsBtn');
-      if (toggleBtn) toggleBtn.classList.add('nudge-target');
-      els.ghostylesContainer.querySelectorAll('.preview-btn').forEach(btn => btn.classList.add('nudge-target'));
-   }
-   if (state.nudgeStep === 4) els.scanBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 5 && !els.copyMakeupBtn.disabled) els.copyMakeupBtn.classList.add('nudge-target');
-} 
 
 window.Ghostati = {
    log: (message, sourcePlugin) => setLog(message, sourcePlugin),
@@ -167,8 +84,6 @@ async function loadGhostyle(url, expectedName = null) {
       const matchName = text.match(/@name\s+(.+)/);
       const name = matchName ? matchName[1].trim() : (expectedName || id);
 
-      setLog(`Ghostyle '${name}' intergrità verificata, caricamento modulo...`);
-
       try {
          const module = await import(url);
          state.loadedGhostyles.set(id, { id, name, module, url });
@@ -204,7 +119,15 @@ async function loadGhostyle(url, expectedName = null) {
    }
 }
 
-
+export function setBusy(isBusy) {
+   state.isSystemBusy = isBusy;
+   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
+      if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
+      else btn.disabled = isBusy;
+   });
+   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+   previewBtns.forEach(btn => btn.disabled = isBusy);
+}
 
 function deactivateEffect({ silent = false } = {}) {
    const previousEffect = state.activeEffect;
@@ -266,7 +189,7 @@ function toggleEffect(effect, button) {
    els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
    els.scanBtn.style.color = '#fff';
 
-   if (state.nudgeStep === 3) { state.nudgeStep = 4; updateNudging(); }
+   updateNudging(3);
 
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
    els.overlay.style.transition = 'none';
@@ -278,9 +201,8 @@ function toggleEffect(effect, button) {
 
 async function loadModels() {
    setStatus('init', 'caricamento modelli');
-   setLog('Caricamento modelli face-api.js in corso…');
    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/tiny_face_detector'),
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URLS.tiny),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URLS.landmarks),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URLS.recognition),
       faceapi.nets.ageGenderNet.loadFromUri(MODEL_URLS.ageGender)
@@ -383,7 +305,7 @@ async function init() {
             } else {
                attemptShare();
             }
-            if (state.nudgeStep === 5) { state.nudgeStep = 6; localStorage.setItem('ghostati-nudge-done', 'true'); updateNudging(); }
+            updateNudging(5);
          });
       } catch (err) {
          console.error(err);
@@ -395,11 +317,12 @@ async function init() {
       setBusy(true);
       try {
          if (hasActivePlugin(state)) {
-            if (state.nudgeStep === 4) { state.nudgeStep = 5; updateNudging(); }
+               updateNudging(4);
             await testMakeupEfficacy(state, els);
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
          } else {
             await scanFace(state, els);
+               updateNudging(1);
          }
       }
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
@@ -460,9 +383,16 @@ async function init() {
    });
 
    setBusy(true);
-   setLog('Caricamento plugin di makeup in corso...')
+   setLog('Caricamento sistema di riconoscimento facciale (face-api.js)...')
    try {
       await loadModels();
+   } catch (err) {
+      setLog('Errore durante il caricamento: ' + err.message);
+      return;
+   }
+
+   setLog('Caricamento plugin di makeup in corso...')
+   try {
 
       const relurl = window.location.pathname.split('/').slice(0, -1).join('/')
       const ghostListUrl = relurl + '/ghostylist.json'
@@ -477,7 +407,7 @@ async function init() {
       else
          throw new Error(`HTTP ${ghostylistRes.status}`);
    } catch (err) {
-      setLog('Errore durante la lettura di ghostylist.json: ' + err.message, 'Sistema');
+      setLog('Errore durante la lettura di ghostylist.json: ' + err.message);
       return;
    }
 
@@ -508,7 +438,7 @@ async function init() {
 
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);
-   updateNudging();
+   updateNudging(0);
    state.ghostatiEvents.dispatchEvent(new CustomEvent('ready', { detail: {} }));
 
    // Questo evento segnala ai file con i loop, che l'ambiente è pronto, e troveranno

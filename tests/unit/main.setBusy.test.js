@@ -41,7 +41,8 @@ vi.mock('../../scripts/camera.js', () => ({
 }));
 
 import { state } from '../../scripts/state.js';
-import { setBusy, els } from '../../scripts/main.js';
+import { setBusy } from '../../scripts/main.js';
+import { els } from '../../scripts/dom.js';
 
 describe('main.setBusy', () => {
   beforeEach(() => {

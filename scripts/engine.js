@@ -1,9 +1,10 @@
 import { state } from './state.js';
-import { els, clearOverlay, updateNudging, DETECTOR_OPTIONS } from './main.js';
+import { els, clearOverlay, updateNudging } from './dom.js';
 import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
 import { triggerOverlayFadeout, resizeCanvas } from './camera.js';
 import { persistDb, renderDbStats } from './db.js';
 import { setLog } from './utils.js';
+import { DETECTOR_OPTIONS } from './config.js';
 
 export async function detectCurrentFace(drawOverlay) {
    clearOverlay();
@@ -71,17 +72,18 @@ export async function compositeAndDetect(liveResult) {
    return { canvas, obfuscatedResult, weakDetection };
 }
 
-
 export async function runEffectPass() {
    if (state.isSystemBusy || state.effectInferenceInFlight || els.video.readyState < 2) return;
    state.effectInferenceInFlight = true;
+   let retToCleanOverlay = false; // do not clean except if no face detected and no active effect, otherwise keep last overlay
    try {
       const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
       const result = state.activeEffect ? await detector.withFaceLandmarks() : await detector;
 
       if (!result) {
          state.lastKnownEffectResult = null;
-         if (state.activeEffect) clearOverlay();
+         if (state.activeEffect) 
+            retToCleanOverlay = true;
       } else if (state.activeEffect) {
          drawEffectOverlay(result, false);
       } else {
@@ -96,6 +98,7 @@ export async function runEffectPass() {
    } finally {
       state.effectInferenceInFlight = false;
    }
+   return retToCleanOverlay;
 }
 
 export function drawEffectOverlay(result, includeDetectionScaffold = false) {
@@ -228,7 +231,6 @@ export async function scanFace() {
       detail: { detectionState: Ghostati.computeMatchState(result.descriptor), source: 'scan', score }
    }));
 
-   if (state.nudgeStep === 1) { state.nudgeStep = 2; updateNudging(); }
 }
 
 export async function saveFace() {
@@ -253,7 +255,7 @@ export async function saveFace() {
       detail: { detectionState: window.Ghostati.computeMatchState(result.descriptor), source: 'save', score }
    }));
 
-   if (state.nudgeStep === 2) { state.nudgeStep = 3; updateNudging(); }
+   updateNudging(2); 
 }
 
 export async function findFace() {

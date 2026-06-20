@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-vi.mock('../../scripts/main.js', () => ({
+vi.mock('../../scripts/dom.js', () => ({
   setStatus: vi.fn(),
   els: {
     video: {
@@ -42,7 +42,7 @@ vi.mock('../../scripts/engine.js', () => ({
 }));
 
 import { state } from '../../scripts/state.js';
-import { setStatus, els } from '../../scripts/main.js';
+import { setStatus, els } from '../../scripts/dom.js';
 import { setLog } from '../../scripts/utils.js';
 import { runEffectPass } from '../../scripts/engine.js';
 import {
@@ -170,11 +170,11 @@ describe('camera module', () => {
     }
   });
 
-  it('effectLoop triggers inference based on selected delay and re-schedules itself', () => {
+  it('effectLoop triggers inference based on selected delay and re-schedules itself',  async () => {
     state.lastEffectRun = 0;
     els.fpsSelect.value = '100';
 
-    effectLoop(150);
+    await effectLoop(150);
 
     expect(runEffectPass).toHaveBeenCalledTimes(1);
     expect(state.lastEffectRun).toBe(150);

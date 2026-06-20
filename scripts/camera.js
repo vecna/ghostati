@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { setStatus, els } from './main.js';
+import { setStatus, els, clearOverlay } from './dom.js';
 import { setLog } from './utils.js';
 import { runEffectPass } from './engine.js';
 
@@ -65,11 +65,14 @@ export function triggerOverlayFadeout() {
    }, 5000);
 }
 
-export function effectLoop(ts = 0) {
+export async function effectLoop(ts = 0) {
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - state.lastEffectRun > currentDelay) {
       state.lastEffectRun = ts;
-      runEffectPass();
+      let result = await runEffectPass();
+      if (result) {
+         clearOverlay();
+      }
    }
    state.effectLoopHandle = requestAnimationFrame(effectLoop);
 }

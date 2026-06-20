@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-vi.mock('../../scripts/main.js', () => ({
+vi.mock('../../scripts/dom.js', () => ({
   els: {
     video: { readyState: 4 },
     overlay: {
@@ -35,7 +35,7 @@ vi.mock('../../scripts/db.js', () => ({
 }));
 
 import { state } from '../../scripts/state.js';
-import { els, clearOverlay, updateNudging } from '../../scripts/main.js';
+import { els, clearOverlay, updateNudging } from '../../scripts/dom.js';
 import { setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/utils.js';
 import { triggerOverlayFadeout, resizeCanvas } from '../../scripts/camera.js';
 import { persistDb, renderDbStats } from '../../scripts/db.js';
@@ -286,8 +286,6 @@ describe('engine core exports', () => {
     expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Volto trovato. Età stimata: 31.'));
     expect(onMatch).toHaveBeenCalledTimes(1);
     expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'scan', detectionState: 'matched', score: 0.78 });
-    expect(updateNudging).toHaveBeenCalled();
-    expect(state.nudgeStep).toBe(2);
   });
 
   it('saveFace adds record, persists DB, logs and dispatches matchStateChanged', async () => {
@@ -323,7 +321,5 @@ describe('engine core exports', () => {
     expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Impronta biometrica salvata con ID 7.'));
     expect(onMatch).toHaveBeenCalledTimes(1);
     expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'save', detectionState: 'matched', score: 0.91 });
-    expect(updateNudging).toHaveBeenCalled();
-    expect(state.nudgeStep).toBe(3);
   });
 });

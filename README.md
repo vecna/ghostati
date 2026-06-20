@@ -1,5 +1,5 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-53.25%25-lightgrey)
+![Unit Test Coverage](https://img.shields.io/badge/coverage-53.26%25-lightgrey)
 # ghòstati | Face Lab
 
 **Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**
@@ -77,7 +77,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `99ad6a8` – improved unit tests coverage
+
+**Last commit:** `fd24bcc` – Merge branch 'refactor1'
+
+
 
 
 
@@ -120,8 +123,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
+- `fd24bcc` Merge branch 'refactor1'
+- `405e5e6` fixed e2e test and update-readme script
+- `5468742` Merge pull request #6 from vecna/refactor1
 - `99ad6a8` improved unit tests coverage
 - `6e6617c` ultimi bug fix dopo il primo refactor
-- `4099089` primo refactor completo, modularizzato
-- `1a5c8e9` refactor quasi completato
-- `a794558` mosse le funzioni sulla webcam in file dedicato

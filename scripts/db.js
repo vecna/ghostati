@@ -1,4 +1,4 @@
-import { els } from './main.js';
+import { els } from './dom.js';
 import { state } from './state.js';
 import { setLog } from './utils.js';
 

@@ -15,7 +15,7 @@ vi.mock('../../scripts/utils.js', () => ({
 
 import { state } from '../../scripts/state.js';
 import { setLog } from '../../scripts/utils.js';
-import { els } from '../../scripts/main.js';
+import { els } from '../../scripts/dom.js';
 import { STORAGE_KEY, loadDb, persistDb, renderDbStats, clearDb } from '../../scripts/db.js';
 
 function defaultDb() {
