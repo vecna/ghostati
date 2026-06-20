@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "docs": "jsdoc scripts/ -d docs"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
     "@vitest/coverage-v8": "^4.1.8",
     "canvas": "^3.2.3",
     "http-server": "^14.1.1",
+    "jsdoc": "^4.0.5",
     "jsdom": "^29.1.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"

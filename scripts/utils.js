@@ -1,5 +1,12 @@
 import { state } from './state.js';
 
+/**
+ * Compute Euclidean distance between two equal-length numeric arrays.
+ * @param {number[]} a - First coordinate array.
+ * @param {number[]} b - Second coordinate array.
+ * @returns {number} Euclidean distance, or Infinity if inputs are invalid.
+ * @see computeMatchState – uses distance to compare descriptors.
+ */
 export function distance(a, b) {
    if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
    let sum = 0;
@@ -10,29 +17,77 @@ export function distance(a, b) {
    return Math.sqrt(sum);
 }
 
+/**
+ * Compute match state for a face descriptor against the database.
+ * @param {Object} descriptor - Face descriptor to compare.
+ * @returns {string} 'unknown', 'matched', or 'eluded' based on distance threshold.
+ * @see distance – called internally for each face.
+ */
 export function computeMatchState(descriptor) {
    if (!descriptor || state.db.faces.length === 0) return 'unknown';
    const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
    return minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded';
 }
 
+/**
+ * Compute the average point from an array of points.
+ * @param {Object[]} points - Array of points with x and y properties.
+ * @returns {Object} Average point with x and y.
+ * @see expandEyePolygon – uses avgPoint to find eye center.
+ */
 export function avgPoint(points) {
    const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
    return { x: total.x / points.length, y: total.y / points.length };
 }
 
+/**
+ * Linear interpolation between two points.
+ * @param {Object} a - Start point.
+ * @param {Object} b - End point.
+ * @param {number} t - Interpolation factor [0,1].
+ * @returns {Object} Interpolated point.
+ * @see expandEyePolygon – uses lerp for eyebrow lift.
+ * @see drawEyeWing – uses lerp for geometry.
+ * @see drawCheekSweep – uses lerp for segment points.
+ */
 export function lerp(a, b, t) {
    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
+/**
+ * Scale a point away from a center point.
+ * @param {Object} center - Center point.
+ * @param {Object} point - Point to scale.
+ * @param {number} scale - Scale factor.
+ * @returns {Object} Scaled point.
+ * @see expandEyePolygon – uses scaleFrom to enlarge eye shape.
+ */
 export function scaleFrom(center, point, scale) {
    return { x: center.x + (point.x - center.x) * scale, y: center.y + (point.y - center.y) * scale };
 }
 
+/**
+ * Create a point object.
+ * @param {number} x - X coordinate.
+ * @param {number} y - Y coordinate.
+ * @returns {Object} Point with x and y.
+ * @see expandEyePolygon – uses point for constructing extra points.
+ */
 export function point(x, y) {
    return { x, y };
 }
 
+/**
+ * Draw a closed path on a canvas, optionally filling and stroking.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {Object[]} points - Array of points defining the path.
+ * @param {string|null} [fillStyle=null] - Fill color/style.
+ * @param {string|null} [strokeStyle=null] - Stroke color/style.
+ * @param {number} [lineWidth=2] - Width of the stroke.
+ * @see drawEyeWing – uses to render eye shape.
+ * @see drawCheekSweep – uses to render cheek area.
+ * @see drawContourBand – uses to render contour outlines.
+ */
 export function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null, lineWidth = 2) {
    if (!points.length) return;
    ctx.beginPath();
@@ -50,6 +105,17 @@ export function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null
    }
 }
 
+/**
+ * Draw an open path on a canvas.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {Object[]} points - Array of points defining the path.
+ * @param {string} strokeStyle - Stroke color/style.
+ * @param {number} [lineWidth=2] - Width of the stroke.
+ * @param {boolean} [dashed=false] - Whether to use dashed line.
+ * @see drawEyeWing – draws eye outline with dashed optional.
+ * @see drawContourBand – draws multiple layered bands.
+ * @see drawCheekSweep – draws cheek lines.
+ */
 export function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = false) {
    if (!points.length) return;
    ctx.save();
@@ -63,6 +129,16 @@ export function drawOpenPath(ctx, points, strokeStyle, lineWidth = 2, dashed = f
    ctx.restore();
 }
 
+/**
+ * Draw a labeled box with text on a canvas.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {string} text - Text to display.
+ * @param {number} x - X coordinate of the label.
+ * @param {number} y - Y coordinate of the label.
+ * @see drawEyeWing – adds label to eye wing.
+ * @see drawCheekSweep – adds label to cheek sweep.
+ * @see drawContourBand – adds label to contour band.
+ */
 export function drawLabel(ctx, text, x, y) {
    ctx.save();
    ctx.font = '700 14px Inter, system-ui, sans-serif';
@@ -88,6 +164,16 @@ export function drawLabel(ctx, text, x, y) {
    ctx.restore();
 }
 
+/**
+ * Draw a rounded rectangle path.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {number} x - X coordinate of the rectangle.
+ * @param {number} y - Y coordinate of the rectangle.
+ * @param {number} w - Width of the rectangle.
+ * @param {number} h - Height of the rectangle.
+ * @param {number} r - Corner radius.
+ * @see drawLabel – used within to render background of label.
+ */
 export function roundRect(ctx, x, y, w, h, r) {
    ctx.beginPath();
    ctx.moveTo(x + r, y);
@@ -98,6 +184,15 @@ export function roundRect(ctx, x, y, w, h, r) {
    ctx.closePath();
 }
 
+/**
+ * Expand an eye polygon based on eyebrow and scaling factors.
+ * @param {Object[]} eye - Array of eye points.
+ * @param {Object[]} eyebrow - Array of eyebrow points.
+ * @param {number} [scale=1.22] - Scale factor for eye.
+ * @param {number} [eyebrowLift=0.72] - Lift factor for eyebrows.
+ * @returns {Object[]} Expanded eye polygon points.
+ * @see drawEyeWing – primary consumer of this function.
+ */
 export function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72) {
    const center = avgPoint(eye);
    const topBrow = eyebrow.map((b, idx) => {
@@ -108,6 +203,15 @@ export function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72)
    return [...topBrow, expandedEye[3], expandedEye[4], expandedEye[5], expandedEye[0]];
 }
 
+/**
+ * Draw an eye wing with label and styling.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {Object[]} eye - Eye points.
+ * @param {Object[]} eyebrow - Eyebrow points.
+ * @param {string} label - Text label.
+ * @param {Object} tone - Styling parameters.
+ * @see expandEyePolygon – called to compute shape.
+ */
 export function drawEyeWing(ctx, eye, eyebrow, label, tone) {
    const eyeShape = expandEyePolygon(eye, eyebrow, tone.scale, tone.brow);
    drawClosedPath(ctx, eyeShape, tone.fill, tone.stroke, 2.2);
@@ -123,6 +227,18 @@ export function drawEyeWing(ctx, eye, eyebrow, label, tone) {
    drawLabel(ctx, label, tailTop.x + (tone.side === 'left' ? -52 : 10), tailTop.y - 10);
 }
 
+/**
+ * Draw a cheek sweep with label.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {Object} anchor - Anchor point.
+ * @param {Object} noseSide - Nose side point.
+ * @param {Object} mouthCorner - Mouth corner point.
+ * @param {Object} jawPoint - Jaw point.
+ * @param {string} label - Text label.
+ * @param {string} fill - Fill style.
+ * @param {string} stroke - Stroke style.
+ * @see lerp – used for point interpolation.
+ */
 export function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, label, fill, stroke) {
    const upper = lerp(anchor, noseSide, 0.42);
    const lower = lerp(mouthCorner, jawPoint, 0.36);
@@ -139,6 +255,13 @@ export function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, lab
    drawLabel(ctx, label, side.x - 20, side.y - 12);
 }
 
+/**
+ * Draw a contour band with label.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context.
+ * @param {Object[]} pts - Points defining the band.
+ * @param {string} label - Text label.
+ * @see drawOpenPath – used twice for layered strokes.
+ */
 export function drawContourBand(ctx, pts, label) {
    drawOpenPath(ctx, pts, 'rgba(193, 154, 107, 0.95)', 7, true);
    drawOpenPath(ctx, pts, 'rgba(90, 54, 33, 0.22)', 16);
@@ -146,11 +269,21 @@ export function drawContourBand(ctx, pts, label) {
    drawLabel(ctx, label, mid.x + 10, mid.y - 6);
 }
 
+/**
+ * Return the current time as a HH:MM:SS string.
+ * @returns {string} Formatted time.
+ * @see setLog – prefixes log messages with this timestamp.
+ */
 export function formatTime() {
    const now = new Date();
    return now.toTimeString().split(' ')[0]; // Returns HH:MM:SS
 }
 
+/**
+ * Update the on‑screen log display based on the current state.
+ * Handles both expanded and collapsed views.
+ * @see setLog – called after pushing a new log entry.
+ */
 export function updateLogDisplay() {
    const logBox = document.getElementById('logBox');
    if (!logBox) return;
@@ -176,6 +309,13 @@ export function updateLogDisplay() {
 }
 
 
+/**
+ * Append a new log line to the log archive and refresh the display.
+ * @param {string} message - Log message.
+ * @param {string|null} [sourcePlugin=null] - Optional source identifier.
+ * @see formatTime – adds timestamp to each log line.
+ * @see updateLogDisplay – refreshes UI after adding entry.
+ */
 export function setLog(message, sourcePlugin = null) {
    const line = document.createElement('div');
    line.className = 'log-line';

@@ -39,6 +39,16 @@ Since it's a static web application, there is no build step required.
    ```
 3. Open a modern browser and navigate to `http://localhost:8000/ghostati-face-api.html`.
 
+## Generating Documentation
+
+This project uses [JSDoc](https://jsdoc.app/) to generate documentation for the source code.
+
+To generate the documentation, run the following command:
+```bash
+npm run docs
+```
+This will parse the JSDoc comments in the `scripts/` directory and generate a static HTML website in the `docs/` folder. You can open `docs/index.html` in your browser to view the documentation.
+
 ## Writing a Ghostyle (Plugin)
 
 You can create your own modular AR makeup effects called **Ghostyles**. A "Ghostyle" is a simple JavaScript module that exports a draw function hooking into the face tracking engine. 

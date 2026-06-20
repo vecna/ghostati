@@ -29,6 +29,14 @@ export const els = {
    fpsSelect: document.getElementById('fpsSelect')
 };
 
+/**
+ * Update the UI status indicator.
+ * @param {string} kind - Status kind ('live', 'init', 'error', etc.).
+ * @param {string} text - Human‑readable status text.
+ * @see camera.js:36 – called after webcam is successfully started (kind 'live').
+ * @see main.js:203 – called during model loading initialization (kind 'init').
+ * @see main.js:215 – called when an error occurs (kind 'error').
+ */
 export function setStatus(kind, text) {
    els.statusDot.className = 'status-dot';
    if (kind === 'live') els.statusDot.classList.add('live');

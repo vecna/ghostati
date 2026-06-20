@@ -6,6 +6,16 @@ import { persistDb, renderDbStats } from './db.js';
 import { setLog } from './utils.js';
 import { DETECTOR_OPTIONS } from './config.js';
 
+/**
+ * Detect a face in the webcam video and optionally draw an overlay.
+ * Returns the face detection result or null if no face is found.
+ * @param {boolean} drawOverlay - Whether to draw the detection overlay.
+ * @returns {Promise<Object|null>} Detection result.
+ * @see scanFace - uses detectCurrentFace to log and dispatch match state.
+ * @see saveFace - uses detectCurrentFace before saving a face.
+ * @see findFace - uses detectCurrentFace to compare against stored faces.
+ * @see testMakeupEfficacy - uses detectCurrentFace as the baseline detection.
+ */
 export async function detectCurrentFace(drawOverlay) {
    clearOverlay();
    const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS)
@@ -23,13 +33,18 @@ export async function detectCurrentFace(drawOverlay) {
    return result;
 }
 
-// Costruisce un canvas col compositing video + ghostyle 2D + plugin 3D (via evento)
-// e ci esegue una detection face-api con landmarks + descriptor. Ritorna
-// {canvas, obfuscatedResult, weakDetection}.
-// Se la detection con la soglia normale fallisce (`scoreThreshold: 0.5`), ritenta
-// con una rilassata (0.1) per estrarre comunque metriche numeriche dal composito —
-// utile come "indicatore di efficacia" del makeup anche oltre la soglia di rilevamento.
-// `weakDetection` segnala quando si è dovuto fare il fallback.
+/**
+ * Build a canvas with video compositing, 2D ghostly overlay, and optional 3D plugin (via event).
+ * Executes a Face API detection with landmarks and descriptor on the composite.
+ * Returns an object containing the canvas, obfuscatedResult, and weakDetection flag.
+ * If detection with the normal threshold (`scoreThreshold: 0.5`) fails, it retries with a relaxed threshold (0.1) to still extract numeric metrics from the composite —
+ * useful as a "makeup efficacy indicator" even beyond the detection threshold.
+ * `weakDetection` indicates when a fallback detection was required.
+ * @param {Object} liveResult - Result from the live face detection.
+ * @returns {Promise<Object>} An object with canvas, obfuscatedResult, and weakDetection.
+ * @see findFace - uses this function to obtain a composite for post‑makeup comparison.
+ * @see testMakeupEfficacy - uses this to evaluate makeup effect.
+ */
 export async function compositeAndDetect(liveResult) {
    const canvas = document.createElement('canvas');
    canvas.width = els.overlay.width;
@@ -72,6 +87,13 @@ export async function compositeAndDetect(liveResult) {
    return { canvas, obfuscatedResult, weakDetection };
 }
 
+/**
+ * Run a single effect pass: performs face detection (with optional landmarks) and draws the effect overlay.
+ * Manages state flags to avoid concurrent inference.
+ * @returns {Promise<boolean>} Whether the overlay should be cleared (no face detected without active effect).
+ * @see drawEffectOverlay - invoked to render the effect.
+ * @see detectCurrentFace - used internally for detection when an active effect is present.
+ */
 export async function runEffectPass() {
    if (state.isSystemBusy || state.effectInferenceInFlight || els.video.readyState < 2) return;
    state.effectInferenceInFlight = true;
@@ -101,6 +123,14 @@ export async function runEffectPass() {
    return retToCleanOverlay;
 }
 
+/**
+ * Draw the effect overlay onto the canvas, optionally including the detection scaffold.
+ * Resizes the canvas, clears previous drawings, and renders the active effect style if present.
+ * @param {Object} result - Face detection result.
+ * @param {boolean} [includeDetectionScaffold=false] - Whether to draw the detection scaffold.
+ * @see runEffectPass - calls this to render overlay after detection.
+ * @see drawDetectionScaffold - optionally used when includeDetectionScaffold is true.
+ */
 export function drawEffectOverlay(result, includeDetectionScaffold = false) {
    resizeCanvas(els);
    const ctx = els.overlay.getContext('2d');
@@ -125,6 +155,14 @@ export function drawEffectOverlay(result, includeDetectionScaffold = false) {
    state.lastKnownEffectResult = result;
 }
 
+/**
+ * Draw visual scaffolding for a detection result: bounding box, eye line, and facial landmarks.
+ * Useful for debugging and user feedback.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context to draw on.
+ * @param {Object} resized - Resized detection result containing box and landmarks.
+ * @see drawEffectOverlay - may call this when includeDetectionScaffold is true.
+ * @see drawResult - calls this to display detection scaffold.
+ */
 export function drawDetectionScaffold(ctx, resized) {
    const box = resized.detection.box;
    const landmarks = resized.landmarks;
@@ -197,6 +235,12 @@ export function drawDetectionScaffold(ctx, resized) {
    ctx.restore();
 }
 
+/**
+ * Draw the detection result on the overlay canvas, including the detection scaffold and any active effect.
+ * @param {Object} result - Detection result.
+ * @see drawDetectionScaffold - used to draw scaffold.
+ * @see drawEffectOverlay - effect drawing is performed here if active.
+ */
 export function drawResult(result) {
    resizeCanvas(els);
    const ctx = els.overlay.getContext('2d');
@@ -217,6 +261,10 @@ export function drawResult(result) {
 }
 
 
+/**
+ * Scan the current face, trigger overlay fadeout, log details, and dispatch a match‑state change event.
+ * @see detectCurrentFace - obtains the base detection used for scanning.
+ */
 export async function scanFace() {
    const result = await detectCurrentFace(true);
    if (!result) return;
@@ -233,6 +281,10 @@ export async function scanFace() {
 
 }
 
+/**
+ * Capture the current face, save its descriptor and metadata to the local database, and log the action.
+ * @see detectCurrentFace - obtains the face data to be saved.
+ */
 export async function saveFace() {
    const result = await detectCurrentFace(true);
    if (!result) return;
@@ -258,6 +310,11 @@ export async function saveFace() {
    updateNudging(2); 
 }
 
+/**
+ * Find the best matching face in the database, optionally using a composited post‑makeup image when a plugin is active.
+ * @see detectCurrentFace - obtains live detection.
+ * @see compositeAndDetect - obtains post‑makeup detection for comparison.
+ */
 export async function findFace() {
    if (state.db.faces.length === 0) {
       setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
@@ -276,7 +333,6 @@ export async function findFace() {
       .sort((a, b) => a.distance - b.distance);
    const liveMinDist = liveDistances[0].distance;
    const liveMinId = liveDistances[0].id;
-
 
    // Se c'è un plugin attivo, calcola anche le metriche post-makeup. Con retry weak
    // dentro compositeAndDetect, abbiamo quasi sempre un descrittore (anche di bassa
@@ -344,6 +400,11 @@ export async function findFace() {
    }));
 }
 
+/**
+ * Evaluate makeup efficacy by comparing live and composited detections against stored faces.
+ * @see detectCurrentFace - baseline detection.
+ * @see compositeAndDetect - obtain composited detection.
+ */
 export async function testMakeupEfficacy() {
    const result = await detectCurrentFace(false);
    if (!result) {
@@ -434,6 +495,12 @@ export async function testMakeupEfficacy() {
    }
 }
 
+/**
+ * Determine whether a 2D or 3D effect plugin is currently active.
+ * @returns {boolean} True if an effect plugin is active.
+ * @see findFace - checks plugin status before compositing.
+ * @see testMakeupEfficacy - checks plugin status.
+ */
 export function hasActivePlugin() {
    const G = window.Ghostati;
    const a2d = typeof G.getActiveEffect === 'function' && G.getActiveEffect();
