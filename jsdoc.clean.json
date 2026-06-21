@@ -1,0 +1,14 @@
+{
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["scripts"],
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "opts": {
+    "template": "node_modules/clean-jsdoc-theme/dist",
+    "destination": "./docs",
+    "recurse": true,
+    "readme": "./JSDOC_README.md"
+  }
+}

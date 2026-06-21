@@ -1,4 +1,6 @@
 /**
+ * @module auto-find-loop
+ * @description
  * Auto-find loop — add-on per ghostati.html
  *
  * Ogni N secondi rifà la pipeline di "trova faccia" in modo silenzioso:

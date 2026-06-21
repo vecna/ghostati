@@ -1,3 +1,4 @@
+/** @module main */
 import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';

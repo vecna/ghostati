@@ -1,4 +1,6 @@
 /**
+ * @module bbox-overlay
+ * @description
  * Bbox match-state overlay — add-on per ghostati.html
  *
  * Disegna una bounding box attorno al volto rilevato, colorata in base

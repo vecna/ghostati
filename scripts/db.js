@@ -1,3 +1,4 @@
+/** @module db */
 import { els } from './dom.js';
 import { state } from './state.js';
 import { setLog } from './utils.js';

@@ -1,3 +1,4 @@
+/** @module ghostyles-manager */
 import { state } from './state.js';
 import { setLog } from './utils.js';
 import { els, clearActiveEffect, effectSelected } from './dom.js';

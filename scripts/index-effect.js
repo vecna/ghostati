@@ -1,3 +1,4 @@
+/** @module index-effect */
 const hero = document.getElementById('ghostHero');
 const link = document.getElementById('ghostLink');
 const veil = document.getElementById('ghostVeil');

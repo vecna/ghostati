@@ -1,3 +1,4 @@
+/** @module ghostati-mobile-ui */
 document.addEventListener('DOMContentLoaded', () => {
   // --- SETTINGS DRAWER TOGGLE ---
   const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
