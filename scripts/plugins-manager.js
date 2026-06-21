@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { setLog } from './utils.js';
-import { clearActiveEffect, effectSelected } from './dom.js';
+import { els, clearActiveEffect, effectSelected } from './dom.js';
 
 /* window.Ghostati è l'API usata dai ghostyle per interagire con l'applicazione. */
 /* Nota sul caricamento dinamico: avvengono 2 chiamate http, la prima

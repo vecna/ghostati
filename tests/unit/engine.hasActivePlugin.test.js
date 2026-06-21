@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 vi.mock('../../scripts/main.js', () => ({
   els: {},
   clearOverlay: vi.fn(),
-  updateNudging: vi.fn(),
   DETECTOR_OPTIONS: {}
 }));
 

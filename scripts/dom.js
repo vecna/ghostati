@@ -55,40 +55,7 @@ export function clearOverlay() {
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
-/**
- * Update the UI nudging flow.
- *
- * Shows a contextual hint on a specific UI element based on the current
- * `state.nudgeStep`.  The function increments the step, stores progress in
- * `localStorage`, and visually highlights the next target element.
- *
- * @see main.js – called after a successful scan to advance the nudging step.
- * @see main.js – called after a successful save to advance the nudging step.
- * @see main.js – called after the “copy makeup” button is enabled.
- */
-export function updateNudging(currentStep) {
 
-   // there was the if condition before, now is checked here so I can remove all the 'if'
-   if (currentStep !== state.nudgeStep || state.nudgeStep > 5)
-      return;
-
-   if (currentStep === 5) {
-      localStorage.setItem('ghostati-nudge-done', 'true');
-   }
-
-   state.nudgeStep += 1;
-   document.querySelectorAll('.nudge-target').forEach(el => el.classList.remove('nudge-target'));
-
-   if (state.nudgeStep === 1) els.scanBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 2) els.saveBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 3) {
-      const toggleBtn = document.getElementById('toggleSettingsBtn');
-      if (toggleBtn) toggleBtn.classList.add('nudge-target');
-      els.ghostylesContainer.querySelectorAll('.preview-btn').forEach(btn => btn.classList.add('nudge-target'));
-   }
-   if (state.nudgeStep === 4) els.scanBtn.classList.add('nudge-target');
-   if (state.nudgeStep === 5 && !els.copyMakeupBtn.disabled) els.copyMakeupBtn.classList.add('nudge-target');
-}
 
 export function addGhostyleBtn(record) {
    state.loadedGhostyles.set(record.id, record);

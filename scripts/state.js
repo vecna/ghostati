@@ -14,7 +14,6 @@ export const state = {
    visibleLogStartIndex: 0,
    overlayFadeTimeout: null,
    isLogExpanded: false,
-   nudgeStep: localStorage.getItem('ghostati-nudge-done') ? 6 : 1,
    MATCH_THRESHOLD: 0.58,
    ghostatiEvents: new EventTarget(),
    loadedGhostyles: new Map(),

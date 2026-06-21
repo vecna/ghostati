@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { els, clearOverlay, updateNudging } from './dom.js';
+import { els, clearOverlay } from './dom.js';
 import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
 import { triggerOverlayFadeout, resizeCanvas } from './camera.js';
 import { persistDb, renderDbStats } from './db.js';
@@ -307,7 +307,6 @@ export async function saveFace() {
       detail: { detectionState: window.Ghostati.computeMatchState(result.descriptor), source: 'save', score }
    }));
 
-   updateNudging(2); 
 }
 
 /**

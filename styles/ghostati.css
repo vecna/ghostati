@@ -565,16 +565,3 @@ body {
     right: 20px;
   }
 }
-
-/* --- NUDGING (TUTORIAL) --- */
-.nudge-target {
-  box-shadow: 0 0 0 4px var(--warn), 0 0 15px rgba(255, 204, 102, 0.4) !important;
-  animation: nudge-pulse 1.5s infinite;
-  z-index: 20;
-}
-
-@keyframes nudge-pulse {
-  0% { box-shadow: 0 0 0 4px var(--warn), 0 0 15px rgba(255, 204, 102, 0.4); }
-  50% { box-shadow: 0 0 0 6px var(--warn), 0 0 25px rgba(255, 204, 102, 0.6); }
-  100% { box-shadow: 0 0 0 4px var(--warn), 0 0 15px rgba(255, 204, 102, 0.4); }
-}

@@ -4,7 +4,7 @@ import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
 import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
-import { els, setStatus, clearOverlay, updateNudging, addGhostyleBtn } from './dom.js';
+import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
 import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './plugins-manager.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
@@ -216,7 +216,6 @@ async function init() {
             } else {
                attemptShare();
             }
-            updateNudging(5);
          });
       } catch (err) {
          console.error(err);
@@ -228,12 +227,10 @@ async function init() {
       setBusy(true);
       try {
          if (hasActivePlugin(state)) {
-            updateNudging(4);
             await testMakeupEfficacy(state, els);
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
          } else {
             await scanFace(state, els);
-            updateNudging(1);
          }
       }
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
@@ -335,7 +332,6 @@ async function init() {
 
    setLog('Tutto pronto! Inizia scansionando il tuo volto o attivando una guida makeup.');
    setBusy(false);
-   updateNudging(0);
    state.ghostatiEvents.dispatchEvent(new CustomEvent('ready', { detail: {} }));
 
    // Questo evento segnala ai file con i loop, che l'ambiente è pronto, e troveranno

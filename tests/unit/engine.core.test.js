@@ -11,7 +11,6 @@ vi.mock('../../scripts/dom.js', () => ({
     copyMakeupBtn: { disabled: true }
   },
   clearOverlay: vi.fn(),
-  updateNudging: vi.fn(),
   DETECTOR_OPTIONS: { detector: 'opts' }
 }));
 
@@ -35,7 +34,7 @@ vi.mock('../../scripts/db.js', () => ({
 }));
 
 import { state } from '../../scripts/state.js';
-import { els, clearOverlay, updateNudging } from '../../scripts/dom.js';
+import { els, clearOverlay } from '../../scripts/dom.js';
 import { setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/utils.js';
 import { triggerOverlayFadeout, resizeCanvas } from '../../scripts/camera.js';
 import { persistDb, renderDbStats } from '../../scripts/db.js';
@@ -122,7 +121,6 @@ describe('engine core exports', () => {
     state.lastKnownEffectResult = null;
     state.isSystemBusy = false;
     state.effectInferenceInFlight = false;
-    state.nudgeStep = 1;
     state.ghostatiEvents = new EventTarget();
 
     window.Ghostati = {
@@ -290,7 +288,6 @@ describe('engine core exports', () => {
 
   it('saveFace adds record, persists DB, logs and dispatches matchStateChanged', async () => {
     state.db = { nextId: 7, faces: [] };
-    state.nudgeStep = 2;
 
     const result = {
       age: 29,
