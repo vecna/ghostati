@@ -67,8 +67,17 @@ window.Ghostati = {
    detectorOptions: DETECTOR_OPTIONS
 };
 
-/* This function is used to load a Ghostyle plugin from a given URL, and optionally check for an expected name.
-* It fetches the metadata, imports the module, and calls its onInit function if present. */
+/**
+ * Loads a Ghostyle plugin from a given URL.
+ * Fetches its metadata, imports the module, runs its optional `onInit` hook, and registers
+ * a UI button that toggles the effect.
+ *
+ * @param {string} url - The URL of the Ghostyle script.
+ * @param {string} expectedName - Optional expected display name for logging.
+ * @see init – called during application startup to load all Ghostyles from `ghostylist.json`.
+ * @see fetchGhostyleMetadata – retrieves the plugin metadata.
+ * @see importGhostyleModule – imports the actual Ghostyle module.
+ */
 async function loadGhostyle(url, expectedName) {
    let ghostyle = null;
    try {
@@ -102,6 +111,14 @@ async function loadGhostyle(url, expectedName) {
 }
 
 
+/**
+ * Sets the busy flag for the whole UI, disabling/enabling controls during asynchronous operations.
+ *
+ * @param {boolean} isBusy - When true, UI controls are disabled to prevent concurrent actions.
+ * @see init – called during startup to manage UI state while models load.
+ * @see loadModels – UI is set busy while models are loading.
+ * @see toggleEffect – disables controls while an effect is being applied.
+ */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
    [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn].forEach(btn => {
@@ -112,6 +129,13 @@ export function setBusy(isBusy) {
    previewBtns.forEach(btn => btn.disabled = isBusy);
 }
 
+/**
+ * Loads all required face-api.js models for facial detection, landmarks, recognition, and age/gender.
+ * This is called during application startup to ensure the models are cached before any webcam processing.
+ *
+ * @see init – the main initialization routine that invokes `loadModels` before starting the camera.
+ * @see setStatus – updates UI status while models are being loaded.
+ */
 async function loadModels() {
    setStatus('init', 'caricamento modelli');
    await Promise.all([
@@ -131,6 +155,14 @@ function handleError(err, fallbackMessage) {
    setLog(fallbackMessage + detail);
 }
 
+/**
+ * Initializes the application: loads the database, renders statistics, sets up the canvas,
+ * registers UI event listeners, loads models, ghostyle plugins, and starts the webcam.
+ * This is the entry point called at the end of the script.
+ *
+ * @see loadModels – called within init to load face-api.js models before webcam activation.
+ * @see init(); – the function is invoked at the bottom of the script to start the app.
+ */
 async function init() {
    state.db = loadDb();
    renderDbStats(state, els);
