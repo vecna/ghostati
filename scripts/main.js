@@ -146,6 +146,15 @@ async function loadModels() {
    ]);
 }
 
+/**
+ * Centralized error handling for UI actions.
+ * Logs the fallback message, the error details, updates the status UI, shows the placeholder, and records the full message in the log.
+ *
+ * @param {Error} err - The caught error object.
+ * @param {string} fallbackMessage - User‑friendly message describing the context of the error.
+ * @see init – uses handleError for camera initialization failures.
+ * @see toggleEffect – uses handleError when scanning or applying effects fails.
+ */
 function handleError(err, fallbackMessage) {
    console.log('Errore:', fallbackMessage);
    console.error(err);
