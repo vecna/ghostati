@@ -4,6 +4,14 @@ import { setLog } from './utils.js';
 
 export const STORAGE_KEY = 'local-face-lab-db-v1';
 
+/**
+ * Loads the application’s face database from `localStorage`.
+ *
+ * Returns a fresh default database if no stored data exists or if the data is malformed.
+ *
+ * @returns {{nextId: number, faces: Array}} The current database state.
+ * @see Used in `scripts/main.js` during startup and in unit tests for DB loading.
+ */
 export function loadDb() {
    try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -18,6 +26,14 @@ export function loadDb() {
    }
 }
 
+/**
+ * Persists the current database (`state.db`) to `localStorage` and emits a `dbChanged`
+ * event so UI components can update the displayed count and next ID.
+ *
+ * @see engine.js – invoked after modifications to ensure storage stays in sync.
+ * @see clearDb – called after clearing the database to save the empty state.
+ * @see tests/unit/db.test.js – validates that persistence occurs correctly.
+ */
 export function persistDb() {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
    state.ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
@@ -28,6 +44,15 @@ export function persistDb() {
    }));
 }
 
+/**
+ * Renders the current database statistics to the UI.
+ *
+ * Updates the displayed face count, next ID, matching threshold, and badge.
+ *
+ * @see main.js – initial rendering after loading the database.
+ * @see engine.js – re‑render after any modification to the database.
+ * @see clearDb – refreshes the UI after the database is cleared.
+ */
 export function renderDbStats() {
    els.dbCount.textContent = String(state.db.faces.length);
    els.nextId.textContent = String(state.db.nextId);
@@ -38,6 +63,15 @@ export function renderDbStats() {
    els.dbCountBadge.style.display = 'inline-block'; // sempre, anche quando è 0.
 }
 
+/**
+ * Clears the local face database, resetting it to an empty state and persisting the change.
+ *
+ * Emits a `matchStateChanged` event so any listeners can update their UI accordingly.
+ *
+ * @see persistDb – called after resetting to ensure the empty state is saved.
+ * @see renderDbStats – updates the displayed statistics after the clear operation.
+ * @see tests/unit/db.test.js – verifies that clearing the database works as expected.
+ */
 export function clearDb() {
    state.db = { nextId: 0, faces: [] };
    persistDb();

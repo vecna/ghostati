@@ -44,6 +44,13 @@ export function setStatus(kind, text) {
    els.statusText.textContent = text;
 }
 
+/**
+ * Clear the overlay canvas and reset its visual state.
+ * Removes all drawings and disables any fade-out transition.
+ * @see engine.js:20 – called after face detection to clear previous overlay before drawing new results.
+ * @see main.js:371 – invoked when the user clicks the "Clear Overlay" button.
+ * @see main.js:156 – used when deactivating an effect to ensure the overlay is clean.
+ */
 export function clearOverlay() {
    const ctx = els.overlay.getContext('2d');
    ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
@@ -52,6 +59,17 @@ export function clearOverlay() {
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
+/**
+ * Update the UI nudging flow.
+ *
+ * Shows a contextual hint on a specific UI element based on the current
+ * `state.nudgeStep`.  The function increments the step, stores progress in
+ * `localStorage`, and visually highlights the next target element.
+ *
+ * @see main.js:316 – called after a successful scan to advance the nudging step.
+ * @see main.js:335 – called after a successful save to advance the nudging step.
+ * @see main.js:345 – called after the “copy makeup” button is enabled.
+ */
 export function updateNudging(currentStep) {
 
    // there was the if condition before, now is checked here so I can remove all the 'if'
