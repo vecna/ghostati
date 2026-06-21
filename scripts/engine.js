@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { els, clearOverlay } from './dom.js';
 import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
-import { triggerOverlayFadeout, resizeCanvas } from './camera.js';
+import { resizeCanvas } from './camera.js';
 import { persistDb, renderDbStats } from './db.js';
 import { setLog } from './utils.js';
 import { DETECTOR_OPTIONS } from './config.js';
@@ -32,6 +32,18 @@ export async function detectCurrentFace(drawOverlay) {
 
    if (drawOverlay) drawResult(result);
    return result;
+}
+
+export function triggerOverlayFadeout() {
+   els.overlay.style.transition = 'none';
+   els.overlay.style.opacity = '1';
+   void els.overlay.offsetHeight; // force reflow
+   els.overlay.style.transition = 'opacity 2s ease-in-out';
+
+   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
+   state.overlayFadeTimeout = setTimeout(() => {
+      els.overlay.style.opacity = '0';
+   }, 5000);
 }
 
 /**

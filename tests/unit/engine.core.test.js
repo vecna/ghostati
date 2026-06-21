@@ -6,7 +6,9 @@ vi.mock('../../scripts/dom.js', () => ({
     overlay: {
       width: 320,
       height: 240,
-      getContext: vi.fn()
+      getContext: vi.fn(),
+      style: { transition: '', opacity: '' },
+      offsetHeight: 20
     },
     copyMakeupBtn: { disabled: true }
   },
@@ -24,7 +26,6 @@ vi.mock('../../scripts/utils.js', () => ({
 }));
 
 vi.mock('../../scripts/camera.js', () => ({
-  triggerOverlayFadeout: vi.fn(),
   resizeCanvas: vi.fn()
 }));
 
@@ -36,7 +37,7 @@ vi.mock('../../scripts/db.js', () => ({
 import { state } from '../../scripts/state.js';
 import { els, clearOverlay } from '../../scripts/dom.js';
 import { setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/utils.js';
-import { triggerOverlayFadeout, resizeCanvas } from '../../scripts/camera.js';
+import { resizeCanvas } from '../../scripts/camera.js';
 import { persistDb, renderDbStats } from '../../scripts/db.js';
 import {
   detectCurrentFace,
@@ -46,7 +47,8 @@ import {
   drawDetectionScaffold,
   drawResult,
   scanFace,
-  saveFace
+  saveFace,
+  triggerOverlayFadeout
 } from '../../scripts/engine.js';
 
 function createCtx() {
@@ -140,6 +142,25 @@ describe('engine core exports', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('triggerOverlayFadeout schedules opacity fade and clears previous timeout', () => {
+    vi.useFakeTimers();
+    try {
+      state.overlayFadeTimeout = setTimeout(() => {}, 1000);
+      const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+      triggerOverlayFadeout();
+
+      expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
+      expect(els.overlay.style.opacity).toBe('1');
+      expect(clearSpy).toHaveBeenCalled();
+
+      vi.advanceTimersByTime(5000);
+      expect(els.overlay.style.opacity).toBe('0');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('detectCurrentFace returns null and logs when no face is detected', async () => {
@@ -280,7 +301,7 @@ describe('engine core exports', () => {
 
     await scanFace();
 
-    expect(triggerOverlayFadeout).toHaveBeenCalled();
+    expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
     expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Volto trovato. Età stimata: 31.'));
     expect(onMatch).toHaveBeenCalledTimes(1);
     expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'scan', detectionState: 'matched', score: 0.78 });
@@ -314,7 +335,7 @@ describe('engine core exports', () => {
     expect(typeof state.db.faces[0].savedAt).toBe('string');
     expect(persistDb).toHaveBeenCalled();
     expect(renderDbStats).toHaveBeenCalled();
-    expect(triggerOverlayFadeout).toHaveBeenCalled();
+    expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
     expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Impronta biometrica salvata con ID 7.'));
     expect(onMatch).toHaveBeenCalledTimes(1);
     expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'save', detectionState: 'matched', score: 0.91 });

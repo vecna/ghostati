@@ -48,7 +48,6 @@ import { runEffectPass } from '../../scripts/engine.js';
 import {
   startCamera,
   resizeCanvas,
-  triggerOverlayFadeout,
   effectLoop,
   startEffectLoop,
   stopEffectLoop
@@ -151,24 +150,7 @@ describe('camera module', () => {
     expect(els.overlay.height).toBe(480);
   });
 
-  it('triggerOverlayFadeout schedules opacity fade and clears previous timeout', () => {
-    vi.useFakeTimers();
-    try {
-      state.overlayFadeTimeout = setTimeout(() => {}, 1000);
-      const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
 
-      triggerOverlayFadeout();
-
-      expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
-      expect(els.overlay.style.opacity).toBe('1');
-      expect(clearSpy).toHaveBeenCalled();
-
-      vi.advanceTimersByTime(5000);
-      expect(els.overlay.style.opacity).toBe('0');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
 
   it('effectLoop triggers inference based on selected delay and re-schedules itself',  async () => {
     state.lastEffectRun = 0;

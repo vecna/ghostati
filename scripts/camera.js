@@ -54,18 +54,6 @@ export function resizeCanvas() {
    els.overlay.height = h;
 }
 
-export function triggerOverlayFadeout() {
-   els.overlay.style.transition = 'none';
-   els.overlay.style.opacity = '1';
-   void els.overlay.offsetHeight; // force reflow
-   els.overlay.style.transition = 'opacity 2s ease-in-out';
-
-   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
-   state.overlayFadeTimeout = setTimeout(() => {
-      els.overlay.style.opacity = '0';
-   }, 5000);
-}
-
 export async function effectLoop(ts = 0) {
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - state.lastEffectRun > currentDelay) {

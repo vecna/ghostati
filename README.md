@@ -1,8 +1,9 @@
 ## Status
 ![Unit Test Coverage](https://img.shields.io/badge/coverage-65.33%25-lightgrey)
-# ghòstati | Face Lab
 
-**Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**
+# ghòstati! | the _Face Confusion Assistant?_
+
+This is a: Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (also known as, Computer Vision Dazzle).
 
 ![ghòstati](facerec-transparency.png)
 
@@ -28,8 +29,8 @@ Since it's a static web application, there is no build step required.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/vecna/antagonistrucco.git
-   cd antagonistrucco
+   git clone https://github.com/vecna/ghostati.git
+   cd ghostati
    ```
 2. Serve the directory with a local HTTP server:
    ```bash
@@ -37,7 +38,7 @@ Since it's a static web application, there is no build step required.
    # or
    python3 -m http.server 8000
    ```
-3. Open a modern browser and navigate to `http://localhost:8000/ghostati-face-api.html`.
+3. Open a modern browser, ensure to have a webcam, and navigate to `http://localhost:8000/ghostati.html`.
 
 ## Generating Documentation
 
@@ -56,7 +57,8 @@ You can create your own modular AR makeup effects called **Ghostyles**. A "Ghost
 To develop a new Ghostyle:
 1. Copy the `./ghostyles/00-template.js`.
 2. Implement your custom canvas drawing logic based on the provided facial landmarks.
-3. Test it live by pasting your local/remote URL into the "Carica Ghostyle Remoto" diagnostic box!
+3. Test it live by editing the `ghostylist.json` file
+4. Open a PR to get it distributed - this can't get any easy at the moment.
 
 See the `ghostati-docs.html` page for more advanced documentation on Ghostyle development.
 
@@ -89,7 +91,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `9f2dc5f` – removed nudging logic, added new unit tests
+
+**Last commit:** `7eefd6f` – added handleError JSDoc
+
+
 
 
 
@@ -136,8 +141,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `9f2dc5f` removed nudging logic, added new unit tests
-- `ab54a5c` moved the ghostyles related functions into a dedicated file, decoupled the ghostyles related code
-- `d6ca74a` added other JSDoc compatible comments
-- `79dae4d` added JSDoc and started to document some functions
-- `bdb7174` removed some dependency loop and small cleanups
+- `7eefd6f` added handleError JSDoc
+- `9fee284` Merge branch 'feat/jsdoc-improvement'
+- `2d2f778` removed useless inclusions
+- `f5d1a44` added JSDoc to main
+- `2cbcd9c` renewed the JSDoc output with the 'clean' template
