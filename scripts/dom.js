@@ -55,8 +55,15 @@ export function clearOverlay() {
    if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
 }
 
-
-
+/**
+ * Creates and registers a UI button for a ghostyle effect.
+ * The button is added to the Ghostyles container and stored in state.loadedGhostyles.
+ *
+ * @param {{id:string, name:string, url:string, module:any}} record - Ghostyle metadata and module.
+ * @returns {HTMLButtonElement} The created button element.
+ * @see main.js – iterates over fetched ghostyle records and calls this to populate UI.
+ * @see tests/unit/dom.test.js – verifies button creation and registration.
+ */
 export function addGhostyleBtn(record) {
    state.loadedGhostyles.set(record.id, record);
 
@@ -69,6 +76,15 @@ export function addGhostyleBtn(record) {
    return btn;
 }
 
+/**
+ * Resets the UI and internal state after an effect is cleared.
+ * Removes visual active classes from preview buttons, clears scan button styling,
+ * resets effect name and tracking UI, clears selected effect state, disables the
+ * makeup copy button, and clears the overlay canvas.
+ *
+ * @see toggleEffect – called when the user toggles off the currently active effect.
+ * @see main.js – UI button triggers effect clearing via toggleEffect which uses this.
+ */
 export function clearActiveEffect() {
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
 
@@ -87,6 +103,15 @@ export function clearActiveEffect() {
    clearOverlay();
 }
 
+/**
+ * Handles UI updates when a ghostyle effect button is selected.
+ * Marks the selected button as active, hides any preview image, configures the scan button appearance,
+ * resets overlay fade timers, and updates effect name/tracking display based on the newly active effect.
+ *
+ * @param {HTMLButtonElement} button - The button element that was clicked to select the effect.
+ * @see toggleEffect – invoked after changing the active effect.
+ * @see main.js – user interaction triggers toggleEffect which calls this function.
+ */
 export function effectSelected(button) {
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
 
