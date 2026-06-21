@@ -23,9 +23,9 @@ vi.mock('https://example.com/effects/graphic-liner.js', () => ({
 import { state } from '../../scripts/state.js';
 import { setLog } from '../../scripts/utils.js';
 import { clearActiveEffect, effectSelected } from '../../scripts/dom.js';
-import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from '../../scripts/plugins-manager.js';
+import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from '../../scripts/ghostyles-manager.js';
 
-describe('plugins-manager', () => {
+describe('ghostyles-manager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     state.activeEffect = null;

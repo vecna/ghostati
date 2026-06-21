@@ -1,5 +1,5 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-53.26%25-lightgrey)
+![Unit Test Coverage](https://img.shields.io/badge/coverage-65.33%25-lightgrey)
 # ghòstati | Face Lab
 
 **Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**
@@ -88,7 +88,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `fd24bcc` – Merge branch 'refactor1'
+
+**Last commit:** `9f2dc5f` – removed nudging logic, added new unit tests
+
+
 
 
 
@@ -133,8 +136,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `fd24bcc` Merge branch 'refactor1'
-- `405e5e6` fixed e2e test and update-readme script
-- `5468742` Merge pull request #6 from vecna/refactor1
-- `99ad6a8` improved unit tests coverage
-- `6e6617c` ultimi bug fix dopo il primo refactor
+- `9f2dc5f` removed nudging logic, added new unit tests
+- `ab54a5c` moved the ghostyles related functions into a dedicated file, decoupled the ghostyles related code
+- `d6ca74a` added other JSDoc compatible comments
+- `79dae4d` added JSDoc and started to document some functions
+- `bdb7174` removed some dependency loop and small cleanups

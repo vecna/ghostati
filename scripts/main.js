@@ -5,7 +5,7 @@ import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, comp
 import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
-import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './plugins-manager.js';
+import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './ghostyles-manager.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
