@@ -1,3 +1,4 @@
+/** @module camera */
 import { state } from './state.js';
 import { setStatus, els, clearOverlay } from './dom.js';
 import { setLog } from './utils.js';

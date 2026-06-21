@@ -1,3 +1,4 @@
+/** @module config */
 
 // tiny: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights',
 // URL previously hold here but never actually loeaded: investigate exactly.

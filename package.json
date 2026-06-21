@@ -6,7 +6,7 @@
   "scripts": {
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "docs": "jsdoc scripts/ -d docs"
+    "docs": "jsdoc -c jsdoc.clean.json"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
     "@playwright/test": "^1.60.0",
     "@vitest/coverage-v8": "^4.1.8",
     "canvas": "^3.2.3",
+    "clean-jsdoc-theme": "^5.0.2",
     "http-server": "^14.1.1",
     "jsdoc": "^4.0.5",
     "jsdom": "^29.1.1",

@@ -1,4 +1,6 @@
 /**
+ * @module ghostyle3d-uv-renderer
+ * @description
  * Ghostyle3D UV renderer — modulo condiviso per tutti i plugin 3D.
  *
  * I plugin 3D devono solo:

@@ -1,4 +1,6 @@
 /**
+ * @module mediapipe-loop
+ * @description
  * MediaPipe FaceLandmarker loop — add-on per ghostati.html
  *
  * Carica il modello MediaPipe (478 landmark 3D), esegue inferenza

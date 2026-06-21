@@ -1,3 +1,4 @@
+/** @module utils */
 import { state } from './state.js';
 
 /**

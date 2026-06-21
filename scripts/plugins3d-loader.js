@@ -1,4 +1,6 @@
 /**
+ * @module plugins3d-loader
+ * @description
  * Loader e UI dei Ghostyle 3D — add-on per ghostati.html
  *
  * Carica plugin 3D dichiarati in `ghostylist3d.json`, genera bottoni in

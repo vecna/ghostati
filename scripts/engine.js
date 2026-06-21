@@ -1,3 +1,4 @@
+/** @module engine */
 import { state } from './state.js';
 import { els, clearOverlay } from './dom.js';
 import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';

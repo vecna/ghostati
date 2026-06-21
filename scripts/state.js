@@ -1,3 +1,4 @@
+/** @module state */
 
 export const state = {
    db: null, // initialized after loading via db.loadDb(),
