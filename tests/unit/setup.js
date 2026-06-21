@@ -52,7 +52,6 @@ document.body.innerHTML = `
   <button id="findBtn"></button>
   <span id="dbCountBadge"></span>
   <button id="clearDbBtn"></button>
-  <button id="clearOverlayBtn"></button>
   <button id="switchCameraBtn"></button>
   <div id="logBox"></div>
   <div id="dbCount"></div>
@@ -61,8 +60,6 @@ document.body.innerHTML = `
   <div id="effectName"></div>
   <div id="effectTracking"></div>
   <div id="ghostylesContainer"></div>
-  <input id="remoteGhostyleUrl" />
-  <button id="loadRemoteGhostyleBtn"></button>
   <button id="mirrorToggle"></button>
   <select id="fpsSelect"><option value="120" selected></option></select>
 `;

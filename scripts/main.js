@@ -4,7 +4,8 @@ import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
 import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
-import { els, setStatus, clearOverlay, updateNudging } from './dom.js';
+import { els, setStatus, clearOverlay, updateNudging, addGhostyleBtn } from './dom.js';
+import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './plugins-manager.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
@@ -33,11 +34,6 @@ if (els.switchCameraBtn) {
    });
 }
 
-function updateEffectStats() {
-   const style = state.loadedGhostyles.get(state.activeEffect);
-   els.effectName.textContent = style ? style.name : 'nessuno';
-   els.effectTracking.textContent = state.activeEffect ? 'on' : 'off';
-}
 
 window.Ghostati = {
    log: (message, sourcePlugin) => setLog(message, sourcePlugin),
@@ -70,134 +66,50 @@ window.Ghostati = {
    detectorOptions: DETECTOR_OPTIONS
 };
 
-async function loadGhostyle(url, expectedName = null) {
-   const id = url.split('/').pop().replace('.js', '');
+/* This function is used to load a Ghostyle plugin from a given URL, and optionally check for an expected name.
+* It fetches the metadata, imports the module, and calls its onInit function if present. */
+async function loadGhostyle(url, expectedName) {
+   let ghostyle = null;
    try {
-      setLog(`Caricamento ghostyle da ${url}...`);
-
-      /* Nota sul caricamento dinamico: avvengono 2 chiamate http, la prima
-       * è per gestire il testo, con tutti i commenti e metadata, la seconda 
-       * è per importare effettivamente il modulo. */
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
-      const matchName = text.match(/@name\s+(.+)/);
-      const name = matchName ? matchName[1].trim() : (expectedName || id);
-
-      try {
-         const module = await import(url);
-         state.loadedGhostyles.set(id, { id, name, module, url });
-
-         if (module.onInit) {
-            console.log(`Funzione di inizializzazione trovata in '${name}'`);
-            module.onInit();
-         }
-      } catch (err) {
-         console.log(`Errore durante l'importazione del modulo '${name}': ${err.message}`);
-         throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
-      }
-
-      const btn = document.createElement('button');
-      btn.className = 'preview-btn';
-      btn.textContent = name;
-      btn.dataset.effect = id;
-      btn.onclick = () => toggleEffect(id, btn);
-
-      els.ghostylesContainer.appendChild(btn);
+      const moduleMetadata = await fetchGhostyleMetadata(url);
+      ghostyle = await importGhostyleModule(moduleMetadata);
 
    } catch (err) {
-      console.error(err);
-      const btn = document.createElement('button');
-      btn.className = 'preview-btn';
-      btn.textContent = expectedName || id;
-      btn.disabled = true;
-      btn.style.color = 'var(--danger)';
-      btn.style.borderColor = 'rgba(255, 122, 122, 0.4)';
-      btn.title = `Errore di caricamento: ${err.message}`;
-      els.ghostylesContainer.appendChild(btn);
-      setLog(`Impossibile caricare Ghostyle ${expectedName || id}: ${err.message}`, 'Sistema (Error)');
+      throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
    }
+
+   if (ghostyle.module.onInit) {
+      console.log(`Funzione di inizializzazione trovata in '${ghostyle.name}'`);
+      try {
+
+         const message = ghostyle.module.onInit();
+         if (message) {
+            setLog(`${ghostyle.name}: ${message}`);
+         }
+      } catch (err) {
+         throw new Error(`Errore durante l'inizializzazione del modulo: ${err.message}`);
+      }
+   }
+
+   /* add the changes in the DOM */
+   const btn = addGhostyleBtn(ghostyle);
+   btn.onclick = () => {
+      toggleEffect(ghostyle.id, btn);
+      startEffectLoop(state, els);
+   }
+   setLog(`Caricato con successo ghostyle ${expectedName} da ${url}`);
 }
+
 
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.clearOverlayBtn, els.loadRemoteGhostyleBtn].forEach(btn => {
+   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn].forEach(btn => {
       if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
       else btn.disabled = isBusy;
    });
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.disabled = isBusy);
 }
-
-function deactivateEffect({ silent = false } = {}) {
-   const previousEffect = state.activeEffect;
-   if (state.activeEffect) {
-      const style = state.loadedGhostyles.get(state.activeEffect);
-      if (style && style.module.onClear) {
-         style.module.onClear(els.overlay.getContext('2d'));
-      }
-   }
-   state.activeEffect = null;
-   if (previousEffect) {
-      state.ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
-         detail: { activeEffect: null, previous: previousEffect }
-      }));
-   }
-   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
-   previewBtns.forEach(btn => btn.classList.remove('active'));
-   els.scanBtn.style.background = '';
-   els.scanBtn.style.borderColor = '';
-   els.scanBtn.style.color = '';
-
-   updateEffectStats();
-   state.lastKnownEffectResult = null;
-   state.lastCompositedCanvas = null;
-   els.copyMakeupBtn.disabled = true;
-   clearOverlay();
-   if (!silent) setLog('Guida makeup disattivata. Webcam ripristinata senza overlay.');
-}
-
-function toggleEffect(effect, button) {
-   console.log(`toggleEffect, active: ${state.activeEffect} new effect ${effect} button ${button}`);
-
-   if (state.activeEffect === effect) {
-      deactivateEffect();
-      return;
-   }
-
-   if (state.activeEffect) {
-      deactivateEffect({ silent: true });
-      // wait for complete removal then continue
-   }
-
-   const previousEffect = state.activeEffect;
-   state.activeEffect = effect;
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('effectChanged', {
-      detail: { activeEffect: effect, previous: previousEffect }
-   }));
-   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
-   previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
-   els.previewImage.style.display = 'none';
-   els.previewImage.removeAttribute('src');
-   updateEffectStats();
-
-   console.log('Loading Ghostyles', effect);
-   const style = state.loadedGhostyles.get(effect);
-   setLog(`Guida makeup attiva: ${style ? style.name : effect}. Cerca un volto nella webcam per vedere dove applicarlo.`);
-
-   els.scanBtn.style.background = 'linear-gradient(180deg, rgba(159, 122, 234, 0.35), rgba(159, 122, 234, 0.15))';
-   els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
-   els.scanBtn.style.color = '#fff';
-
-   updateNudging(3);
-
-   if (state.overlayFadeTimeout) clearTimeout(state.overlayFadeTimeout);
-   els.overlay.style.transition = 'none';
-   els.overlay.style.opacity = '1';
-
-   startEffectLoop(state, els);
-}
-
 
 async function loadModels() {
    setStatus('init', 'caricamento modelli');
@@ -221,7 +133,6 @@ function handleError(err, fallbackMessage) {
 async function init() {
    state.db = loadDb();
    renderDbStats(state, els);
-   updateEffectStats();
    resizeCanvas(els);
 
    window.addEventListener('resize', function () {
@@ -317,12 +228,12 @@ async function init() {
       setBusy(true);
       try {
          if (hasActivePlugin(state)) {
-               updateNudging(4);
+            updateNudging(4);
             await testMakeupEfficacy(state, els);
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
          } else {
             await scanFace(state, els);
-               updateNudging(1);
+            updateNudging(1);
          }
       }
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
@@ -366,21 +277,6 @@ async function init() {
          }, 4000);
       }
    });
-   els.clearOverlayBtn.addEventListener('click', () => {
-      if (state.activeEffect) deactivateEffect({ silent: true });
-      clearOverlay();
-      setLog('Overlay pulito.');
-   });
-
-   els.loadRemoteGhostyleBtn.addEventListener('click', async () => {
-      const url = els.remoteGhostyleUrl.value.trim();
-      if (url) {
-         els.loadRemoteGhostyleBtn.disabled = true;
-         await loadGhostyle(url);
-         els.remoteGhostyleUrl.value = '';
-         els.loadRemoteGhostyleBtn.disabled = false;
-      }
-   });
 
    setBusy(true);
    setLog('Caricamento sistema di riconoscimento facciale (face-api.js)...')
@@ -393,7 +289,8 @@ async function init() {
 
    setLog('Caricamento plugin di makeup in corso...')
    try {
-
+      /* This is still supporting remote loading assuming it might be useful in the future,
+       * but for now we load a static list of Ghostyles from ghostylist.json */
       const relurl = window.location.pathname.split('/').slice(0, -1).join('/')
       const ghostListUrl = relurl + '/ghostylist.json'
       const ghostylistRes = await fetch(ghostListUrl);

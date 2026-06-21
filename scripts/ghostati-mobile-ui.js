@@ -81,11 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
   function clearOverlayAndLogs() {
-    // 1. Trigger the logic to clear the face/overlay if it exists
-    const clearOverlayBtn = document.getElementById('clearOverlayBtn');
-    if (clearOverlayBtn) {
-      clearOverlayBtn.click(); // Trigger the logic bound in face-api.js
-    }
+    // 1. Trigger the logic to clear the Ghostaoverlay if it exists
+
+    // Removed at the moment, should be renamed OR we should clean the Ghostyle effect.
 
     // 2. Clear the visible logs
     if (window.Ghostati && window.Ghostati.clearVisibleLogs) {

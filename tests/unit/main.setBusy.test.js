@@ -64,8 +64,6 @@ describe('main.setBusy', () => {
       els.saveBtn,
       els.findBtn,
       els.clearDbBtn,
-      els.clearOverlayBtn,
-      els.loadRemoteGhostyleBtn
     ].forEach(btn => {
       if (btn) btn.disabled = false;
     });
@@ -78,8 +76,6 @@ describe('main.setBusy', () => {
     expect(els.saveBtn.disabled).toBe(true);
     expect(els.findBtn.disabled).toBe(true);
     expect(els.clearDbBtn.disabled).toBe(true);
-    expect(els.clearOverlayBtn.disabled).toBe(true);
-    expect(els.loadRemoteGhostyleBtn.disabled).toBe(true);
     expect(els.copyMakeupBtn.disabled).toBe(true);
 
     const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
