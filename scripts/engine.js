@@ -323,78 +323,55 @@ export async function saveFace() {
 }
 
 /**
- * Find the best matching face in the database, optionally using a composited post‑makeup image when a plugin is active.
- * @see detectCurrentFace - obtains live detection.
- * @see compositeAndDetect - obtains post‑makeup detection for comparison.
+ * findFace
+ * Goal: find the best matching face in the database, optionally using a composited
+ * post‑makeup image when a plugin is active.
+ *
+ * `findFace` now serves solely as an orchestrator:
+ *   1. Guard against an empty database and obtain a live detection result.
+ *   2. Trigger UI feedback (overlay fade‑out) – the only allowed side‑effects.
+ *   3. Delegate metric calculations to pure helpers that receive explicit
+ *     parameters and return immutable results.
+ *   4. Use the helper outcomes to decide the match state and compose a user‑
+ *      facing log message.
+ *   5. Dispatch a `matchStateChanged` event with a concise payload.
+ *
+ * By limiting mutable global interactions to these well‑defined steps we gain:
+ * • Simple unit tests for each helper (no DOM or global state needed).
+ * • Clear separation of concerns – UI logic vs. algorithmic logic.
+ * • Easier future extensions (e.g., alternative matching algorithms) without
+ *   touching the orchestration flow.
  */
 export async function findFace() {
+   // Guard: empty DB
    if (state.db.faces.length === 0) {
       setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
       clearOverlay();
       return;
    }
 
-   console.log("Faccie nel DB:", state.db.faces);
    const liveResult = await detectCurrentFace(true);
    if (!liveResult) return;
    triggerOverlayFadeout();
 
-   const liveScore = liveResult.detection.score;
-   const liveDistances = state.db.faces
-      .map(entry => ({ id: entry.id, distance: distance(liveResult.descriptor, entry.descriptor) }))
-      .sort((a, b) => a.distance - b.distance);
-   const liveMinDist = liveDistances[0].distance;
-   const liveMinId = liveDistances[0].id;
-
-   // Se c'è un plugin attivo, calcola anche le metriche post-makeup. Con retry weak
-   // dentro compositeAndDetect, abbiamo quasi sempre un descrittore (anche di bassa
-   // confidenza) da cui estrarre obfMinDist e obfScore. weakDetection ci ricorda che
-   // la prima detection (strict) è fallita.
-   let obfScore = null;
-   let obfMinDist = null;
-   let obfMinId = null;
-   let weakDetection = false;
-   let detectionTotallyFailed = false;
+   // Pure metric computation
+   const { liveScore, liveMinDist, liveMinId } = computeLiveMetrics(liveResult);
+   let composite = null;
    if (hasActivePlugin()) {
-      const composite = await compositeAndDetect(liveResult);
-      if (composite.obfuscatedResult) {
-         obfScore = composite.obfuscatedResult.detection.score;
-         const obfDistances = state.db.faces
-            .map(e => ({ id: e.id, distance: distance(composite.obfuscatedResult.descriptor, e.descriptor) }))
-            .sort((a, b) => a.distance - b.distance);
-         obfMinDist = obfDistances[0].distance;
-         obfMinId = obfDistances[0].id;
-         weakDetection = !!composite.weakDetection;
-      } else {
-         detectionTotallyFailed = true;
-      }
+      composite = await compositeAndDetect(liveResult);
    }
+   const { obfScore, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed } = computeCompositeMetrics(composite || {});
 
-   // Stato/match decision: con plugin il giudizio è basato sulla strict detection
-   // (weakDetection → eluso a prescindere dalla distanza, perché face-api stessa
-   // non si fida del volto). Senza plugin, semplicemente confronto liveMinDist.
-   let detectionState, headline;
-   if (detectionTotallyFailed) {
-      detectionState = 'eluded';
-      headline = `Rilevatore ingannato dal makeup: face-api non trova un volto nel composito.`;
-   } else if (weakDetection) {
-      detectionState = 'eluded';
-      headline = `Detection sul composito forzata a confidenza bassa (face-api non vede chiaramente un volto).`;
-   } else {
-      const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
-      const useId = obfMinDist != null ? obfMinId : liveMinId;
-      if (useDist <= state.MATCH_THRESHOLD) {
-         detectionState = 'matched';
-         headline = `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${state.MATCH_THRESHOLD.toFixed(2)}).`;
-      } else {
-         detectionState = 'eluded';
-         headline = `Nessuna corrispondenza sotto soglia ${state.MATCH_THRESHOLD.toFixed(2)}.`;
-      }
-   }
+   const { detectionState, headline } = decideMatchState({
+      liveMinDist,
+      liveMinId,
+      obfMinDist,
+      obfMinId,
+      weakDetection,
+      detectionTotallyFailed,
+   });
 
-   const distLog = obfMinDist != null
-      ? `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`
-      : `distanza live: ${liveMinDist.toFixed(3)}`;
+   const distLog = buildDistLog({ liveMinDist, obfMinDist });
    setLog(`${headline} ${distLog}.`);
 
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
@@ -407,15 +384,30 @@ export async function findFace() {
          obfuscatedScore: obfScore,
          liveMinDist,
          obfMinDist,
-         weakDetection
-      }
+         weakDetection,
+      },
    }));
 }
 
+
 /**
- * Evaluate makeup efficacy by comparing live and composited detections against stored faces.
- * @see detectCurrentFace - baseline detection.
- * @see compositeAndDetect - obtain composited detection.
+ * testMakeupEfficacy
+ * Goal: Evaluate makeup efficacy by comparing live and composited detections against stored faces.
+ * 
+ * Similar to `findFace`, the original `testMakeupEfficacy` blended UI updates,
+ * state changes, and computational logic. To enable isolated testing we moved
+ * all metric‑related calculations into pure helper functions (`computeEfficacyMetrics`,
+ * `buildEfficacyDistLog`, and `decideEfficacyOutcome`).
+ *
+ * The top‑level function now:
+ *   1. Acquires a baseline face detection without overlay.
+ *   2. Generates a composited image (if possible) and updates UI state.
+ *   3. Calls pure helpers to evaluate distances, scores, and overall outcome.
+ *   4. Constructs a descriptive log string and dispatches a `matchStateChanged`
+ *      event with a minimal payload.
+ *
+ * This separation ensures the core logic can be unit‑tested in isolation and
+ * keeps side‑effects confined to clearly defined sections.
  */
 export async function testMakeupEfficacy() {
    const result = await detectCurrentFace(false);
@@ -423,89 +415,40 @@ export async function testMakeupEfficacy() {
       setLog('Nessun volto di base trovato. Avvicinati alla webcam.');
       return;
    }
-
    const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(result);
-
    state.lastCompositedCanvas = canvas;
    els.copyMakeupBtn.disabled = false;
 
-   setLog('Analisi in corso... sottopongo il compositing a face-api');
-
    const liveScore = result.detection.score;
-   const liveMinDist = state.db.faces.length > 0
-      ? Math.min(...state.db.faces.map(e => distance(result.descriptor, e.descriptor)))
-      : null;
-   const obfScore = obfuscatedResult ? obfuscatedResult.detection.score : null;
-   const obfMinDist = obfuscatedResult && state.db.faces.length > 0
-      ? Math.min(...state.db.faces.map(e => distance(obfuscatedResult.descriptor, e.descriptor)))
-      : null;
+   const { liveMinDist, obfMinDist, obfScore, weakDetection: weakDet, }
+      = computeEfficacyMetrics({ result, composite: { obfuscatedResult, weakDetection } });
 
-   // Suffix metriche da appendere ai messaggi
-   const distLog = (() => {
-      if (state.db.faces.length === 0) {
-         // Senza DB la metrica è self-vs-post (non ha senso "min DB")
-         if (obfuscatedResult) {
-            const selfDist = distance(result.descriptor, obfuscatedResult.descriptor);
-            return `distanza self pre→post: ${selfDist.toFixed(3)}`;
-         }
-         return 'distanza self pre→post: post-makeup non rilevato';
-      }
-      return obfMinDist != null
-         ? `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`
-         : `distanza live: ${liveMinDist.toFixed(3)}`;
-   })();
+   const distLog = buildEfficacyDistLog({ liveMinDist, obfMinDist, dbEmpty: state.db.faces.length === 0, result, obfuscatedResult });
+   const { detectionState, headline, dist, } = decideEfficacyOutcome({
+      result,
+      liveMinDist,
+      obfMinDist,
+      weakDetection,
+      obfuscatedResult,
+      dbEmpty: state.db.faces.length === 0,
+   });
 
-   // Decisione di stato analoga a findFace: weakDetection o detection totalmente fallita → eluso
-   if (!obfuscatedResult) {
-      let detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
-      const headline = state.db.faces.length === 0
-         ? `Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.`
-         : `Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l'algoritmo di rilevamento.`;
-      setLog(`${headline} ${distLog}.`);
-      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: {
-            detectionState,
-            source: 'efficacy',
-            score: liveScore,
-            obfuscatedScore: null,
-            liveMinDist,
-            obfMinDist: null,
-            weakDetection: false
-         }
-      }));
-      return;
-   }
+   // Prepare payload for event dispatch
+   const detail = {
+      detectionState,
+      source: 'efficacy',
+      score: liveScore,
+      obfuscatedScore: obfScore,
+      liveMinDist,
+      obfMinDist,
+      weakDetection,
+   };
+   if (dist !== undefined) detail.distance = dist;
 
-   if (weakDetection) {
-      const detectionState = state.db.faces.length === 0 ? 'unknown' : 'eluded';
-      setLog(`Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto. ${distLog}.`);
-      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { detectionState, source: 'efficacy', score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: true }
-      }));
-      return;
-   }
-
-   if (state.db.faces.length === 0) {
-      const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      const detectionState = dist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = dist > state.MATCH_THRESHOLD
-         ? `Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!`
-         : `Risultato: INSUFFICIENTE. L'identità biometrica è ancora intatta.`;
-      setLog(`${headline} distanza self pre→post: ${dist.toFixed(3)}.`);
-      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { detectionState, source: 'efficacy', distance: dist, score: liveScore, obfuscatedScore: obfScore, liveMinDist: null, obfMinDist: null, weakDetection: false }
-      }));
-   } else {
-      const detectionState = obfMinDist > state.MATCH_THRESHOLD ? 'eluded' : 'matched';
-      const headline = obfMinDist > state.MATCH_THRESHOLD
-         ? `Risultato: BUONO (Spoofed). Volto rilevato ma l'identità è irriconoscibile.`
-         : `Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.`;
-      setLog(`${headline} ${distLog}.`);
-      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-         detail: { detectionState, source: 'efficacy', distance: obfMinDist, score: liveScore, obfuscatedScore: obfScore, liveMinDist, obfMinDist, weakDetection: false }
-      }));
-   }
+   setLog(`${headline} ${distLog}.`);
+   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', { detail }));
 }
+
 
 /**
  * Determine whether a 2D or 3D effect plugin is currently active.
@@ -520,3 +463,226 @@ export function hasActivePlugin() {
    return !!(a2d || a3d);
    // state.activeEffect = string with the effect name
 }
+
+function computeLiveMetrics(liveResult) {
+   const liveScore = liveResult.detection.score;
+   const distances = state.db.faces.map(e => ({
+       id: e.id,
+       distance: distance(liveResult.descriptor, e.descriptor)
+   })).sort((a, b) => a.distance - b.distance);
+   const liveMinDist = distances.length ? distances[0].distance : null;
+   const liveMinId = distances.length ? distances[0].id : null;
+   return { liveScore, liveMinDist, liveMinId };
+}
+
+/**
+ * Compute metrics for the composited (post‑makeup) detection.
+ *
+ * If a plugin is active a composited image is generated and this function
+ * evaluates the detection score and the smallest distance between the
+ * composited descriptor and the faces stored in the DB. It also reports whether
+ * a weak detection was performed or if detection completely failed.
+ *
+ * The function is pure – it only reads from `state.db` and the supplied
+ * `composite` object and does not mutate any global state.
+ *
+ * @param {Object} composite - Result of `compositeAndDetect`, containing
+ *   `obfuscatedResult` and `weakDetection`.
+ * @returns {{obfScore:number|null, obfMinDist:number|null, obfMinId:number|null,
+ *   weakDetection:boolean, detectionTotallyFailed:boolean}}
+ *   Metrics used by `findFace`.
+ * @see findFace – uses this helper to incorporate post‑makeup metrics.
+ */
+function computeCompositeMetrics(composite) {
+   if (!composite || !composite.obfuscatedResult) {
+       return {
+           obfScore: null,
+           obfMinDist: null,
+           obfMinId: null,
+           weakDetection: !!composite?.weakDetection,
+           detectionTotallyFailed: true
+       };
+   }
+   const obfScore = composite.obfuscatedResult.detection.score;
+   const distances = state.db.faces.map(e => ({
+       id: e.id,
+       distance: distance(composite.obfuscatedResult.descriptor, e.descriptor)
+   })).sort((a, b) => a.distance - b.distance);
+   const obfMinDist = distances.length ? distances[0].distance : null;
+   const obfMinId = distances.length ? distances[0].id : null;
+   return {
+       obfScore,
+       obfMinDist,
+       obfMinId,
+       weakDetection: !!composite.weakDetection,
+       detectionTotallyFailed: false
+   };
+}
+
+/**
+ * Decide the overall match state based on live and composited metrics.
+ *
+ * Applies the matching threshold and handles cases where detection failed
+ * entirely or only a weak detection was possible.
+ *
+ * @param {Object} params - Metric parameters.
+ * @param {number|null} params.liveMinDist - Minimum distance for live detection.
+ * @param {number|null} params.liveMinId - Matching face ID for live detection.
+ * @param {number|null} params.obfMinDist - Minimum distance for composited detection.
+ * @param {number|null} params.obfMinId - Matching face ID for composited detection.
+ * @param {boolean} params.weakDetection - Whether composited detection was weak.
+ * @param {boolean} params.detectionTotallyFailed - Whether composited detection failed.
+ * @returns {{detectionState:string, headline:string}} Decision and message for UI.
+ * @see findFace – consumes this decision to build event payload.
+ */
+function decideMatchState({ liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed }) {
+   const threshold = state.MATCH_THRESHOLD;
+   if (detectionTotallyFailed) {
+       return {
+           detectionState: 'eluded',
+           headline: 'Rilevatore ingannato dal makeup: face-api non trova un volto nel composito.'
+       };
+   }
+   if (weakDetection) {
+       return {
+           detectionState: 'eluded',
+           headline: 'Detection sul composito forzata a confidenza bassa (face-api non vede chiaramente un volto).'
+       };
+   }
+   const useDist = obfMinDist != null ? obfMinDist : liveMinDist;
+   const useId = obfMinDist != null ? obfMinId : liveMinId;
+   if (useDist <= threshold) {
+       return {
+           detectionState: 'matched',
+           headline: `Corrispondenza trovata: ID ${useId} (distanza ${useDist.toFixed(3)} ≤ ${threshold.toFixed(2)}).`
+       };
+   }
+   return {
+       detectionState: 'eluded',
+       headline: `Nessuna corrispondenza sotto soglia ${threshold.toFixed(2)}.`
+   };
+}
+
+/**
+ * Build a log string describing live and optional post‑makeup distances.
+ *
+ * @param {Object} params
+ * @param {number|null} params.liveMinDist - Live detection distance.
+ * @param {number|null} params.obfMinDist - Post‑makeup detection distance, if any.
+ * @returns {string} Formatted distance log.
+ * @see findFace – used to generate log message for match result.
+ */
+function buildDistLog({ liveMinDist, obfMinDist }) {
+   if (obfMinDist != null) {
+       return `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`;
+   }
+   return `distanza live: ${liveMinDist.toFixed(3)}`;
+}
+
+// ---- Efficacy helpers -------------------------------------------------
+/**
+ * Compute efficacy metrics comparing live and composited detections against the DB.
+ *
+ * Determines the closest stored face distance for the live result and, if a
+ * composited result exists, its distance and detection score.
+ *
+ * @param {Object} params
+ * @param {Object} params.result - Live detection result.
+ * @param {Object} params.composite - Composite detection result containing `obfuscatedResult` and `weakDetection`.
+ * @returns {{liveMinDist:number|null, obfMinDist:number|null, obfScore:number|null, weakDetection:boolean}}
+ *   Metrics used by `testMakeupEfficacy`.
+ * @see testMakeupEfficacy – uses this helper for outcome calculation.
+ */
+function computeEfficacyMetrics({ result, composite }) {
+   const liveMinDist = state.db.faces.length
+       ? Math.min(...state.db.faces.map(e => distance(result.descriptor, e.descriptor)))
+       : null;
+   let obfScore = null,
+       obfMinDist = null;
+   if (composite.obfuscatedResult) {
+       obfScore = composite.obfuscatedResult.detection.score;
+       if (state.db.faces.length) {
+           obfMinDist = Math.min(...state.db.faces.map(e => distance(composite.obfuscatedResult.descriptor, e.descriptor)));
+       }
+   }
+   return {
+       liveMinDist,
+       obfMinDist,
+       obfScore,
+       weakDetection: composite.weakDetection
+   };
+}
+
+/**
+ * Build a descriptive log for makeup efficacy testing.
+ *
+ * Handles cases where the database is empty, where no composited result is
+ * detected, and where distances are available.
+ *
+ * @param {Object} params
+ * @param {number|null} params.liveMinDist - Live detection distance.
+ * @param {number|null} params.obfMinDist - Post‑makeup detection distance.
+ * @param {boolean} params.dbEmpty - Whether the face DB has any entries.
+ * @param {Object} params.result - Live detection result.
+ * @param {Object} params.obfuscatedResult - Composited detection result.
+ * @returns {string} Formatted distance description.
+ * @see testMakeupEfficacy – incorporates this log into UI feedback.
+ */
+function buildEfficacyDistLog({ liveMinDist, obfMinDist, dbEmpty, result, obfuscatedResult }) {
+   if (dbEmpty) {
+       if (obfuscatedResult) {
+           return `distanza self pre→post: ${distance(result.descriptor, obfuscatedResult.descriptor).toFixed(3)}`;
+       }
+       return 'distanza self pre→post: post-makeup non rilevato';
+   }
+   if (obfMinDist != null) {
+       return `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`;
+   }
+   return `distanza live: ${liveMinDist.toFixed(3)}`;
+}
+
+/**
+ * Decide the outcome of a makeup efficacy test.
+ *
+ * Evaluates detection success, weak detection flags, and distance thresholds to
+ * produce a human‑readable headline and a detection state.
+ *
+ * @param {Object} params
+ * @param {Object} params.result - Live detection result.
+ * @param {number|null} params.liveMinDist - Live detection distance.
+ * @param {number|null} params.obfMinDist - Post‑makeup detection distance.
+ * @param {boolean} params.weakDetection - Whether composited detection was weak.
+ * @param {Object|null} params.obfuscatedResult - Result of composited detection.
+ * @param {boolean} params.dbEmpty - Whether the DB contains any faces.
+ * @returns {{detectionState:string, headline:string, dist?:number}} Outcome description.
+ * @see testMakeupEfficacy – uses this decision to dispatch events and log.
+ */
+export function decideEfficacyOutcome({ result, liveMinDist, obfMinDist, weakDetection, obfuscatedResult, dbEmpty }) {
+   const threshold = state.MATCH_THRESHOLD;
+   if (!obfuscatedResult) {
+       const detectionState = dbEmpty ? 'unknown' : 'eluded';
+       const headline = dbEmpty
+           ? 'Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.'
+           : 'Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l\'algoritmo di rilevamento.';
+       return { detectionState, headline };
+   }
+   if (weakDetection) {
+       const detectionState = dbEmpty ? 'unknown' : 'eluded';
+       const headline = 'Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto.';
+       return { detectionState, headline };
+   }
+   if (dbEmpty) {
+       const dist = distance(result.descriptor, obfuscatedResult.descriptor);
+       const detectionState = dist > threshold ? 'eluded' : 'matched';
+       const headline = dist > threshold
+           ? 'Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!'
+           : 'Risultato: INSUFFICIENTE. L\'identità biometrica è ancora intatta.';
+       return { detectionState, headline, dist };
+   }
+   const detectionState = obfMinDist > threshold ? 'eluded' : 'matched';
+   const headline = obfMinDist > threshold
+       ? 'Risultato: BUONO (Spoofed). Volto rilevato ma l\'identità è irriconoscibile.'
+       : 'Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.';
+   return { detectionState, headline };
+}
+
