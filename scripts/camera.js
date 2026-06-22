@@ -54,6 +54,14 @@ export function resizeCanvas() {
    els.overlay.height = h;
 }
 
+/**
+ *   Handle returned by `requestAnimationFrame` for the 2D effect render loop.
+ *   **Range:** `null` when the loop is stopped; otherwise a positive rAF id.
+ *   **Used in:** camera.js only (startEffectLoop sets/replaces it, stopEffectLoop
+ *   cancels and nulls it).
+ */
+export let effectLoopHandle = null;
+
 export async function effectLoop(ts = 0) {
    const currentDelay = parseInt(els.fpsSelect.value, 10) || 120;
    if (ts - state.lastEffectRun > currentDelay) {
@@ -63,17 +71,17 @@ export async function effectLoop(ts = 0) {
          clearOverlay();
       }
    }
-   state.effectLoopHandle = requestAnimationFrame(effectLoop);
+   effectLoopHandle = requestAnimationFrame(effectLoop);
 }
 
 export function startEffectLoop() {
-   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
-   state.effectLoopHandle = requestAnimationFrame(effectLoop);
+   if (effectLoopHandle) cancelAnimationFrame(effectLoopHandle);
+   effectLoopHandle = requestAnimationFrame(effectLoop);
 }
 
 export function stopEffectLoop() {
    // Mai usato?
-   if (state.effectLoopHandle) cancelAnimationFrame(state.effectLoopHandle);
-   state.effectLoopHandle = null;
+   if (effectLoopHandle) cancelAnimationFrame(effectLoopHandle);
+   effectLoopHandle = null;
    state.effectInferenceInFlight = false;
 }

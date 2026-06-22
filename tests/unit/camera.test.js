@@ -48,6 +48,7 @@ import { runEffectPass } from '../../scripts/engine.js';
 import {
   startCamera,
   resizeCanvas,
+  effectLoopHandle,
   effectLoop,
   startEffectLoop,
   stopEffectLoop
@@ -60,7 +61,6 @@ describe('camera module', () => {
     state.currentFacingMode = 'user';
     state.isMirrored = false;
     state.lastEffectRun = 0;
-    state.effectLoopHandle = null;
     state.effectInferenceInFlight = true;
     state.overlayFadeTimeout = null;
 
@@ -161,27 +161,29 @@ describe('camera module', () => {
     expect(runEffectPass).toHaveBeenCalledTimes(1);
     expect(state.lastEffectRun).toBe(150);
     expect(requestAnimationFrame).toHaveBeenCalled();
-    expect(state.effectLoopHandle).toBe(321);
+    expect(effectLoopHandle).toBe(321);
   });
 
   it('startEffectLoop cancels previous frame and schedules a new one', () => {
-    state.effectLoopHandle = 999;
+    startEffectLoop();
+
+    requestAnimationFrame.mockReturnValueOnce(654);
 
     startEffectLoop();
 
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(999);
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(321);
     expect(requestAnimationFrame).toHaveBeenCalled();
-    expect(state.effectLoopHandle).toBe(321);
+    expect(effectLoopHandle).toBe(654);
   });
 
   it('stopEffectLoop cancels frame and resets loop state flags', () => {
-    state.effectLoopHandle = 888;
+    startEffectLoop();
     state.effectInferenceInFlight = true;
 
     stopEffectLoop();
 
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(888);
-    expect(state.effectLoopHandle).toBe(null);
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(321);
+    expect(effectLoopHandle).toBe(null);
     expect(state.effectInferenceInFlight).toBe(false);
   });
 });
