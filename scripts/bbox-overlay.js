@@ -43,6 +43,10 @@ function boxOverlayLoop() {
    let lastLiveMinDist = null;
    let lastObfMinDist = null;
 
+   /* experiments to display the ID and / or the closest match, if any */
+   let lastLiveMinId = null;
+   let lastObfMinId = null;
+
    function syncSize() {
       if (canvas.width !== overlayEl.width || canvas.height !== overlayEl.height) {
          canvas.width = overlayEl.width;
@@ -80,10 +84,17 @@ function boxOverlayLoop() {
    // CSS), così leggono dritte anche con webcam in modalità mirror.
    function drawLabels(box, score) {
       const lines = [
-         `score ${fmt(score, 2)}`,
-         `live  ${fmt(lastLiveMinDist, 3)}`,
-         `post  ${fmt(lastObfMinDist, 3)}`
+         `detection ${fmt(score, 2)}`,
+         `distance ${fmt(lastLiveMinDist, 3)}`,
+         `faceId  ${fmt(lastLiveMinId, 0)}`,
       ];
+
+      if(lastObfMinId !== null && lastObfMinId.isFinite() && lastObfMinId !== lastLiveMinId) {
+         console.log('[bbox-overlay] lastObfMinId', lastObfMinId, 'lastLiveMinId', lastLiveMinId);
+         lines.push(`ObfFaceId!  ${fmt(lastObfMinId, 0)}`);
+      }
+      //   `post  ${fmt(lastObfMinDist, 3)}`,
+      // if(`obfuscated (Id)  ${fmt(lastObfMinId, 0)}`
 
       // Scala canvas→CSS: moltiplico tutte le dimensioni in CSS-px per ottenere
       // canvas-px coerenti col rendering visivo.
@@ -157,6 +168,8 @@ function boxOverlayLoop() {
       // scan/save non portano distanze: aggiorno solo quando le chiavi sono presenti.
       if ('liveMinDist' in e.detail) lastLiveMinDist = e.detail.liveMinDist;
       if ('obfMinDist' in e.detail) lastObfMinDist = e.detail.obfMinDist;
+      if ('liveMinId' in e.detail) lastLiveMinId = e.detail.liveMinId;
+      if ('obfMinId' in e.detail) lastObfMinId = e.detail.obfMinId;
    });
 
    Ghostati.events.addEventListener('dbChanged', (e) => {

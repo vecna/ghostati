@@ -19,18 +19,6 @@ export function distance(a, b) {
 }
 
 /**
- * Compute match state for a face descriptor against the database.
- * @param {Object} descriptor - Face descriptor to compare.
- * @returns {string} 'unknown', 'matched', or 'eluded' based on distance threshold.
- * @see distance – called internally for each face.
- */
-export function computeMatchState(descriptor) {
-   if (!descriptor || state.db.faces.length === 0) return 'unknown';
-   const minDist = Math.min(...state.db.faces.map(e => distance(descriptor, e.descriptor)));
-   return minDist <= state.MATCH_THRESHOLD ? 'matched' : 'eluded';
-}
-
-/**
  * Compute the average point from an array of points.
  * @param {Object[]} points - Array of points with x and y properties.
  * @returns {Object} Average point with x and y.

@@ -1,5 +1,5 @@
 /** @module main */
-import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
+import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
@@ -63,7 +63,6 @@ window.Ghostati = {
    getActiveEffect: () => state.activeEffect,
    getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => state.MATCH_THRESHOLD,
-   computeMatchState: (descriptor) => computeMatchState(descriptor),
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
    detectorOptions: DETECTOR_OPTIONS
 };
