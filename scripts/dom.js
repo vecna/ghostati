@@ -24,7 +24,8 @@ export const els = {
    mirrorToggle: document.getElementById('mirrorToggle'), // Left for fallback, but managed by JS via camera direction
    switchCameraBtn: document.getElementById('switchCameraBtn'),
    dbCountBadge: document.getElementById('dbCountBadge'),
-   fpsSelect: document.getElementById('fpsSelect')
+   fpsSelect: document.getElementById('fpsSelect'),
+   recordBtn: document.getElementById('recordBtn')
 };
 
 /**

@@ -72,6 +72,13 @@
         <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
       </svg>
     </button>
+    <button id="recordBtn" class="floating-btn main-action" title="Registra Video (2s)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M23 7l-7 5 7 5V7z"></path>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+      </svg>
+    </button>
   </div>
 
   <!-- Top Right: Settings Toggle -->
@@ -206,14 +213,14 @@
 
   <!-- Scripts che aspettano evento custom per caricarsi -->
   <script src="scripts/ghostati-mobile-ui.js"></script>
-  <script src="scripts/bbox-overlay.js"></script>
-  <script type="module" src="scripts/auto-find-loop.js"></script>
   <script src="scripts/ghostyle3d-uv-renderer.js"></script>
   <script src="scripts/plugins3d-loader.js"></script>
   <script type="module" src="scripts/mediapipe-loop.js"></script>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script type="module" src="scripts/bbox-overlay.js"></script>
+  <script type="module" src="scripts/auto-find-loop.js"></script>
   <script type="module" src="scripts/main.js"></script>
 </body>
 

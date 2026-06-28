@@ -1,12 +1,13 @@
 /** @module main */
-import { distance, computeMatchState, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
+import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
-import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
+import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
 import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './ghostyles-manager.js';
+import { exportMakeup } from './export-makeup.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
@@ -62,7 +63,6 @@ window.Ghostati = {
    getActiveEffect: () => state.activeEffect,
    getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => state.MATCH_THRESHOLD,
-   computeMatchState: (descriptor) => computeMatchState(descriptor),
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
    detectorOptions: DETECTOR_OPTIONS
 };
@@ -121,9 +121,12 @@ async function loadGhostyle(url, expectedName) {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn].forEach(btn => {
-      if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
-      else btn.disabled = isBusy;
+   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+      if (btn) {
+         if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
+         else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
+         else btn.disabled = isBusy;
+      }
    });
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.disabled = isBusy);
@@ -188,82 +191,11 @@ async function init() {
       });
    }
 
-   els.copyMakeupBtn.addEventListener('click', async () => {
-      if (!state.lastCompositedCanvas) return;
-      try {
-         const exportCanvas = document.createElement('canvas');
-         const headerHeight = 44;
-         const footerHeight = 50;
-         exportCanvas.width = state.lastCompositedCanvas.width;
-         exportCanvas.height = state.lastCompositedCanvas.height + headerHeight + footerHeight;
-         const ctx = exportCanvas.getContext('2d');
+   els.copyMakeupBtn.addEventListener('click', exportMakeup);
 
-         ctx.fillStyle = '#0f1115';
-         ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
-         if (state.isMirrored) {
-            ctx.save();
-            ctx.translate(exportCanvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(state.lastCompositedCanvas, 0, headerHeight);
-            ctx.restore();
-         } else {
-            ctx.drawImage(state.lastCompositedCanvas, 0, headerHeight);
-         }
-
-         ctx.fillStyle = '#eef2ff';
-         ctx.textAlign = 'center';
-         ctx.textBaseline = 'middle';
-
-         const style = state.loadedGhostyles.get(state.activeEffect);
-         const pluginName = style ? style.name : 'Unknown Plugin';
-         ctx.font = 'bold 14px Inter, sans-serif';
-         ctx.fillText(`github.com/vecna/antagonistrucco | Modulo: ${pluginName} | URL: https://sindacato.nina.watch/ghostati/`, exportCanvas.width / 2, headerHeight / 2);
-
-         const logText = els.logBox.lastChild ? els.logBox.lastChild.textContent : '';
-         ctx.font = '14px Inter, sans-serif';
-         if (logText.includes('ECCELLENTE') || logText.includes('BUONO')) ctx.fillStyle = '#3ddc97';
-         else if (logText.includes('INSUFFICIENTE')) ctx.fillStyle = '#ff7a7a';
-         else ctx.fillStyle = '#eef2ff';
-
-         ctx.fillText(logText, exportCanvas.width / 2, exportCanvas.height - footerHeight / 2);
-
-         exportCanvas.toBlob(blob => {
-            const file = new File([blob], "ghostati-makeup.png", { type: "image/png" });
-            const attemptShare = () => {
-               if (navigator.share) {
-                  navigator.share({
-                     title: 'Ghostati Makeup',
-                     text: 'Il mio camouflage anti-riconoscimento!',
-                     files: [file]
-                  }).then(() => setLog('Immagine condivisa con successo!'))
-                     .catch(err => console.error('Share failed', err));
-               } else {
-                  setLog('Impossibile copiare l\'immagine (permessi mancanti o Share API non supportata).');
-               }
-            };
-
-            if (navigator.clipboard && navigator.clipboard.write) {
-               try {
-                  navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-                     .then(() => setLog('Immagine con referto diagnostico copiata negli appunti!'))
-                     .catch(err => {
-                        console.error('Clipboard write fallito, provo fallback', err);
-                        attemptShare();
-                     });
-               } catch (err) {
-                  console.error(err);
-                  attemptShare();
-               }
-            } else {
-               attemptShare();
-            }
-         });
-      } catch (err) {
-         console.error(err);
-         setLog('Errore durante la copia. Forse manca il permesso nel browser?');
-      }
-   });
+   if (els.recordBtn) {
+      els.recordBtn.addEventListener('click', recordOneSecond);
+   }
 
    els.scanBtn.addEventListener('click', async () => {
       setBusy(true);
@@ -344,7 +276,6 @@ async function init() {
          throw new Error(`HTTP ${ghostylistRes.status}`);
    } catch (err) {
       setLog('Errore durante la lettura di ghostylist.json: ' + err.message);
-      return;
    }
 
    setLog('Inizializzazione completata. Avvio webcam in corso...');

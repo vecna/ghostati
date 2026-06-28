@@ -127,6 +127,7 @@ describe('Match state utilities', () => {
     state.MATCH_THRESHOLD = 0.58;
   });
 
+  /* -- this has been moved in enginge.js - this is kept to complete the unit test refactoring
   test('computeMatchState returns unknown when descriptor missing or empty db', () => {
     expect(utils.computeMatchState(null)).toBe('unknown');
     expect(utils.computeMatchState([0.1, 0.2])).toBe('unknown');
@@ -139,7 +140,7 @@ describe('Match state utilities', () => {
     state.db.faces = [{ descriptor: [10, 10] }];
     expect(utils.computeMatchState(descriptor)).toBe('eluded');
   });
-
+*/
 });
 
 

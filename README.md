@@ -1,8 +1,8 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-65.33%25-lightgrey)
-# ghòstati | Face Lab
+![Unit Test Coverage](https://img.shields.io/badge/coverage-66.92%25-lightgrey)
+# ghòstati! | the _Face Confusion Assistant?_
 
-**Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).**
+This is a: Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (also known as, Computer Vision Dazzle).
 
 ![ghòstati](facerec-transparency.png)
 
@@ -28,8 +28,8 @@ Since it's a static web application, there is no build step required.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/vecna/antagonistrucco.git
-   cd antagonistrucco
+   git clone https://github.com/vecna/ghostati.git
+   cd ghostati
    ```
 2. Serve the directory with a local HTTP server:
    ```bash
@@ -37,7 +37,7 @@ Since it's a static web application, there is no build step required.
    # or
    python3 -m http.server 8000
    ```
-3. Open a modern browser and navigate to `http://localhost:8000/ghostati-face-api.html`.
+3. Open a modern browser, ensure to have a webcam, and navigate to `http://localhost:8000/ghostati.html`.
 
 ## Generating Documentation
 
@@ -56,7 +56,8 @@ You can create your own modular AR makeup effects called **Ghostyles**. A "Ghost
 To develop a new Ghostyle:
 1. Copy the `./ghostyles/00-template.js`.
 2. Implement your custom canvas drawing logic based on the provided facial landmarks.
-3. Test it live by pasting your local/remote URL into the "Carica Ghostyle Remoto" diagnostic box!
+3. Test it live by editing the `ghostylist.json` file
+4. Open a PR to get it distributed - this can't get any easy at the moment.
 
 See the `ghostati-docs.html` page for more advanced documentation on Ghostyle development.
 
@@ -89,7 +90,13 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `9f2dc5f` – removed nudging logic, added new unit tests
+
+
+**Last commit:** `ba4d356` – added webcam recording when pressed the button
+
+
+
+
 
 
 
@@ -136,8 +143,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `9f2dc5f` removed nudging logic, added new unit tests
-- `ab54a5c` moved the ghostyles related functions into a dedicated file, decoupled the ghostyles related code
-- `d6ca74a` added other JSDoc compatible comments
-- `79dae4d` added JSDoc and started to document some functions
-- `bdb7174` removed some dependency loop and small cleanups
+- `ba4d356` added webcam recording when pressed the button
+- `f712181` completed a large engine.js refactor
+- `8e7738d` decoupled the most complex functions in engine.js
+- `444afb3` Create engine.efficacyoutcome.test.js
+- `df81ef9` JSDoc in state, cleaning in camera

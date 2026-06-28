@@ -29,6 +29,13 @@ vi.mock('../../scripts/dom.js', () => ({
     },
     fpsSelect: {
       value: '120'
+    },
+    recordBtn: {
+      classList: {
+        add: vi.fn(),
+        remove: vi.fn()
+      },
+      disabled: false
     }
   }
 }));
@@ -48,10 +55,11 @@ import { runEffectPass } from '../../scripts/engine.js';
 import {
   startCamera,
   resizeCanvas,
-  triggerOverlayFadeout,
+  effectLoopHandle,
   effectLoop,
   startEffectLoop,
-  stopEffectLoop
+  stopEffectLoop,
+  recordOneSecond
 } from '../../scripts/camera.js';
 
 describe('camera module', () => {
@@ -61,7 +69,6 @@ describe('camera module', () => {
     state.currentFacingMode = 'user';
     state.isMirrored = false;
     state.lastEffectRun = 0;
-    state.effectLoopHandle = null;
     state.effectInferenceInFlight = true;
     state.overlayFadeTimeout = null;
 
@@ -151,24 +158,7 @@ describe('camera module', () => {
     expect(els.overlay.height).toBe(480);
   });
 
-  it('triggerOverlayFadeout schedules opacity fade and clears previous timeout', () => {
-    vi.useFakeTimers();
-    try {
-      state.overlayFadeTimeout = setTimeout(() => {}, 1000);
-      const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
 
-      triggerOverlayFadeout();
-
-      expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
-      expect(els.overlay.style.opacity).toBe('1');
-      expect(clearSpy).toHaveBeenCalled();
-
-      vi.advanceTimersByTime(5000);
-      expect(els.overlay.style.opacity).toBe('0');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
 
   it('effectLoop triggers inference based on selected delay and re-schedules itself',  async () => {
     state.lastEffectRun = 0;
@@ -179,27 +169,90 @@ describe('camera module', () => {
     expect(runEffectPass).toHaveBeenCalledTimes(1);
     expect(state.lastEffectRun).toBe(150);
     expect(requestAnimationFrame).toHaveBeenCalled();
-    expect(state.effectLoopHandle).toBe(321);
+    expect(effectLoopHandle).toBe(321);
   });
 
   it('startEffectLoop cancels previous frame and schedules a new one', () => {
-    state.effectLoopHandle = 999;
+    startEffectLoop();
+
+    requestAnimationFrame.mockReturnValueOnce(654);
 
     startEffectLoop();
 
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(999);
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(321);
     expect(requestAnimationFrame).toHaveBeenCalled();
-    expect(state.effectLoopHandle).toBe(321);
+    expect(effectLoopHandle).toBe(654);
   });
 
   it('stopEffectLoop cancels frame and resets loop state flags', () => {
-    state.effectLoopHandle = 888;
+    startEffectLoop();
     state.effectInferenceInFlight = true;
 
     stopEffectLoop();
 
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(888);
-    expect(state.effectLoopHandle).toBe(null);
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(321);
+    expect(effectLoopHandle).toBe(null);
     expect(state.effectInferenceInFlight).toBe(false);
+  });
+
+  describe('recordOneSecond', () => {
+    let mockMediaRecorderStart;
+    let mockMediaRecorderStop;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      mockMediaRecorderStart = vi.fn();
+      mockMediaRecorderStop = vi.fn();
+
+      class MockMediaRecorder {
+        constructor(stream, options) {
+          this.stream = stream;
+          this.options = options;
+          this.state = 'inactive';
+        }
+        start() {
+          this.state = 'recording';
+          mockMediaRecorderStart();
+        }
+        stop() {
+          this.state = 'inactive';
+          mockMediaRecorderStop();
+          if (this.onstop) this.onstop();
+        }
+      }
+      MockMediaRecorder.isTypeSupported = vi.fn(() => true);
+      vi.stubGlobal('MediaRecorder', MockMediaRecorder);
+      vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200 })));
+
+      els.video.srcObject = { id: 'camera-stream' };
+      state.isRecording = false;
+      state.isSystemBusy = false;
+      if (els.recordBtn) {
+        els.recordBtn.disabled = false;
+        els.recordBtn.classList.add.mockClear();
+        els.recordBtn.classList.remove.mockClear();
+      }
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('sets recording state, adds classes, starts recorder, and stops after durationMs', async () => {
+      await recordOneSecond();
+
+      expect(state.isRecording).toBe(true);
+      expect(els.recordBtn.classList.add).toHaveBeenCalledWith('recording');
+      expect(els.recordBtn.disabled).toBe(true);
+      expect(mockMediaRecorderStart).toHaveBeenCalledTimes(1);
+
+      // Fast-forward 1 second
+      vi.advanceTimersByTime(1000);
+
+      expect(mockMediaRecorderStop).toHaveBeenCalledTimes(1);
+      expect(state.isRecording).toBe(false);
+      expect(els.recordBtn.classList.remove).toHaveBeenCalledWith('recording');
+      expect(els.recordBtn.disabled).toBe(false);
+    });
   });
 });
