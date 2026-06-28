@@ -1,6 +1,5 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-65.33%25-lightgrey)
-
+![Unit Test Coverage](https://img.shields.io/badge/coverage-66.92%25-lightgrey)
 # ghòstati! | the _Face Confusion Assistant?_
 
 This is a: Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (also known as, Computer Vision Dazzle).
@@ -92,7 +91,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `7eefd6f` – added handleError JSDoc
+
+**Last commit:** `ba4d356` – added webcam recording when pressed the button
+
+
 
 
 
@@ -141,8 +143,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `7eefd6f` added handleError JSDoc
-- `9fee284` Merge branch 'feat/jsdoc-improvement'
-- `2d2f778` removed useless inclusions
-- `f5d1a44` added JSDoc to main
-- `2cbcd9c` renewed the JSDoc output with the 'clean' template
+- `ba4d356` added webcam recording when pressed the button
+- `f712181` completed a large engine.js refactor
+- `8e7738d` decoupled the most complex functions in engine.js
+- `444afb3` Create engine.efficacyoutcome.test.js
+- `df81ef9` JSDoc in state, cleaning in camera
