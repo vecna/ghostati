@@ -29,6 +29,13 @@ vi.mock('../../scripts/dom.js', () => ({
     },
     fpsSelect: {
       value: '120'
+    },
+    recordBtn: {
+      classList: {
+        add: vi.fn(),
+        remove: vi.fn()
+      },
+      disabled: false
     }
   }
 }));
@@ -51,7 +58,8 @@ import {
   effectLoopHandle,
   effectLoop,
   startEffectLoop,
-  stopEffectLoop
+  stopEffectLoop,
+  recordOneSecond
 } from '../../scripts/camera.js';
 
 describe('camera module', () => {
@@ -185,5 +193,66 @@ describe('camera module', () => {
     expect(cancelAnimationFrame).toHaveBeenCalledWith(321);
     expect(effectLoopHandle).toBe(null);
     expect(state.effectInferenceInFlight).toBe(false);
+  });
+
+  describe('recordOneSecond', () => {
+    let mockMediaRecorderStart;
+    let mockMediaRecorderStop;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      mockMediaRecorderStart = vi.fn();
+      mockMediaRecorderStop = vi.fn();
+
+      class MockMediaRecorder {
+        constructor(stream, options) {
+          this.stream = stream;
+          this.options = options;
+          this.state = 'inactive';
+        }
+        start() {
+          this.state = 'recording';
+          mockMediaRecorderStart();
+        }
+        stop() {
+          this.state = 'inactive';
+          mockMediaRecorderStop();
+          if (this.onstop) this.onstop();
+        }
+      }
+      MockMediaRecorder.isTypeSupported = vi.fn(() => true);
+      vi.stubGlobal('MediaRecorder', MockMediaRecorder);
+      vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200 })));
+
+      els.video.srcObject = { id: 'camera-stream' };
+      state.isRecording = false;
+      state.isSystemBusy = false;
+      if (els.recordBtn) {
+        els.recordBtn.disabled = false;
+        els.recordBtn.classList.add.mockClear();
+        els.recordBtn.classList.remove.mockClear();
+      }
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('sets recording state, adds classes, starts recorder, and stops after durationMs', async () => {
+      await recordOneSecond();
+
+      expect(state.isRecording).toBe(true);
+      expect(els.recordBtn.classList.add).toHaveBeenCalledWith('recording');
+      expect(els.recordBtn.disabled).toBe(true);
+      expect(mockMediaRecorderStart).toHaveBeenCalledTimes(1);
+
+      // Fast-forward 1 second
+      vi.advanceTimersByTime(1000);
+
+      expect(mockMediaRecorderStop).toHaveBeenCalledTimes(1);
+      expect(state.isRecording).toBe(false);
+      expect(els.recordBtn.classList.remove).toHaveBeenCalledWith('recording');
+      expect(els.recordBtn.disabled).toBe(false);
+    });
   });
 });

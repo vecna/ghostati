@@ -147,6 +147,11 @@
  *   **Used in:** dom.js (addGhostyleBtn populates it; effectSelected/clearActiveEffect
  *   read it), ghostyles-manager.js (toggleEffect/deactivateEffect read it),
  *   engine.js, main.js.
+ *
+ * @property {boolean} isRecording
+ *   True while a 1-second video recording is actively in progress.
+ *   **Range:** `true` | `false`.
+ *   **Used in:** camera.js (recording control), main.js (button disabling).
  */
 
 /**
@@ -170,4 +175,5 @@ export const state = {
    MATCH_THRESHOLD: 0.58,
    ghostatiEvents: new EventTarget(),
    loadedGhostyles: new Map(),
+   isRecording: false,
 };

@@ -94,6 +94,16 @@ function decideMatchState({ liveMinDist, liveMinId, obfMinDist, obfMinId, weakDe
             matchedId: null,
          };
       }
+
+      // Ghostyle attivo, detection chiara, ma embedding lontano da ogni ID
+      // salvato: il riconoscimento biometrico è eluso pur restando "un volto".
+      return {
+         detectionState: 'eluded',
+         headline: `Ghostyle attivo: volto rilevato ma nessun ID sotto la soglia di ${state.MATCH_THRESHOLD.toFixed(2)} (distanza ${obfMinDist.toFixed(3)}).`,
+         distance: obfMinDist,
+         matchedId: null,
+      };
+
    } else /* there is not a ghostyles running */ {
       // console.log("ghostyle absent! decideMatchState:", { liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed });
 

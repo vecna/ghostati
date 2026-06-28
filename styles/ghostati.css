@@ -565,3 +565,28 @@ body {
     right: 20px;
   }
 }
+
+/* --- RECORDING BUTTON VISUALS --- */
+#recordBtn.recording {
+  background: rgba(255, 122, 122, 0.25);
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: pulse-recording 1s ease-in-out infinite alternate;
+  box-shadow: 0 0 15px rgba(255, 122, 122, 0.6);
+}
+
+#recordBtn.recording:disabled {
+  opacity: 1; /* Keep visible when disabled to show visual feedback */
+  cursor: not-allowed;
+}
+
+@keyframes pulse-recording {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 122, 122, 0.4);
+  }
+  100% {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(255, 122, 122, 0.8);
+  }
+}

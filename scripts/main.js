@@ -3,7 +3,7 @@ import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPat
 import { state } from './state.js';
 import { loadDb, renderDbStats, clearDb } from './db.js';
 import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
-import { startCamera, resizeCanvas, startEffectLoop } from './camera.js';
+import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
 import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './ghostyles-manager.js';
@@ -121,9 +121,12 @@ async function loadGhostyle(url, expectedName) {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn].forEach(btn => {
-      if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
-      else btn.disabled = isBusy;
+   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+      if (btn) {
+         if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
+         else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
+         else btn.disabled = isBusy;
+      }
    });
    const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
    previewBtns.forEach(btn => btn.disabled = isBusy);
@@ -189,6 +192,10 @@ async function init() {
    }
 
    els.copyMakeupBtn.addEventListener('click', exportMakeup);
+
+   if (els.recordBtn) {
+      els.recordBtn.addEventListener('click', recordOneSecond);
+   }
 
    els.scanBtn.addEventListener('click', async () => {
       setBusy(true);

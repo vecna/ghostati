@@ -14,3 +14,21 @@ export const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
    inputSize: 416,
    scoreThreshold: 0.5
 });
+
+export const RECORDING_CONFIG = {
+   // Mode of operation: 'download' (triggers direct browser download) or 'upload' (POSTs to uploadEndpoint)
+   mode: 'download',
+
+   // Endpoint for 'upload' mode.
+   // Expected backend specification:
+   // - Protocol: HTTP/HTTPS
+   // - Method: POST
+   // - Content-Type: multipart/form-data
+   // - Payload: The recording file attached under the field name 'video'
+   // - Response: HTTP status code 200 (or any 2xx) indicating success, any other status represents an error.
+   uploadEndpoint: 'http://localhost:3000/upload',
+
+   // Duration of the recording in milliseconds (2 seconds)
+   durationMs: 2000
+};
+

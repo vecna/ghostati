@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { setStatus, els, clearOverlay } from './dom.js';
 import { setLog } from './utils.js';
 import { runEffectPass } from './engine.js';
+import { RECORDING_CONFIG } from './config.js';
 
 export async function startCamera() {
    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
@@ -84,4 +85,118 @@ export function stopEffectLoop() {
    if (effectLoopHandle) cancelAnimationFrame(effectLoopHandle);
    effectLoopHandle = null;
    state.effectInferenceInFlight = false;
+}
+
+export async function recordOneSecond() {
+   if (state.isRecording || state.isSystemBusy) return;
+
+   const stream = els.video.srcObject;
+   if (!stream) {
+      setLog("Errore: Webcam stream non attivo.");
+      return;
+   }
+
+   // 1. Mark recording state
+   state.isRecording = true;
+   if (els.recordBtn) {
+      els.recordBtn.classList.add('recording');
+      els.recordBtn.disabled = true;
+   }
+   setLog("Registrazione avviata...");
+
+   // 2. Select format
+   let mimeType = 'video/webm';
+   let extension = 'webm';
+
+   if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) {
+      mimeType = 'video/mp4;codecs=h264';
+      extension = 'mp4';
+   } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+      mimeType = 'video/mp4';
+      extension = 'mp4';
+   } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+      mimeType = 'video/webm;codecs=vp9';
+      extension = 'webm';
+   } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+      mimeType = 'video/webm;codecs=vp8';
+      extension = 'webm';
+   }
+
+   try {
+      const recorder = new MediaRecorder(stream, { mimeType });
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => {
+         if (e.data && e.data.size > 0) {
+            chunks.push(e.data);
+         }
+      };
+
+      recorder.onstop = async () => {
+         const blob = new Blob(chunks, { type: mimeType });
+         const isUploadMode = RECORDING_CONFIG.mode === 'upload';
+
+         if (isUploadMode) {
+            setLog("Caricamento del video sul server in corso...");
+            try {
+               const formData = new FormData();
+               const filename = `ghostati-recording-${Date.now()}.${extension}`;
+               formData.append('video', blob, filename);
+
+               const response = await fetch(RECORDING_CONFIG.uploadEndpoint, {
+                  method: 'POST',
+                  body: formData
+               });
+
+               if (response.ok) {
+                  setLog(`Caricamento completato con successo sul server (HTTP ${response.status}) - File: ${filename}`);
+               } else {
+                  setLog(`Errore durante il caricamento del video: Server HTTP ${response.status} ${response.statusText}`);
+               }
+            } catch (err) {
+               setLog(`Errore di rete durante il caricamento del video: ${err.message}`);
+            }
+         } else {
+            // Direct download mode
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `ghostati-recording-${Date.now()}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+               document.body.removeChild(a);
+               URL.revokeObjectURL(url);
+            }, 100);
+            setLog(`Registrazione completata e scaricata: ${a.download}`);
+         }
+
+         // Reset visual styles and state
+         state.isRecording = false;
+         if (els.recordBtn) {
+            els.recordBtn.classList.remove('recording');
+            // Re-enable if system not busy
+            els.recordBtn.disabled = state.isSystemBusy;
+         }
+      };
+
+      // Start recording
+      recorder.start();
+
+      // Stop recording after durationMs (1 second)
+      setTimeout(() => {
+         if (recorder.state !== 'inactive') {
+            recorder.stop();
+         }
+      }, RECORDING_CONFIG.durationMs);
+
+   } catch (err) {
+      setLog(`Errore durante l'inizializzazione di MediaRecorder: ${err.message}`);
+      state.isRecording = false;
+      if (els.recordBtn) {
+         els.recordBtn.classList.remove('recording');
+         els.recordBtn.disabled = state.isSystemBusy;
+      }
+   }
 }
