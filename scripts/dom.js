@@ -139,20 +139,22 @@ export function addGhostyleBtn(record) {
  *   user deactivates the currently active effect.
  */
 export function clearActiveEffect() {
-   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+   const previewBtns = els.ghostylesContainer ? els.ghostylesContainer.querySelectorAll('.preview-btn') : [];
 
    previewBtns.forEach(btn => btn.classList.remove('active'));
-   els.scanBtn.style.background = '';
-   els.scanBtn.style.borderColor = '';
-   els.scanBtn.style.color = '';
+   if (els.scanBtn) {
+      els.scanBtn.style.background = '';
+      els.scanBtn.style.borderColor = '';
+      els.scanBtn.style.color = '';
+   }
 
-   els.effectName.textContent = 'N/A';
-   els.effectTracking.textContent = 'off';
+   if (els.effectName) els.effectName.textContent = 'N/A';
+   if (els.effectTracking) els.effectTracking.textContent = 'off';
 
    state.activeEffect = null;
    state.lastKnownEffectResult = null;
    state.lastCompositedCanvas = null;
-   els.copyMakeupBtn.disabled = true;
+   if (els.copyMakeupBtn) els.copyMakeupBtn.disabled = true;
    clearOverlay();
 }
 
@@ -169,28 +171,34 @@ export function clearActiveEffect() {
  *   setting `state.activeEffect`.
  */
 export function effectSelected(button) {
-   const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');
+   const previewBtns = els.ghostylesContainer ? els.ghostylesContainer.querySelectorAll('.preview-btn') : [];
 
    previewBtns.forEach(btn => btn.classList.toggle('active', btn === button));
-   els.previewImage.style.display = 'none';
-   els.previewImage.removeAttribute('src');
+   if (els.previewImage) {
+      els.previewImage.style.display = 'none';
+      els.previewImage.removeAttribute('src');
+   }
 
-   els.scanBtn.style.background = 'linear-gradient(180deg, rgba(159, 122, 234, 0.35), rgba(159, 122, 234, 0.15))';
-   els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
-   els.scanBtn.style.color = '#fff';
+   if (els.scanBtn) {
+      els.scanBtn.style.background = 'linear-gradient(180deg, rgba(159, 122, 234, 0.35), rgba(159, 122, 234, 0.15))';
+      els.scanBtn.style.borderColor = 'rgba(159, 122, 234, 0.5)';
+      els.scanBtn.style.color = '#fff';
+   }
 
    if (state.overlayFadeTimeout)
       clearTimeout(state.overlayFadeTimeout);
-   els.overlay.style.transition = 'none';
-   els.overlay.style.opacity = '1';
+   if (els.overlay) {
+      els.overlay.style.transition = 'none';
+      els.overlay.style.opacity = '1';
+   }
 
    const style = state.loadedGhostyles.get(state.activeEffect);
    if(style) {
-      els.effectName.textContent = style.name;
-      els.effectTracking.textContent = state.activeEffect;
+      if (els.effectName) els.effectName.textContent = style.name;
+      if (els.effectTracking) els.effectTracking.textContent = state.activeEffect;
    } else {
       console.warn(`No style found for active when it should -- ${state.activeEffect}`);
-      els.effectName.textContent = 'N/A';
-      els.effectTracking.textContent = 'off';
+      if (els.effectName) els.effectName.textContent = 'N/A';
+      if (els.effectTracking) els.effectTracking.textContent = 'off';
    }
 }

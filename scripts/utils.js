@@ -357,6 +357,140 @@ export function drawContourBand(ctx, pts, label) {
    drawLabel(ctx, label, mid.x + 10, mid.y - 6);
 }
 
+function asFaceApiPoints(landmarks) {
+   if (!landmarks) return [];
+   if (Array.isArray(landmarks)) return landmarks.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
+   if (typeof landmarks.positions !== 'undefined' && Array.isArray(landmarks.positions)) {
+      return landmarks.positions.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
+   }
+   if (typeof landmarks.getPositions === 'function') {
+      const pts = landmarks.getPositions();
+      return Array.isArray(pts) ? pts.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y)) : [];
+   }
+   return [];
+}
+
+function asMediapipePoints(landmarks3d) {
+   if (!Array.isArray(landmarks3d)) return [];
+   return landmarks3d.filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y));
+}
+
+/**
+ * Clip the current canvas context to the left half of a face-api landmark cloud.
+ *
+ * The split axis is the vertical line that passes through the landmarks centroid.
+ * This helper exists so a plugin can render a side-by-side comparison where one
+ * half of the face shows a 2D pixel-space strategy and the other half is left
+ * untouched (or rendered by a different callback).
+ *
+ * IMPORTANT: call `ctx.save()` before using this helper and `ctx.restore()`
+ * afterwards. The function only applies the clip path.
+ *
+ * @param {CanvasRenderingContext2D} ctx - 2D rendering context.
+ * @param {object|Array<{x:number,y:number}>} landmarks - face-api landmarks object or array of points.
+ * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
+ * @see ghostyles/smokey-eyes.js
+ * @see ghostyles/soft-contour.js
+ */
+export function clipLeftHalf(ctx, landmarks) {
+   const pts = asFaceApiPoints(landmarks);
+   if (!pts.length) return false;
+
+   const c = avgPoint(pts);
+   const margin = Math.max(ctx.canvas.width, ctx.canvas.height) * 2;
+   ctx.beginPath();
+   ctx.rect(-margin, -margin, c.x + margin, ctx.canvas.height + margin * 2);
+   ctx.clip();
+   return true;
+}
+
+/**
+ * Clip the current canvas context to the right half of a face-api landmark cloud.
+ *
+ * The split axis is the vertical line through the landmarks centroid. Use this
+ * together with `clipLeftHalf` when a plugin needs to compare two rendering
+ * strategies on the same face without visual overlap.
+ *
+ * IMPORTANT: call `ctx.save()` before using this helper and `ctx.restore()`
+ * afterwards. The function only applies the clip path.
+ *
+ * @param {CanvasRenderingContext2D} ctx - 2D rendering context.
+ * @param {object|Array<{x:number,y:number}>} landmarks - face-api landmarks object or array of points.
+ * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
+ * @see ghostyles/smokey-eyes.js
+ * @see ghostyles/soft-contour.js
+ */
+export function clipRightHalf(ctx, landmarks) {
+   const pts = asFaceApiPoints(landmarks);
+   if (!pts.length) return false;
+
+   const c = avgPoint(pts);
+   const margin = Math.max(ctx.canvas.width, ctx.canvas.height) * 2;
+   ctx.beginPath();
+   ctx.rect(c.x, -margin, ctx.canvas.width - c.x + margin * 2, ctx.canvas.height + margin * 2);
+   ctx.clip();
+   return true;
+}
+
+/**
+ * Clip a UV canvas to the left half of the MediaPipe landmark cloud.
+ *
+ * The landmarks are normalized in `[0,1]`, so the centroid x is converted to
+ * pixel coordinates of the UV canvas before clipping. This makes it possible to
+ * show UV-space rendering only on one side while another strategy occupies the
+ * opposite side.
+ *
+ * IMPORTANT: call `ctx.save()` before using this helper and `ctx.restore()`
+ * afterwards. The function only applies the clip path.
+ *
+ * @param {CanvasRenderingContext2D} ctx - UV texture rendering context.
+ * @param {Array<{x:number,y:number,z?:number}>} landmarks3d - MediaPipe face landmarks.
+ * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
+ * @see ghostyles/smokey-eyes.js
+ * @see ghostyles/soft-contour.js
+ */
+export function clipLeftHalfUV(ctx, landmarks3d) {
+   const pts = asMediapipePoints(landmarks3d);
+   if (!pts.length) return false;
+
+   const c = avgPoint(pts);
+   const axisX = c.x * ctx.canvas.width;
+   const margin = Math.max(ctx.canvas.width, ctx.canvas.height) * 2;
+   ctx.beginPath();
+   ctx.rect(-margin, -margin, axisX + margin, ctx.canvas.height + margin * 2);
+   ctx.clip();
+   return true;
+}
+
+/**
+ * Clip a UV canvas to the right half of the MediaPipe landmark cloud.
+ *
+ * This is the UV-space counterpart of `clipRightHalf`. It supports split-view
+ * plugins where one side is painted in pixel-space and the other side in
+ * UV-space, keeping the didactic comparison readable.
+ *
+ * IMPORTANT: call `ctx.save()` before using this helper and `ctx.restore()`
+ * afterwards. The function only applies the clip path.
+ *
+ * @param {CanvasRenderingContext2D} ctx - UV texture rendering context.
+ * @param {Array<{x:number,y:number,z?:number}>} landmarks3d - MediaPipe face landmarks.
+ * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
+ * @see ghostyles/smokey-eyes.js
+ * @see ghostyles/soft-contour.js
+ */
+export function clipRightHalfUV(ctx, landmarks3d) {
+   const pts = asMediapipePoints(landmarks3d);
+   if (!pts.length) return false;
+
+   const c = avgPoint(pts);
+   const axisX = c.x * ctx.canvas.width;
+   const margin = Math.max(ctx.canvas.width, ctx.canvas.height) * 2;
+   ctx.beginPath();
+   ctx.rect(axisX, -margin, ctx.canvas.width - axisX + margin * 2, ctx.canvas.height + margin * 2);
+   ctx.clip();
+   return true;
+}
+
 /**
  * Current wall-clock time as a `HH:MM:SS` string. Used exclusively for log
  * timestamping so the workshop participants can correlate UI events with

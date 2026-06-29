@@ -661,6 +661,27 @@ body {
 .preview-btn {
   background: linear-gradient(180deg, rgba(159, 122, 234, 0.15), rgba(159, 122, 234, 0.05));
   text-align: left;
+  position: relative;
+  min-height: 52px;
+  padding-right: 14px;
+  padding-bottom: 20px;
+}
+
+.preview-btn__title {
+  display: block;
+  padding-right: 86px;
+  line-height: 1.2;
+}
+
+.preview-btn__meta {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0.92;
+  pointer-events: none;
 }
 
 .preview-btn.active {

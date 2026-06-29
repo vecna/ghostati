@@ -1,5 +1,5 @@
 /** @module main */
-import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
+import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, clipLeftHalf, clipRightHalf, clipLeftHalfUV, clipRightHalfUV, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, loadDb3d, persistDb, persistDb3d, renderDbStats, clearDb } from './db.js';
 import { saveFace, compositeAndDetect } from './engine.js';
@@ -75,6 +75,10 @@ window.Ghostati = {
    drawEyeWing,
    drawCheekSweep,
    drawContourBand,
+   clipLeftHalf,
+   clipRightHalf,
+   clipLeftHalfUV,
+   clipRightHalfUV,
    /* fine delle funzioni usate nei plugin, ora implementate in utils.js */
    events: state.ghostatiEvents,
    getDb: () => structuredClone(state.db),
@@ -570,36 +574,23 @@ async function init() {
          getFaceLandmarker: () => (window.Ghostati && window.Ghostati.FaceLandmarker) || null
       });
 
-      /* This is still supporting remote loading assuming it might be useful in the future,
-       * but for now we load a static list of Ghostyles from ghostylist.json */
+      /* Unified manifest: all plugins are loaded through ghostyles-manager. */
       const relurl = window.location.pathname.split('/').slice(0, -1).join('/')
-      const ghostListUrl = relurl + '/ghostylist.json'
+      const ghostListUrl = relurl + '/ghostyles.json'
       const ghostylistRes = await fetch(ghostListUrl);
       if (ghostylistRes.ok) {
          const list = await ghostylistRes.json();
          for (const item of list) {
             let effectiveUrl = relurl + '/' + item.url;
-            await loadGhostyle(effectiveUrl, item.name, {
+            await loadGhostyle(effectiveUrl, item.id || item.name, {
                onFaceapiToggle: () => startEffectLoop(state, els)
             });
          }
       }
       else
          throw new Error(`HTTP ${ghostylistRes.status}`);
-
-      const ghostList3dUrl = relurl + '/ghostylist3d.json';
-      const ghostylist3dRes = await fetch(ghostList3dUrl);
-      if (ghostylist3dRes.ok) {
-         const list3d = await ghostylist3dRes.json();
-         for (const item of list3d) {
-            const effectiveUrl = relurl + '/' + item.url;
-            await loadGhostyle(effectiveUrl, item.name);
-         }
-      } else {
-         throw new Error(`HTTP ${ghostylist3dRes.status}`);
-      }
    } catch (err) {
-      setLog('Errore durante la lettura di ghostylist/ghostylist3d: ' + err.message);
+      setLog('Errore durante la lettura di ghostyles.json: ' + err.message);
    }
 
    setLog('Inizializzazione completata. Avvio webcam in corso...');

@@ -17,11 +17,6 @@ vi.mock('../../scripts/utils.js', () => ({
   setLog: vi.fn()
 }));
 
-vi.mock('../../scripts/plugins3d-loader.js', () => ({
-  initPlugins3dLoader: vi.fn(),
-  loadPlugin3d: vi.fn(async (url, name) => ({ id: 'plugin-3d', url, name, engine: 'mediapipe' }))
-}));
-
 vi.mock('https://example.com/effects/graphic-liner.js', () => ({
   onClear: 'mock-on-clear'
 }), { virtual: true });
@@ -38,7 +33,6 @@ vi.mock('https://example.com/effects/init-fail.js', () => ({
 import { state } from '../../scripts/state.js';
 import { setLog } from '../../scripts/utils.js';
 import { clearActiveEffect, effectSelected, els } from '../../scripts/dom.js';
-import { initPlugins3dLoader, loadPlugin3d } from '../../scripts/plugins3d-loader.js';
 import { fetchGhostyleMetadata, importGhostyleModule, loadGhostyle, toggleEffect } from '../../scripts/ghostyles-manager.js';
 
 describe('ghostyles-manager', () => {
@@ -55,9 +49,10 @@ describe('ghostyles-manager', () => {
   });
 
   describe('fetchGhostyleMetadata', () => {
-    it('successfully fetches and extracts metadata', async () => {
+    it('successfully fetches and extracts name + release_date metadata', async () => {
       const mockText = `
         // @name Eye Liner Style
+        // @release_date 2026-01-20
         export default function() {}
       `;
       const mockResponse = {
@@ -73,60 +68,34 @@ describe('ghostyles-manager', () => {
         id: 'graphic-liner',
         name: 'Eye Liner Style',
         url: 'https://example.com/effects/graphic-liner.js',
-        engine: 'faceapi'
+        version: null,
+        author: null,
+        description: null,
+        releaseDate: '2026-01-20'
       });
     });
 
-    it('uses id as name if @name metadata is missing', async () => {
-      const mockText = `
-        export default function() {}
-      `;
-      const mockResponse = {
+    it('uses id as name if @name metadata is missing and releaseDate null if absent', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => mockText
-      };
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse);
+        text: async () => 'export default function() {}'
+      });
 
       const meta = await fetchGhostyleMetadata('https://example.com/effects/mystyle.js');
-      expect(meta.name).toBe('mystyle');
-    });
-
-
-    it('extracts explicit mediapipe engine metadata', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        status: 200,
-        text: async () => '// @name UV Stripes\n// @engine mediapipe'
-      });
-
-      const meta = await fetchGhostyleMetadata('https://example.com/ghostyles3d/uv-stripes.js');
       expect(meta).toEqual({
-        id: 'uv-stripes',
-        name: 'UV Stripes',
-        url: 'https://example.com/ghostyles3d/uv-stripes.js',
-        engine: 'mediapipe'
+        id: 'mystyle',
+        name: 'mystyle',
+        url: 'https://example.com/effects/mystyle.js',
+        version: null,
+        author: null,
+        description: null,
+        releaseDate: null
       });
-    });
-
-    it('falls back to mediapipe for ghostyles3d URLs when @engine is invalid', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        status: 200,
-        text: async () => '// @engine unknown-engine'
-      });
-
-      const meta = await fetchGhostyleMetadata('https://example.com/ghostyles3d/prove-stripes.js');
-      expect(meta.engine).toBe('mediapipe');
-      expect(meta.name).toBe('prove-stripes');
     });
 
     it('throws error when response is not ok', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 404
-      };
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse);
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 404 });
 
       await expect(fetchGhostyleMetadata('https://example.com/effects/notfound.js'))
         .rejects.toThrow('HTTP 404');
@@ -143,45 +112,38 @@ describe('ghostyles-manager', () => {
     });
   });
 
-
   describe('loadGhostyle', () => {
-    it('loads a faceapi ghostyle, runs onInit, appends a button and wires toggle callback', async () => {
+    it('loads a ghostyle, runs onInit, appends a button and wires toggle callback', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => '// @name Init Effect\n// @engine faceapi'
+        text: async () => '// @name Init Effect\n// @release_date 2026-06-01'
       });
       const onFaceapiToggle = vi.fn();
 
       const ghostyle = await loadGhostyle('https://example.com/effects/init-effect.js', null, { onFaceapiToggle });
 
-      expect(ghostyle).toMatchObject({ id: 'init-effect', name: 'Init Effect', url: 'https://example.com/effects/init-effect.js' });
+      expect(ghostyle).toMatchObject({
+        id: 'init-effect',
+        name: 'Init Effect',
+        url: 'https://example.com/effects/init-effect.js',
+        releaseDate: '2026-06-01'
+      });
       expect(state.loadedGhostyles.get('init-effect')).toBe(ghostyle);
       expect(els.ghostylesContainer.appendChild).toHaveBeenCalledTimes(1);
+
       const button = els.ghostylesContainer.appendChild.mock.calls[0][0];
       expect(button.className).toBe('preview-btn');
-      expect(button.textContent).toBe('Init Effect');
+      expect(button.textContent).toContain('Init Effect');
+      expect(button.querySelector('.preview-btn__title')?.textContent).toBe('Init Effect');
       expect(button.dataset.effect).toBe('init-effect');
+
       expect(setLog).toHaveBeenCalledWith('Init Effect: init ok');
       expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Caricato con successo ghostyle Init Effect'));
 
       button.onclick();
       expect(state.activeEffect).toBe('init-effect');
       expect(onFaceapiToggle).toHaveBeenCalledTimes(1);
-    });
-
-    it('delegates mediapipe ghostyles to the 3D plugin loader', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        status: 200,
-        text: async () => '// @name UV Stripes\n// @engine mediapipe'
-      });
-
-      const plugin = await loadGhostyle('https://example.com/ghostyles3d/uv-stripes.js', 'Expected UV');
-
-      expect(initPlugins3dLoader).toHaveBeenCalledTimes(1);
-      expect(loadPlugin3d).toHaveBeenCalledWith('https://example.com/ghostyles3d/uv-stripes.js', 'Expected UV');
-      expect(plugin).toMatchObject({ id: 'plugin-3d', name: 'Expected UV', engine: 'mediapipe' });
     });
 
     it('wraps metadata fetch errors with the requested plugin name', async () => {
@@ -195,7 +157,7 @@ describe('ghostyles-manager', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => '// @name Missing Effect\n// @engine faceapi'
+        text: async () => '// @name Missing Effect\n// @release_date 2025-01-01'
       });
 
       await expect(loadGhostyle('https://example.com/effects/missing.js', 'Missing Effect'))
@@ -206,7 +168,7 @@ describe('ghostyles-manager', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => '// @name Init Fail\n// @engine faceapi'
+        text: async () => '// @name Init Fail\n// @release_date 2025-01-01'
       });
 
       await expect(loadGhostyle('https://example.com/effects/init-fail.js', 'Init Fail'))

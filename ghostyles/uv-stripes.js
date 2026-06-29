@@ -1,18 +1,11 @@
 /**
- * ==Ghostyle3D==
+ * ==Ghostyle==
  * @name         UV Stripes
  * @version      0.3.0
  * @author       NINA
- * @description  Strisce/chevron oblique disegnate sul volto in spazio UV canonico (port da viso/StripePaletteRenderer).
- * ==/Ghostyle3D==
- *
- * Plugin Ghostyle3D di tipo "UV-space": disegna un pattern in coordinate UV
- * canoniche su un canvas quadrato (textureSize × textureSize). Il framework
- * (Ghostati.UvRenderer) si occupa del warp triangolo-per-triangolo sul volto,
- * della cache della texture e del backface culling.
- *
- * Le stripe risultano continue tra triangoli adiacenti perché due vertici
- * condivisi hanno UV identica, quindi l'interpolazione lineare matcha sull'edge.
+ * @release_date 2026-05-04
+ * @description  Strisce/chevron oblique disegnate sul volto in spazio UV canonico.
+ * ==/Ghostyle==
  */
 
 export const params = [
@@ -28,9 +21,6 @@ export const params = [
    { name: 'color4',  type: 'color',  label: 'Colore 4',        default: '#ffdc3c' }
 ];
 
-// Disegniamo solo sulla pelle del volto, escludendo occhi, labbra, sopracciglia
-// e iride. Il framework rasterizza queste regioni in spazio UV e applica una
-// mask `destination-in` dopo paintUV. Plugin non deve gestire nulla.
 export const region = {
    include: 'skin'
 };
@@ -56,6 +46,7 @@ export function paintUV(ctx, params) {
    const aByte = Math.round(params.alpha * 255);
    const img = ctx.createImageData(w, h);
    const data = img.data;
+
    for (let py = 0; py < h; py++) {
       const v = (py + 0.5) / h;
       for (let px = 0; px < w; px++) {
@@ -63,7 +54,7 @@ export function paintUV(ctx, params) {
          const col = sampleStripe(u, v, params, palette);
          const idx = (py * w + px) * 4;
          if (col) {
-            data[idx]     = col[0];
+            data[idx] = col[0];
             data[idx + 1] = col[1];
             data[idx + 2] = col[2];
             data[idx + 3] = aByte;
@@ -72,5 +63,6 @@ export function paintUV(ctx, params) {
          }
       }
    }
+
    ctx.putImageData(img, 0, 0);
 }

@@ -1,0 +1,9 @@
+[
+  { "id": "00-template", "url": "ghostyles/00-template.js" },
+  { "id": "beauty-2d", "url": "ghostyles/beauty-2d.js" },
+  { "id": "cv-dazzle-1", "url": "ghostyles/cv-dazzle-1.js" },
+  { "id": "maximalism", "url": "ghostyles/maximalism.js" },
+  { "id": "smokey-eyes", "url": "ghostyles/smokey-eyes.js" },
+  { "id": "soft-contour", "url": "ghostyles/soft-contour.js" },
+  { "id": "uv-stripes", "url": "ghostyles/uv-stripes.js" }
+]

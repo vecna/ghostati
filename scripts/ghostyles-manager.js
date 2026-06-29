@@ -2,7 +2,6 @@
 import { state } from './state.js';
 import { setLog } from './utils.js';
 import { els, clearActiveEffect, effectSelected } from './dom.js';
-import { initPlugins3dLoader, loadPlugin3d } from './plugins3d-loader.js';
 
 /**
  * Retrieves ghostyle metadata from a remote script URL.
@@ -16,44 +15,55 @@ import { initPlugins3dLoader, loadPlugin3d } from './plugins3d-loader.js';
  * @throws {Error} Throws an error if the HTTP request fails or the response is not OK.
  * @see scripts/main.js – loads ghostyle list and calls this function for each URL.
  * @see tests/unit/ghostyles-manager.test.js – unit tests for metadata extraction.
- * @returns {{id: string, name: string, url: string}} Metadata for the ghostyle.
+ * @returns {{
+ *   id: string,
+ *   name: string,
+ *   url: string,
+ *   version: (string|null),
+ *   author: (string|null),
+ *   description: (string|null),
+ *   releaseDate: (string|null)
+ * }} Metadata for the ghostyle.
  */
 export async function fetchGhostyleMetadata(url) {
    const res = await fetch(url);
    if (!res.ok) throw new Error(`HTTP ${res.status}`);
    const text = await res.text();
    const matchName = text.match(/@name\s+(.+)/);
-   const matchEngine = text.match(/@engine\s+([^\n\r*]+)/i);
+    const matchVersion = text.match(/@version\s+([^\n\r*]+)/i);
+    const matchAuthor = text.match(/@author\s+([^\n\r*]+)/i);
+    const matchDescription = text.match(/@description\s+([^\n\r*]+)/i);
+   const matchReleaseDate = text.match(/@release_date\s+([^\n\r*]+)/i);
    const id = url.split('/').pop().replace('.js', '');
    const name = matchName ? matchName[1].trim() : id;
-   const parsedEngine = matchEngine ? matchEngine[1].trim().toLowerCase() : null;
-   const fallbackEngine = url.includes('/ghostyles3d/') ? 'mediapipe' : 'faceapi';
-   const engine = (parsedEngine === 'mediapipe' || parsedEngine === 'faceapi')
-      ? parsedEngine
-      : fallbackEngine;
-   return { id, name, url, engine };
+    const version = matchVersion ? matchVersion[1].trim() : null;
+    const author = matchAuthor ? matchAuthor[1].trim() : null;
+    const description = matchDescription ? matchDescription[1].trim() : null;
+   const releaseDate = matchReleaseDate ? matchReleaseDate[1].trim() : null;
+    return { id, name, url, version, author, description, releaseDate };
 }
 
 /**
  * Dynamically imports a ghostyle module after its metadata has been retrieved.
  * Returns an object containing the original metadata plus the loaded module.
  *
- * @param {{id:string, name:string, url:string}} param - The ghostyle metadata.
- * @returns {{id:string, name:string, module:any, url:string}} The ghostyle with its imported module.
+ * @param {{id:string, name:string, url:string, version:(string|null), author:(string|null), description:(string|null), releaseDate:(string|null)}} param - The ghostyle metadata.
+ * @returns {{id:string, name:string, module:any, url:string, version:(string|null), author:(string|null), description:(string|null), releaseDate:(string|null)}} The ghostyle with its imported module.
  * @see main.js – after metadata extraction, this function loads the actual ghostyle code.
  * @see tests/unit/ghostyles-manager.test.js – tests import behavior.
  */
-export async function importGhostyleModule({ id, name, url }) {
+export async function importGhostyleModule({ id, name, url, version = null, author = null, description = null, releaseDate = null }) {
    const module = await import(url);
-   return { id, name, module, url };
+   return { id, name, module, url, version, author, description, releaseDate };
 }
 
 /**
  * Unified plugin loader for both engines.
  *
- * Engine dispatch:
- * - `faceapi`    -> loads as classic 2D ghostyle module
- * - `mediapipe`  -> delegates loading to plugins3d-loader.js
+ * Every ghostyle is loaded from the same manifest. Runtime capabilities are
+ * detected from module exports:
+ * - if module exports `onDraw`, it can render on face-api ticks
+ * - if module exports `paintUV`, it can render on MediaPipe UV ticks
  *
  * @param {string} url
  * @param {string} expectedName
@@ -69,11 +79,6 @@ export async function loadGhostyle(url, expectedName, options = {}) {
    }
 
    const displayName = expectedName || metadata.name;
-
-   if (metadata.engine === 'mediapipe') {
-      initPlugins3dLoader();
-      return loadPlugin3d(url, displayName);
-   }
 
    let ghostyle = null;
    try {
@@ -104,12 +109,55 @@ export async function loadGhostyle(url, expectedName, options = {}) {
    return ghostyle;
 }
 
+function formatRelativeReleaseDate(releaseDate) {
+   if (!releaseDate) return null;
+
+   const parsed = new Date(releaseDate);
+   if (Number.isNaN(parsed.getTime())) return null;
+
+   const now = Date.now();
+   const diffMs = parsed.getTime() - now;
+
+   const units = [
+      { unit: 'year', ms: 1000 * 60 * 60 * 24 * 365 },
+      { unit: 'month', ms: 1000 * 60 * 60 * 24 * 30 },
+      { unit: 'week', ms: 1000 * 60 * 60 * 24 * 7 },
+      { unit: 'day', ms: 1000 * 60 * 60 * 24 },
+      { unit: 'hour', ms: 1000 * 60 * 60 },
+      { unit: 'minute', ms: 1000 * 60 }
+   ];
+
+   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+   for (const { unit, ms } of units) {
+      if (Math.abs(diffMs) >= ms) {
+         return rtf.format(Math.round(diffMs / ms), unit);
+      }
+   }
+
+   return 'just now';
+}
+
 function addGhostyleBtn(record) {
    state.loadedGhostyles.set(record.id, record);
 
    const btn = document.createElement('button');
    btn.className = 'preview-btn';
-   btn.textContent = record.name;
+   btn.setAttribute('aria-label', record.name);
+
+   const title = document.createElement('span');
+   title.className = 'preview-btn__title';
+   title.textContent = record.name;
+   btn.appendChild(title);
+
+   const relTime = formatRelativeReleaseDate(record.releaseDate);
+   if (relTime) {
+      const meta = document.createElement('span');
+      meta.className = 'preview-btn__meta';
+      meta.textContent = relTime;
+      meta.title = record.releaseDate;
+      btn.appendChild(meta);
+   }
+
    btn.dataset.effect = record.id;
    els.ghostylesContainer.appendChild(btn);
 

@@ -1,102 +1,72 @@
 /**
  * ==Ghostyle==
- * @name         Template Didattico
- * @version      1.0.0
+ * @name         Template
+ * @version      2.0.0
  * @author       NINA
- * @description  Plugin di esempio commentato per facilitare lo sviluppo di nuovi effetti.
+ * @release_date 2026-06-29
+ * @description  Template canonico per plugin Ghòstati: esempio minimo con callback 2D + UV.
  * ==/Ghostyle==
  */
 
-// NOTA: Puoi definire variabili globali locali per il tuo modulo qui.
-let initialized = false;
+// Questo file e' volutamente molto commentato: il suo scopo non e' l'effetto
+// visivo, ma mostrare come si costruisce un plugin compatibile col modello
+// unificato (onDraw per face-api e paintUV per MediaPipe).
 
 /**
- * [OPZIONALE] onInit
- * Chiamata una sola volta quando il plugin viene caricato con successo.
- * Utile per pre-caricare immagini (es. loghi NINA asincroni) o inizializzare variabili.
+ * Callback 2D chiamata durante il tick face-api.
+ *
+ * Per un template didattico vogliamo un gesto minimo: un cerchio sottile
+ * centrato sul naso. Non usiamo forme complesse per evitare di "sovra-educare"
+ * chi copia questo file come base.
  */
-export function onInit() {
-  Ghostati.log("Inizializzazione del modulo didattico completata.", "Template Didattico");
-  initialized = true;
-}
-
-/**
- * [OPZIONALE] onClear
- * Chiamata quando l'utente disattiva il tuo plugin.
- * Utile se devi pulire la memoria o loggare lo spegnimento.
- */
-export function onClear(ctx) {
-  Ghostati.log("Effetto disattivato.", "Template Didattico");
-}
-
-/**
- * [OBBLIGATORIO] onDraw
- * Questa funzione viene chiamata per ogni frame della webcam dove viene riconosciuto un volto.
- * 
- * @param {CanvasRenderingContext2D} ctx - Il contesto 2D nativo dell'overlay JS.
- * @param {FaceLandmarks68} landmarks - Oggetto di face-api.js con 68 punti bidimensionali (x,y).
- * @param {BoundingBox} box - Oggetto {x, y, width, height} che incornicia l'intera testa.
- */
-export function onDraw(ctx, landmarks, box) {
-  /*
-  --- 1. LA STRUTTURA DEI LANDMARKS ---
-  I landmarks di face-api presentano 68 punti estraibili tramite getters:
-  - getJawOutline()   : 17 punti (0-16) per il perimetro inferiore (mascella)
-  - getLeftEyeBrow()  : 5 punti per il sopracciglio sx
-  - getRightEyeBrow() : 5 punti per il sopracciglio dx
-  - getNose()         : 9 punti (dal ponte centrale alle narici)
-  - getLeftEye()      : 6 punti per il contorno palpebrale sx
-  - getRightEye()     : 6 punti per il contorno palpebrale dx
-  - getMouth()        : 20 punti (esterno e interno labbra)
-  
-  Ogni punto restituito possiede coordinate piane { x: numero, y: numero }.
-  */
-
-  // Esempio: Estraiamo il naso
+export function onDraw(ctx, landmarks) {
+  // I landmark del naso sono 9 punti. Il centroide e' la media geometrica
+  // dell'area, robusta anche se il volto ruota leggermente.
   const nose = landmarks.getNose();
-  const centroNaso = Ghostati.avgPoint(nose); // avgPoint calcola il baricentro esatto di n punti
+  const c = Ghostati.avgPoint(nose);
 
-  /*
-  --- 2. LA API GLOBALE: window.Ghostati ---
-  Il core della dashboard espone le funzioni geometriche più usate in `window.Ghostati`:
+  // Il raggio cresce con la distanza verticale del naso per adattarsi a
+  // facce grandi/piccole senza hardcode in pixel assoluti.
+  const radius = Math.max(8, Ghostati.distance(nose[0], nose[6]) * 0.18);
 
-  CALCOLI:
-  - Ghostati.distance(p1, p2)      -> distanza euclidea tra due punti
-  - Ghostati.avgPoint(pointsArray) -> calcola il punto centrale
-  - Ghostati.lerp(p1, p2, t)       -> interpolazione lineare spaziale
-  - Ghostati.scaleFrom(center, p, scale) -> allontana e scala un punto 
-  
-  FUNZIONI DI DISEGNO NATIVE (sui Context Canvas):
-  - Ghostati.drawClosedPath(ctx, puntiArray, coloreRiempimento, coloreBordo, spessoreRiga)
-  - Ghostati.drawOpenPath(ctx, puntiArray, coloreBordo, spessoreRiga, lineaTratteggiataBool)
-  - Ghostati.drawLabel(ctx, stringaDiTesto, x, y) -> Disegna un piccolo tooltip ancorato
-  
-  FUNZIONI COMPOSTE (Makeup Presets):
-  - Ghostati.drawEyeWing(ctx, occhio, sopracciglio, label, options)
-  - Ghostati.drawCheekSweep(ctx, anchor, noseSide, ...)
-  - Ghostati.drawContourBand(ctx, puntiArray, label)
-  */
+  // Disegno volutamente sottile: un template non deve dominare il frame.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = 'rgba(235, 245, 255, 0.85)';
+  ctx.stroke();
+  ctx.restore();
+}
 
-  // ----------------------------------------------------
-  // Esempio Pratico: Disegniamo un rettangolo sul naso
-  // ----------------------------------------------------
-  const radius = 25;
-  
-  // Utilizziamo direttamente le API esposte dal Canvas contestuale
-  ctx.fillStyle = 'rgba(159, 122, 234, 0.4)'; // Colore Viola NINA con opacità
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
+/**
+ * Callback UV chiamata durante il tick MediaPipe.
+ *
+ * Qui mostriamo una banda trasparente nella zona fronte UV. E' utile per
+ * capire che paintUV non disegna sul video in pixel-space, ma sulla texture
+ * canonica del volto che poi viene warpata triangolo-per-triangolo.
+ */
+export function paintUV(ctx) {
+  // Non e' necessario conoscere i 478 indici per un primo esempio: tracciamo
+  // una fascia nella parte alta della texture UV, dove tipicamente ricade
+  // la fronte nella mappa canonica.
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
 
-  // ctx.fillRect accetta (x, y, larghezza, altezza)
-  ctx.fillRect(centroNaso.x - radius, centroNaso.y - radius, radius*2, radius*2);
-  ctx.strokeRect(centroNaso.x - radius, centroNaso.y - radius, radius*2, radius*2);
+  // Colore leggibile ma trasparente, cosi' si vede bene la sovrapposizione.
+  ctx.save();
+  ctx.fillStyle = 'rgba(90, 210, 235, 0.22)';
 
-  // Usiamo un helper di Ghostati per mettere un label a lato
-  Ghostati.drawLabel(ctx, "Centro Naso", centroNaso.x + radius + 15, centroNaso.y);
+  // Banda orizzontale con margini laterali per evitare il bordo della texture.
+  const x = w * 0.18;
+  const y = h * 0.08;
+  const bw = w * 0.64;
+  const bh = h * 0.16;
+  ctx.fillRect(x, y, bw, bh);
 
-  // Per inviare log dalla tua estensione:
-  if (initialized) {
-     Ghostati.log(`Tracking iniziato al pixel (${Math.round(centroNaso.x)}, ${Math.round(centroNaso.y)})`, "Template Didattico");
-     initialized = false; // Prevengo di spammare a ogni singolo frame (30fps)
-  }
+  // Un bordo leggero aiuta a percepire l'estensione della forma nella UV map.
+  ctx.lineWidth = Math.max(1, w * 0.006);
+  ctx.strokeStyle = 'rgba(225, 250, 255, 0.4)';
+  ctx.strokeRect(x, y, bw, bh);
+  ctx.restore();
 }

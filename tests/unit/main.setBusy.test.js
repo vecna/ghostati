@@ -15,6 +15,10 @@ vi.mock('../../scripts/utils.js', () => ({
   drawEyeWing: vi.fn(),
   drawCheekSweep: vi.fn(),
   drawContourBand: vi.fn(),
+  clipLeftHalf: vi.fn(),
+  clipRightHalf: vi.fn(),
+  clipLeftHalfUV: vi.fn(),
+  clipRightHalfUV: vi.fn(),
   setLog: vi.fn(),
   updateLogDisplay: vi.fn()
 }));
