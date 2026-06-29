@@ -444,7 +444,7 @@ export function clipRightHalf(ctx, landmarks) {
  * afterwards. The function only applies the clip path.
  *
  * @param {CanvasRenderingContext2D} ctx - UV texture rendering context.
- * @param {Array<{x:number,y:number,z?:number}>} landmarks3d - MediaPipe face landmarks.
+ * @param {Array<{x:number,y:number,z:?number}>} landmarks3d - MediaPipe face landmarks.
  * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
  * @see ghostyles/smokey-eyes.js
  * @see ghostyles/soft-contour.js
@@ -473,7 +473,7 @@ export function clipLeftHalfUV(ctx, landmarks3d) {
  * afterwards. The function only applies the clip path.
  *
  * @param {CanvasRenderingContext2D} ctx - UV texture rendering context.
- * @param {Array<{x:number,y:number,z?:number}>} landmarks3d - MediaPipe face landmarks.
+ * @param {Array<{x:number,y:number,z:?number}>} landmarks3d - MediaPipe face landmarks.
  * @returns {boolean} `true` when clip has been applied, `false` when landmarks are missing.
  * @see ghostyles/smokey-eyes.js
  * @see ghostyles/soft-contour.js

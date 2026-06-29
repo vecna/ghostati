@@ -359,7 +359,7 @@ function withCacheBust(url, token) {
  * Reload all plugins from the unified manifest with cache busting.
  * The currently active plugin is deactivated and must be reselected.
  *
- * @param {{manifestUrl?: string, baseUrl?: string, onFaceapiToggle?: Function}} [options]
+ * @param {{manifestUrl: ?string, baseUrl: ?string, onFaceapiToggle: ?Function}} [options]
  * @returns {Promise<number>} Number of plugins loaded.
  */
 export async function reloadPlugins(options = {}) {
