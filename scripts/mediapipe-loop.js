@@ -12,9 +12,7 @@
  */
 
 import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35";
-
-const MEDIAPIPE_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm";
-const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+import { MEDIAPIPE_WASM_URL, MEDIAPIPE_FACE_LANDMARKER_URL } from './config.js';
 
 let faceLandmarker = null;
 let lastVideoTime = -1;
@@ -49,9 +47,9 @@ async function init() {
    fpsSelect = document.getElementById('fpsSelect');
 
    try {
-      const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM);
+      const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
       faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-         baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
+         baseOptions: { modelAssetPath: MEDIAPIPE_FACE_LANDMARKER_URL, delegate: 'GPU' },
          outputFaceBlendshapes: false,
          runningMode: 'VIDEO',
          numFaces: 1

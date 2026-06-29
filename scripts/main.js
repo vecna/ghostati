@@ -307,7 +307,7 @@ async function init() {
          if (!saved2d) return;
          const { id } = saved2d;
 
-         // 2. 3D engine: extract MobileNet embedding + save under the same ID
+         // 2. 3D engine: extract ImageEmbedder embedding + save under the same ID
          const saved3d = await saveFace3d(id);
 
          // 3. Build unified payload
@@ -392,11 +392,11 @@ async function init() {
       return;
    }
 
-   setLog('Caricamento MobileNetV2 per il motore di riconoscimento 3D...');
+   setLog('Caricamento ImageEmbedder per il motore di riconoscimento 3D...');
    try {
       await loadMobileNet();
    } catch (err) {
-      setLog('MobileNetV2 non disponibile: ' + err.message + ' — solo face-api attivo.');
+      setLog('ImageEmbedder non disponibile: ' + err.message + ' — solo face-api attivo.');
    }
 
    setLog('Caricamento plugin di makeup in corso...')

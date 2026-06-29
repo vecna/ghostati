@@ -16,10 +16,25 @@ vi.mock('../../scripts/utils.js', () => ({
 import { state } from '../../scripts/state.js';
 import { setLog } from '../../scripts/utils.js';
 import { els } from '../../scripts/dom.js';
-import { STORAGE_KEY, loadDb, persistDb, renderDbStats, clearDb } from '../../scripts/db.js';
+import {
+  STORAGE_KEY,
+  STORAGE_KEY_3D,
+  DB3D_MODEL_VERSION,
+  loadDb,
+  loadDb3d,
+  persistDb,
+  persistDb3d,
+  renderDbStats,
+  clearDb,
+  clearDb3d,
+} from '../../scripts/db.js';
 
 function defaultDb() {
   return { nextId: 0, faces: [] };
+}
+
+function defaultDb3d() {
+  return { faces: [], modelVersion: DB3D_MODEL_VERSION };
 }
 
 describe('db module', () => {
@@ -28,6 +43,7 @@ describe('db module', () => {
     vi.clearAllMocks();
 
     state.db = defaultDb();
+    state.db3d = defaultDb3d();
     state.MATCH_THRESHOLD = 0.58;
     state.ghostatiEvents = new EventTarget();
 
@@ -64,6 +80,36 @@ describe('db module', () => {
     });
   });
 
+  describe('loadDb3d', () => {
+    it('returns default 3D DB when storage is empty', () => {
+      expect(loadDb3d()).toEqual(defaultDb3d());
+    });
+
+    it('returns parsed 3D DB when storage contains a valid versioned payload', () => {
+      const stored = {
+        modelVersion: DB3D_MODEL_VERSION,
+        faces: [{ id: 1, descriptor3d: [0.1, 0.2], savedAt: '2026-06-29T00:00:00.000Z' }]
+      };
+      localStorage.setItem(STORAGE_KEY_3D, JSON.stringify(stored));
+
+      expect(loadDb3d()).toEqual(stored);
+    });
+
+    it('wipes an incompatible 3D DB and logs the automatic reset', () => {
+      const stale = {
+        faces: [{ id: 1, descriptor3d: [0.1, 0.2], savedAt: '2026-06-29T00:00:00.000Z' }]
+      };
+      localStorage.setItem(STORAGE_KEY_3D, JSON.stringify(stale));
+
+      const loaded = loadDb3d();
+
+      expect(loaded).toEqual(defaultDb3d());
+      expect(state.db3d).toEqual(defaultDb3d());
+      expect(localStorage.setItem).toHaveBeenCalledWith(STORAGE_KEY_3D, JSON.stringify(defaultDb3d()));
+      expect(setLog).toHaveBeenCalledWith('Database 3D incompatibile col nuovo modello, svuoto', 'db');
+    });
+  });
+
   describe('persistDb', () => {
     it('stores DB and dispatches dbChanged event with summary', () => {
       state.db = { nextId: 3, faces: [{ id: 0 }, { id: 1 }] };
@@ -75,6 +121,19 @@ describe('db module', () => {
       expect(localStorage.setItem).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(state.db));
       expect(onDbChanged).toHaveBeenCalledTimes(1);
       expect(onDbChanged.mock.calls[0][0].detail).toEqual({ count: 2, nextId: 3 });
+    });
+  });
+
+  describe('persistDb3d', () => {
+    it('stores the current 3D DB including modelVersion', () => {
+      state.db3d = {
+        modelVersion: DB3D_MODEL_VERSION,
+        faces: [{ id: 5, descriptor3d: [0.9, 0.1], savedAt: '2026-06-29T00:00:00.000Z' }]
+      };
+
+      persistDb3d();
+
+      expect(localStorage.setItem).toHaveBeenCalledWith(STORAGE_KEY_3D, JSON.stringify(state.db3d));
     });
   });
 
@@ -105,6 +164,7 @@ describe('db module', () => {
       clearDb();
 
       expect(state.db).toEqual(defaultDb());
+      expect(state.db3d).toEqual(defaultDb3d());
       expect(localStorage.setItem).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(defaultDb()));
       expect(onDbChanged).toHaveBeenCalledTimes(1);
       expect(onMatchStateChanged).toHaveBeenCalledTimes(1);
@@ -113,6 +173,20 @@ describe('db module', () => {
       expect(els.dbCount.textContent).toBe('0');
       expect(els.nextId.textContent).toBe('0');
       expect(els.dbCountBadge.textContent).toBe('0');
+    });
+  });
+
+  describe('clearDb3d', () => {
+    it('resets only the 3D DB and persists the empty versioned payload', () => {
+      state.db3d = {
+        modelVersion: DB3D_MODEL_VERSION,
+        faces: [{ id: 4, descriptor3d: [0.2, 0.8], savedAt: '2026-06-29T00:00:00.000Z' }]
+      };
+
+      clearDb3d();
+
+      expect(state.db3d).toEqual(defaultDb3d());
+      expect(localStorage.setItem).toHaveBeenCalledWith(STORAGE_KEY_3D, JSON.stringify(defaultDb3d()));
     });
   });
 });

@@ -4,14 +4,14 @@
  * 3D biometric pipeline for Ghostati.
  *
  * Parallel to engine.js (face-api / 128-D / euclidean distance), this module
- * implements the MobileNetV2 path:
- *   - 1024-D feature embedding extracted from a canvas or video element
+ * implements the ImageEmbedder path:
+ *   - feature embedding extracted from a canvas or video element
  *   - Cosine similarity as the distance metric (higher = more similar)
  *   - Separate localStorage DB (state.db3d) sharing IDs with the 2D DB
  *   - MATCH_THRESHOLD_3D: similarity >= threshold counts as a match
  *
  * IMPORTANT — what this is NOT:
- *   MobileNet was trained for ImageNet classification, not face recognition.
+ *   The embedder was trained for generic image similarity, not face recognition.
  *   It responds strongly to global visual context (background, lighting,
  *   colour palette) as much as to facial geometry. False positives on
  *   similar backgrounds are expected and are part of the didactic point:
@@ -21,32 +21,46 @@
  * dispatched by the orchestrator in main.js / auto-find-loop.js after
  * composing the unified payload from both engines.
  *
- * Depends on globals loaded via CDN <script> tags:
- *   - `tf`        (@tensorflow/tfjs)
- *   - `mobilenet` (@tensorflow-models/mobilenet)
  */
 
 import { state } from './state.js';
 import { els } from './dom.js';
 import { setLog } from './utils.js';
 import { persistDb3d } from './db.js';
+import { MEDIAPIPE_IMAGE_EMBEDDER_URL, MEDIAPIPE_TASKS_VISION_URL, MEDIAPIPE_WASM_URL } from './config.js';
 
 // ─────────────────────────────────────────────
 // Model lifecycle
 // ─────────────────────────────────────────────
 
 /**
- * Load MobileNetV2 (version 2, alpha 1.0) and store it on state.
+ * Load the 3D embedder and store it on state.
  * Safe to call multiple times — returns immediately if already loaded.
  *
+ * Historical note: the exported name stays `loadMobileNet()` to preserve
+ * the public API used by main.js, even though the implementation now loads
+ * MediaPipe ImageEmbedder with MobileNetV3 Small.
+ *
+ * @param {object|null} embedderInstance Optional injected embedder for tests.
  * @returns {Promise<void>}
  * @see main.js – called during init after face-api models are loaded.
  */
-export async function loadMobileNet() {
-   if (state.mobileNetModel) return;
-   // `mobilenet` is the global exposed by @tensorflow-models/mobilenet CDN script.
-   state.mobileNetModel = await mobilenet.load({ version: 2, alpha: 1.0 });
-   setLog('[3D] MobileNetV2 pronto.', 'engine-3d');
+export async function loadMobileNet(embedderInstance = null) {
+   if (state.imageEmbedder) return;
+   if (embedderInstance) {
+      state.imageEmbedder = embedderInstance;
+      return;
+   }
+   const { FilesetResolver, ImageEmbedder } = await import(MEDIAPIPE_TASKS_VISION_URL);
+   const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+   state.imageEmbedder = await ImageEmbedder.createFromOptions(vision, {
+      baseOptions: {
+         modelAssetPath: MEDIAPIPE_IMAGE_EMBEDDER_URL,
+         delegate: 'GPU'
+      },
+      runningMode: 'VIDEO'
+   });
+   setLog('[3D] ImageEmbedder pronto.', 'engine-3d');
 }
 
 // ─────────────────────────────────────────────
@@ -78,28 +92,23 @@ export function cosineSimilarity(vecA, vecB) {
 // ─────────────────────────────────────────────
 
 /**
- * Extract a 1024-D MobileNetV2 embedding from a canvas or video element.
+ * Extract an ImageEmbedder embedding from a canvas or video element.
  *
- * The input is resized to 224×224 and normalised to [0, 1] before inference.
- * TF tensors are explicitly disposed to avoid memory leaks.
- *
- * NOTE: MobileNet responds to global image content (background, colours,
+ * NOTE: ImageEmbedder responds to global image content (background, colours,
  * texture) as much as to the face itself. This is a known characteristic
  * and is the didactic subject of the workshop.
  *
  * @param {HTMLCanvasElement|HTMLVideoElement} source
- * @returns {Promise<number[]>} 1024-element embedding vector.
+ * @returns {Promise<number[]>} Embedding vector serialisable to JSON.
  */
 export async function getFaceEmbedding(source) {
-   if (!state.mobileNetModel) throw new Error('[engine-3d] MobileNet non caricato.');
+   if (!state.imageEmbedder) throw new Error('[engine-3d] ImageEmbedder non caricato.');
    try {
-      const tensor      = tf.browser.fromPixels(source);
-      const resized     = tf.image.resizeBilinear(tensor, [224, 224]);
-      const normalised  = resized.div(255.0).expandDims(0);
-      // `true` as second arg = return the penultimate layer (1024-D embedding)
-      const embTensor   = state.mobileNetModel.infer(normalised, true);
-      const embedding   = await embTensor.data();
-      tf.dispose([tensor, resized, normalised, embTensor]);
+      const result = state.imageEmbedder.embedForVideo(source, performance.now());
+      const embedding = result?.embeddings?.[0]?.floatEmbedding;
+      if (!embedding) {
+         throw new Error('Nessun embedding restituito dal modello.');
+      }
       return Array.from(embedding);
    } catch (err) {
       console.error('[getFaceEmbedding]', err);
@@ -114,7 +123,7 @@ export async function getFaceEmbedding(source) {
 /**
  * Scan the 3D DB for the best cosine-similarity match against `embedding`.
  *
- * @param {number[]} embedding  1024-D query vector.
+ * @param {number[]} embedding  Query vector.
  * @returns {{ liveMaxSim: number|null, liveMaxId: number|null }}
  */
 export function seekFaceInDb3d(embedding) {
@@ -130,7 +139,7 @@ export function seekFaceInDb3d(embedding) {
 }
 
 /**
- * Save a MobileNet embedding to state.db3d under the given `id`.
+ * Save an ImageEmbedder embedding to state.db3d under the given `id`.
  * The `id` is assigned by engine.js (saveFace) and passed here so both
  * DBs stay in sync without a shared counter.
  *
@@ -139,8 +148,8 @@ export function seekFaceInDb3d(embedding) {
  *   Returns null if model not ready or DB not initialised.
  */
 export async function saveFace3d(id) {
-   if (!state.mobileNetModel) {
-      setLog('[3D] MobileNet non pronto — embedding 3D non salvato.', 'engine-3d');
+   if (!state.imageEmbedder) {
+      setLog('[3D] ImageEmbedder non pronto — embedding 3D non salvato.', 'engine-3d');
       return null;
    }
    if (!state.db3d) {
@@ -160,7 +169,7 @@ export async function saveFace3d(id) {
       savedAt: new Date().toISOString(),
    });
    persistDb3d();
-   setLog(`[3D] Embedding MobileNet salvato con ID ${id}.`, 'engine-3d');
+   setLog(`[3D] Embedding ImageEmbedder salvato con ID ${id}.`, 'engine-3d');
    // After saving, seek to get liveInfo (best match is the record we just saved: sim ≈ 1)
    const liveInfo3d = seekFaceInDb3d(embedding);
    return { id, liveInfo3d };
@@ -184,7 +193,7 @@ function hasActivePlugin3d() {
 
 /**
  * Build a composited canvas (video frame + active 3D ghostyle overlay) and
- * extract a MobileNet embedding from it.
+ * extract an ImageEmbedder embedding from it.
  *
  * Dispatches `beforeEfficacyComposite3d` on the event bus so 3D plugins can
  * draw onto the canvas before the embedding is extracted. Plugins receive:
@@ -194,7 +203,7 @@ function hasActivePlugin3d() {
  *   Returns null if model not ready.
  */
 export async function compositeAndDetect3d() {
-   if (!state.mobileNetModel) return null;
+   if (!state.imageEmbedder) return null;
 
    const canvas = document.createElement('canvas');
    canvas.width  = els.overlay.width;
@@ -224,7 +233,7 @@ export async function compositeAndDetect3d() {
  *      unified `matchStateChanged` payload — does NOT dispatch any event.
  *
  * Returns null if:
- *   - MobileNet not loaded yet
+ *   - ImageEmbedder not loaded yet
  *   - state.db3d is empty (3D DB has no entries)
  *
  * Returns `{ liveInfo3d, composite3d }` otherwise, where composite3d is
@@ -233,8 +242,8 @@ export async function compositeAndDetect3d() {
  * @returns {Promise<{ liveInfo3d: object, composite3d: object|null }|null>}
  */
 export async function findFace3d() {
-   if (!state.mobileNetModel) {
-      setLog('[3D] MobileNet non pronto — confronto 3D saltato.', 'engine-3d');
+   if (!state.imageEmbedder) {
+      setLog('[3D] ImageEmbedder non pronto — confronto 3D saltato.', 'engine-3d');
       return null;
    }
    if (!state.db3d || state.db3d.faces.length === 0) {
@@ -283,28 +292,28 @@ export function decideMatchState3d({ liveMaxSim, liveMaxId, obfMaxSim, obfMaxId 
       if (typeof obfMaxId === 'number' && obfMaxSim >= thr) {
          return {
             detectionState: 'matched',
-            headline: `[3D] Ghostyle presente: MobileNet abbina ID ${obfMaxId} (similarità ${obfMaxSim.toFixed(3)} ≥ ${thr.toFixed(2)}).`,
+            headline: `[3D] Ghostyle presente: ImageEmbedder abbina ID ${obfMaxId} (similarità ${obfMaxSim.toFixed(3)} ≥ ${thr.toFixed(2)}).`,
          };
       }
       return {
          detectionState: 'eluded',
-         headline: `[3D] Ghostyle presente: MobileNet non abbina (similarità ${(obfMaxSim ?? 0).toFixed(3)} < ${thr.toFixed(2)}). Embedding visivo spostato.`,
+         headline: `[3D] Ghostyle presente: ImageEmbedder non abbina (similarità ${(obfMaxSim ?? 0).toFixed(3)} < ${thr.toFixed(2)}). Embedding visivo spostato.`,
       };
    }
 
    // No ghostyle: judge on live embedding
    if (liveMaxSim == null) {
-      return { detectionState: 'unknown', headline: '[3D] DB 3D vuoto, nessun confronto MobileNet.' };
+      return { detectionState: 'unknown', headline: '[3D] DB 3D vuoto, nessun confronto ImageEmbedder.' };
    }
    if (liveMaxSim >= thr) {
       return {
          detectionState: 'matched',
-         headline: `[3D] Corrispondenza MobileNet: ID ${liveMaxId} (similarità ${liveMaxSim.toFixed(3)} ≥ ${thr.toFixed(2)}).`,
+         headline: `[3D] Corrispondenza ImageEmbedder: ID ${liveMaxId} (similarità ${liveMaxSim.toFixed(3)} ≥ ${thr.toFixed(2)}).`,
       };
    }
    return {
       detectionState: 'eluded',
-      headline: `[3D] Nessuna corrispondenza MobileNet (max similarità ${liveMaxSim.toFixed(3)} < ${thr.toFixed(2)}).`,
+      headline: `[3D] Nessuna corrispondenza ImageEmbedder (max similarità ${liveMaxSim.toFixed(3)} < ${thr.toFixed(2)}).`,
    };
 }
 
@@ -312,7 +321,7 @@ export function decideMatchState3d({ liveMaxSim, liveMaxId, obfMaxSim, obfMaxId 
  * Build the `mediapipe` section of the unified `matchStateChanged` payload.
  *
  * NOTE: the field is named `mediapipe` in the payload (matching the landmark
- * source) even though the embedding uses MobileNet. The two models run in the
+ * source) because both tasks are powered by MediaPipe. The two models run in the
  * same MediaPipe-initiated pipeline.
  *
  * @param {{ liveInfo3d: object, composite3d: object|null }} result3d

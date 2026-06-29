@@ -25,7 +25,7 @@
  * A single enrolled face record persisted in the 3D DB.
  * @typedef {Object} FaceRecord3d
  * @property {number} id            Same ID as the corresponding FaceRecord (assigned by engine.js).
- * @property {number[]} descriptor3d  1024-D MobileNetV2 embedding.
+ * @property {number[]} descriptor3d  Image embedding produced by MediaPipe ImageEmbedder.
  * @property {string} savedAt       ISO timestamp.
  */
 
@@ -51,8 +51,8 @@
  *   **Used in:** db.js (load/save/clear/renderDbStats), engine.js (descriptor
  *   matching), utils.js (computeMatchState), main.js (init, `Ghostati.getDb`).
  *
- * @property {{ nextId: number, faces: FaceRecord3d[] } | null} db3d
- *   Local 3D face database (MobileNet embeddings, keyed by same IDs as db).
+ * @property {{ faces: FaceRecord3d[], modelVersion: string } | null} db3d
+ *   Local 3D face database (ImageEmbedder embeddings, keyed by same IDs as db).
  *   **Range:** `null` until `db.loadDb3d()` runs at startup.
  *   **Used in:** db.js (load/save/clear), engine-3d.js (embedding matching), main.js.
  *
@@ -145,7 +145,7 @@
  *   findFace/testMakeupEfficacy), db.js (threshold label), main.js (`Ghostati.getMatchThreshold`).
  *
  * @property {number} MATCH_THRESHOLD_3D
- *   MobileNet cosine-similarity threshold. A similarity `>=` this value is a match.
+ *   ImageEmbedder cosine-similarity threshold. A similarity `>=` this value is a match.
  *   **Range:** [0, 1]; default `0.85`. Higher = stricter (opposite sign from MATCH_THRESHOLD).
  *   **Used in:** engine-3d.js (match classification in findFace3d/saveFace3d), main.js.
  *
@@ -156,8 +156,8 @@
  *   **Used in:** mediapipe-loop.js (written), engine-3d.js (read for compositing),
  *   window.Ghostati.lastLandmarks3d (exposed to plugins).
  *
- * @property {object|null} mobileNetModel
- *   Loaded MobileNet model instance (from `mobilenet.load()`). `null` until
+ * @property {object|null} imageEmbedder
+ *   Loaded MediaPipe ImageEmbedder instance. `null` until
  *   `loadMobileNet()` completes in engine-3d.js.
  *   **Used in:** engine-3d.js (getFaceEmbedding, guards).
  *
@@ -198,7 +198,7 @@ export const state = {
    lastKnownEffectResult: null,
    lastCompositedCanvas: null,
    lastLandmarks3d: null, // cached from mediapipe-loop, 478-point normalised array
-   mobileNetModel: null, // loaded MobileNetV2 instance
+   imageEmbedder: null, // loaded MediaPipe ImageEmbedder instance
    isMirrored: false,
    currentFacingMode: 'user',
    logsArchive: [],
