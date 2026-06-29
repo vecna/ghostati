@@ -1,20 +1,63 @@
-/** @module db */
+/**
+ * @module db
+ * @description
+ * LocalStorage persistence layer for the two face databases. Holds two parallel
+ * stores — one for face-api 128-D recognition descriptors (`STORAGE_KEY`) and
+ * one for the MediaPipe ImageEmbedder vectors (`STORAGE_KEY_3D`) — with IDs
+ * aligned between them: when `engine.js` assigns an ID at save time, the same
+ * ID is passed to `engine-3d.js` so both DBs grow in lockstep.
+ *
+ * Why two stores instead of one record with two descriptors: it keeps each
+ * engine independent. `engine.js` never has to know that a 3D embedding
+ * exists, and `engine-3d.js` never has to read or preserve 2D fields it
+ * doesn't understand. Disalignment is tolerated (no rollback): if one save
+ * fails after the other succeeds, the surviving record is left alone and
+ * `findFace` for the missing engine simply returns no match.
+ *
+ * The 3D DB carries a `modelVersion` field. At load time we compare it with
+ * the current `DB3D_MODEL_VERSION`; a mismatch wipes the store automatically,
+ * since embeddings produced by different models are not comparable.
+ */
 import { els } from './dom.js';
 import { state } from './state.js';
 import { setLog } from './utils.js';
 
+/** LocalStorage key for the 2D (face-api) face database. */
 export const STORAGE_KEY = 'local-face-lab-db-v1';
+/** LocalStorage key for the 3D (ImageEmbedder) face database. */
 export const STORAGE_KEY_3D = 'local-face-lab-db-3d-v1';
+/**
+ * Version tag stamped into the 3D DB. Bumping this string invalidates the
+ * stored embeddings on the next load (they will be auto-cleared). Bump it
+ * whenever the embedder model or its preprocessing changes in a way that
+ * makes old vectors incomparable with new ones.
+ */
 export const DB3D_MODEL_VERSION = 'image-embedder-v1';
 
+/**
+ * Factory for an empty 3D DB shape with the current model version stamped in.
+ * Used both for the initial `loadDb3d()` path when no stored data exists and
+ * for the auto-wipe path triggered by a model-version mismatch.
+ *
+ * @returns {{faces: Array, modelVersion: string}}
+ */
 function createEmptyDb3d() {
    return { faces: [], modelVersion: DB3D_MODEL_VERSION };
 }
 
 /**
- * Loads the 3D face database (ImageEmbedder embeddings) from `localStorage`.
+ * Read the 3D face database from `localStorage`. Returns a fresh empty store
+ * if nothing is stored, the JSON is malformed, or the stored model version
+ * does not match `DB3D_MODEL_VERSION` (in which case the old data is wiped
+ * via `clearDb3d()` because it can no longer be matched against new
+ * embeddings).
  *
- * @returns {{faces: Array}} The current 3D database state (no nextId — IDs come from the 2D DB).
+ * @returns {{faces: Array, modelVersion: string}}
+ *   The current 3D DB state. There is no `nextId` field — 3D IDs come from
+ *   the 2D DB to keep the two stores aligned.
+ * @see scripts/main.js – called once during init to populate `state.db3d`.
+ * @see clearDb3d – called from inside this function when the model version
+ *   does not match the stored data.
  */
 export function loadDb3d() {
    try {
@@ -37,14 +80,23 @@ export function loadDb3d() {
 }
 
 /**
- * Persists the current 3D database (`state.db3d`) to `localStorage`.
+ * Serialise `state.db3d` to `localStorage` under `STORAGE_KEY_3D`. Called
+ * after every successful 3D save so the next reload sees the new embedding.
+ *
+ * @see scripts/engine-3d.js – `saveFace3d()` calls this after pushing a record.
  */
 export function persistDb3d() {
    localStorage.setItem(STORAGE_KEY_3D, JSON.stringify(state.db3d));
 }
 
 /**
- * Clears only the local 3D face database and persists the empty state.
+ * Reset the 3D DB to an empty store (preserving the current model version)
+ * and persist the empty state. Called by `clearDb()` as part of a full
+ * cross-engine wipe, and internally by `loadDb3d()` when a model-version
+ * mismatch is detected.
+ *
+ * @see clearDb – orchestrates wiping both DBs together.
+ * @see loadDb3d – triggers this on a model-version mismatch.
  */
 export function clearDb3d() {
    state.db3d = createEmptyDb3d();
@@ -52,12 +104,15 @@ export function clearDb3d() {
 }
 
 /**
- * Loads the application's face database from `localStorage`.
+ * Read the 2D face database from `localStorage`. Returns a fresh empty store
+ * (`{nextId: 0, faces: []}`) if nothing is stored or the JSON is malformed or
+ * structurally invalid. `nextId` is the source of truth for the next assigned
+ * ID across both engines — the 3D save path reuses it rather than tracking
+ * its own counter.
  *
- * Returns a fresh default database if no stored data exists or if the data is malformed.
- *
- * @returns {{nextId: number, faces: Array}} The current database state.
- * @see Used in `scripts/main.js` during startup and in unit tests for DB loading.
+ * @returns {{nextId: number, faces: Array}} The current DB state.
+ * @see scripts/main.js – called once during init to populate `state.db`.
+ * @see scripts/engine.js – `saveFace()` increments and persists `nextId`.
  */
 export function loadDb() {
    try {
@@ -74,12 +129,14 @@ export function loadDb() {
 }
 
 /**
- * Persists the current database (`state.db`) to `localStorage` and emits a `dbChanged`
- * event so UI components can update the displayed count and next ID.
+ * Serialise `state.db` to `localStorage` and emit a `dbChanged` event on the
+ * shared bus so consumers (status badge, bbox overlay) can refresh. Dispatch
+ * happens here so every code path that mutates the DB has consistent UI
+ * feedback without having to remember to fire the event itself.
  *
- * @see engine.js – invoked after modifications to ensure storage stays in sync.
- * @see clearDb – called after clearing the database to save the empty state.
- * @see tests/unit/db.test.js – validates that persistence occurs correctly.
+ * @see scripts/engine.js – `saveFace()` calls this after pushing a record.
+ * @see clearDb – calls this to persist the empty state and notify listeners.
+ * @see tests/unit/db.test.js – verifies persistence and event emission.
  */
 export function persistDb() {
    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
@@ -92,13 +149,12 @@ export function persistDb() {
 }
 
 /**
- * Renders the current database statistics to the UI.
+ * Push the current DB statistics into the side-panel UI: face count, next ID,
+ * the match threshold label, and the badge in the header. Called whenever
+ * the DB shape changes or the app starts up.
  *
- * Updates the displayed face count, next ID, matching threshold, and badge.
- *
- * @see main.js – initial rendering after loading the database.
- * @see engine.js – re‑render after any modification to the database.
- * @see clearDb – refreshes the UI after the database is cleared.
+ * @see scripts/main.js – `init()` calls this once after loading the DBs.
+ * @see clearDb – calls this after wiping the data so the UI shows zero.
  */
 export function renderDbStats() {
    els.dbCount.textContent = String(state.db.faces.length);
@@ -106,18 +162,23 @@ export function renderDbStats() {
    els.thresholdLabel.textContent = state.MATCH_THRESHOLD.toFixed(2);
 
    els.dbCountBadge.textContent = String(state.db.faces.length);
-   // els.dbCountBadge.style.display = state.db.faces.length > 0 ? 'inline-block' : 'none';
-   els.dbCountBadge.style.display = 'inline-block'; // sempre, anche quando è 0.
+   // Badge is always shown, even at zero, so users learn where the count
+   // lives. Toggling its display made the layout shift on first save.
+   els.dbCountBadge.style.display = 'inline-block';
 }
 
 /**
- * Clears the local face database, resetting it to an empty state and persisting the change.
+ * Wipe both the 2D and 3D face databases, persist the empty state of both,
+ * and emit a `matchStateChanged` event (`source: 'clear'`) so any listening
+ * UI (bbox overlay, badges) can reset its derived display. The two
+ * underlying stores are cleared in lockstep because their IDs are aligned —
+ * dropping one without the other would leave orphan records on the next
+ * find.
  *
- * Emits a `matchStateChanged` event so any listeners can update their UI accordingly.
- *
- * @see persistDb – called after resetting to ensure the empty state is saved.
- * @see renderDbStats – updates the displayed statistics after the clear operation.
- * @see tests/unit/db.test.js – verifies that clearing the database works as expected.
+ * @see persistDb – persists the empty 2D state.
+ * @see persistDb3d – persists the empty 3D state (called via reassignment).
+ * @see renderDbStats – refreshes the on-screen counters.
+ * @see tests/unit/db.test.js – covers the cross-DB wipe.
  */
 export function clearDb() {
    state.db = { nextId: 0, faces: [] };
