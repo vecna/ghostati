@@ -10,25 +10,16 @@ import { els, setStatus, clearOverlay } from './dom.js';
 import { loadGhostyle } from './ghostyles-manager.js';
 import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEffect3d, toggleEffect3d, reloadPlugins3d } from './plugins3d-loader.js';
 import { exportMakeup } from './export-makeup.js';
-import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY } from './bbox-overlay.js';
-
-const OVERLAY_MODE_ORDER = ['bbox', 'mesh', 'entrambi', '2d'];
-
-const OVERLAY_MODE_LABELS = {
-   bbox: 'Vista: bbox',
-   mesh: 'Vista: mesh',
-   entrambi: 'Vista: entrambi',
-   '2d': 'Vista: 2D',
-};
+import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY, OVERLAY_MODES } from './bbox-overlay.js';
 
 function overlayModeLabel(mode) {
-   return OVERLAY_MODE_LABELS[mode] || OVERLAY_MODE_LABELS.bbox;
+   return OVERLAY_MODES[mode] || OVERLAY_MODES.bbox;
 }
 
 function readInitialOverlayMode() {
    try {
       const raw = localStorage.getItem(OVERLAY_MODE_STORAGE_KEY);
-      return OVERLAY_MODE_ORDER.includes(raw) ? raw : 'bbox';
+      return Object.keys(OVERLAY_MODES).includes(raw) ? raw : 'bbox';
    } catch {
       return 'bbox';
    }
@@ -255,8 +246,9 @@ async function init() {
       els.overlayModeBtn.textContent = overlayModeLabel(initialOverlayMode);
       els.overlayModeBtn.addEventListener('click', () => {
          const currentMode = els.overlayModeBtn.dataset.overlayMode || initialOverlayMode;
-         const currentIndex = OVERLAY_MODE_ORDER.indexOf(currentMode);
-         const nextMode = OVERLAY_MODE_ORDER[(currentIndex + 1) % OVERLAY_MODE_ORDER.length];
+         const keys = Object.keys(OVERLAY_MODES);
+         const currentIndex = keys.indexOf(currentMode);
+         const nextMode = keys[(currentIndex + 1) % keys.length];
          els.overlayModeBtn.dataset.overlayMode = setOverlayMode(nextMode);
          els.overlayModeBtn.textContent = overlayModeLabel(els.overlayModeBtn.dataset.overlayMode);
       });

@@ -63,7 +63,12 @@ const COPYABLE_FIELDS = ['liveMinDist', 'obfMinDist', 'liveMinId', 'obfMinId'];
 
 export const OVERLAY_MODE_STORAGE_KEY = 'ghostati-overlay-mode-v1';
 
-export const OVERLAY_MODES = ['bbox', 'mesh', 'entrambi', '2d'];
+export const OVERLAY_MODES = {
+   bbox: 'Vista: bbox',
+   mesh: 'Vista: mesh',
+   entrambi: 'Vista: entrambi',
+   '2d': 'Vista: 2D',
+};
 
 // ---------- Module state ----------
 
@@ -201,7 +206,7 @@ export function onDbChanged(e) {
  * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
  */
 export function setOverlayMode(mode) {
-   if (!OVERLAY_MODES.includes(mode)) return view.overlayMode;
+   if (!Object.keys(OVERLAY_MODES).includes(mode)) return view.overlayMode;
    view.overlayMode = mode;
    persistOverlayMode(mode);
    renderOverlay();
@@ -212,8 +217,9 @@ export function setOverlayMode(mode) {
  * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
  */
 export function cycleOverlayMode() {
-   const index = OVERLAY_MODES.indexOf(view.overlayMode);
-   return setOverlayMode(OVERLAY_MODES[(index + 1) % OVERLAY_MODES.length]);
+   const keys = Object.keys(OVERLAY_MODES);
+   const index = keys.indexOf(view.overlayMode);
+   return setOverlayMode(keys[(index + 1) % keys.length]);
 }
 
 // ---------- Geometry / rendering helpers ----------
@@ -282,7 +288,7 @@ function getLastBox() {
 function readPersistedOverlayMode() {
    try {
       const raw = localStorage.getItem(OVERLAY_MODE_STORAGE_KEY);
-      return OVERLAY_MODES.includes(raw) ? raw : null;
+      return Object.keys(OVERLAY_MODES).includes(raw) ? raw : null;
    } catch {
       return null;
    }

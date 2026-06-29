@@ -433,21 +433,6 @@ async function fetchManifest(manifestUrl, opts = {}) {
    return response.json();
 }
 
-export async function loadPlugins3dFromManifest(manifestUrl = runtime.manifestUrl, opts = {}) {
-   requireInit();
-   try {
-      const list = await fetchManifest(manifestUrl, opts);
-      for (const item of list) {
-         const effectiveUrl = runtime.relurl + '/' + item.url;
-         await loadPlugin3d(effectiveUrl, item.name, opts);
-      }
-      if (!runtime.reloadBtn) renderReloadButton();
-   } catch (err) {
-      console.error('[plugins3d] errore lettura manifest:', err);
-      log3d(`Errore lettura ${manifestUrl}: ${err.message}`);
-   }
-}
-
 export async function reloadPlugins3d(manifestUrl = runtime.manifestUrl) {
    requireInit();
    const previouslyActive = runtime.active;
