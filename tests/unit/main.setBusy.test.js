@@ -22,8 +22,17 @@ vi.mock('../../scripts/utils.js', () => ({
 vi.mock('../../scripts/db.js', () => ({
   loadDb: vi.fn(() => ({ nextId: 0, faces: [] })),
   loadDb3d: vi.fn(() => ({ nextId: 0, faces: [] })),
+  persistDb: vi.fn(),
+  persistDb3d: vi.fn(),
   renderDbStats: vi.fn(),
   clearDb: vi.fn()
+}));
+
+vi.mock('../../scripts/face-thumbnails.js', () => ({
+  captureThumbnail: vi.fn(async () => null),
+  deleteThumbnail: vi.fn(),
+  getThumbnail: vi.fn(() => null),
+  saveThumbnail: vi.fn()
 }));
 
 vi.mock('../../scripts/engine.js', () => ({

@@ -56,6 +56,11 @@
  *   **Range:** `null` until `db.loadDb3d()` runs at startup.
  *   **Used in:** db.js (load/save/clear), engine-3d.js (embedding matching), main.js.
  *
+ * @property {undefined} [thumbnailsStore]
+ *   Documentation-only reference to the dedicated thumbnail persistence store
+ *   in `localStorage` (`local-face-lab-thumbnails-v1`). Managed exclusively by
+ *   `face-thumbnails.js` and intentionally not mirrored onto `state`.
+ *
  * @property {string|null} activeEffect
  *   Identifier of the currently active 2D ghostyle effect.
  *   **Range:** `null` when no effect is active, otherwise a key present in

@@ -21,6 +21,7 @@
 import { els } from './dom.js';
 import { state } from './state.js';
 import { setLog } from './utils.js';
+import { clearAllThumbnails } from './face-thumbnails.js';
 
 /** LocalStorage key for the 2D (face-api) face database. */
 export const STORAGE_KEY = 'local-face-lab-db-v1';
@@ -185,6 +186,7 @@ export function clearDb() {
    if (state.db3d) state.db3d = createEmptyDb3d();
    persistDb();
    if (state.db3d !== null) persistDb3d();
+   clearAllThumbnails();
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: 'unknown', source: 'clear' }
    }));

@@ -13,8 +13,13 @@ vi.mock('../../scripts/utils.js', () => ({
   setLog: vi.fn()
 }));
 
+vi.mock('../../scripts/face-thumbnails.js', () => ({
+  clearAllThumbnails: vi.fn()
+}));
+
 import { state } from '../../scripts/state.js';
 import { setLog } from '../../scripts/utils.js';
+import { clearAllThumbnails } from '../../scripts/face-thumbnails.js';
 import { els } from '../../scripts/dom.js';
 import {
   STORAGE_KEY,
@@ -170,6 +175,7 @@ describe('db module', () => {
       expect(onMatchStateChanged).toHaveBeenCalledTimes(1);
       expect(onMatchStateChanged.mock.calls[0][0].detail).toEqual({ detectionState: 'unknown', source: 'clear' });
       expect(setLog).toHaveBeenCalledWith('Archivio locale cancellato. Il contatore ID riparte da 0.');
+      expect(clearAllThumbnails).toHaveBeenCalledTimes(1);
       expect(els.dbCount.textContent).toBe('0');
       expect(els.nextId.textContent).toBe('0');
       expect(els.dbCountBadge.textContent).toBe('0');

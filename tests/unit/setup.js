@@ -48,6 +48,12 @@ document.body.innerHTML = `
   <button id="copyMakeupBtn"></button>
   <button id="fullscreenBtn"></button>
   <button id="toggleSettingsBtn"></button>
+  <button id="closeSettingsBtn"></button>
+  <div id="settingsDrawer" class="settings-drawer hidden"></div>
+  <button id="toggleHistoryBtn"></button>
+  <button id="closeHistoryBtn"></button>
+  <div id="historyDrawer" class="settings-drawer hidden"></div>
+  <div id="historyEntries"></div>
   <button id="saveBtn"></button>
   <button id="analyzeBtn"></button>
   <button id="overlayModeBtn">Vista: bbox</button>
@@ -84,7 +90,8 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   setLineDash: vi.fn(),
   translate: vi.fn(),
   scale: vi.fn(),
-  arcTo: vi.fn()
+  arcTo: vi.fn(),
+  drawImage: vi.fn()
 }));
 
 // 4. Mock faceapi

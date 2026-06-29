@@ -32,6 +32,29 @@ export const ZONE_DELTA_MEDIUM = 0.040;
 export const ANALYZE_PANEL_MAX_WIDTH_DESKTOP = 900;
 
 /**
+ * Maximum number of face thumbnails retained in the dedicated localStorage
+ * thumbnail store. When the limit is exceeded, the oldest thumbnail entry is
+ * evicted (FIFO by `savedAt`).
+ */
+export const THUMBNAIL_MAX_ENTRIES = 200;
+
+/**
+ * Extra margin ratio applied around the detected face box before thumbnail
+ * cropping. The margin is computed from the shortest side of the box.
+ */
+export const THUMBNAIL_MARGIN_RATIO = 0.30;
+
+/**
+ * Output thumbnail size in pixels (square canvas, width and height).
+ */
+export const THUMBNAIL_OUTPUT_SIZE = 160;
+
+/**
+ * JPEG quality used when exporting captured face thumbnails.
+ */
+export const THUMBNAIL_JPEG_QUALITY = 0.8;
+
+/**
  * Root CDN URL for the @mediapipe/tasks-vision package. Used as a base for
  * dynamic ES-module imports of `FaceLandmarker` and `ImageEmbedder`.
  *

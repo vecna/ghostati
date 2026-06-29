@@ -473,6 +473,132 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
+.history-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.history-empty {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.history-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.history-thumb,
+.history-placeholder {
+  width: 160px;
+  height: 160px;
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+.history-thumb {
+  display: block;
+  object-fit: cover;
+  background: #000;
+}
+
+.history-placeholder {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  text-transform: lowercase;
+}
+
+.history-id {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+}
+
+.history-id-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+
+.history-time {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.history-status-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.history-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.history-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.history-dot.present { background: rgba(61, 220, 151, 1); }
+.history-dot.missing { background: rgba(255, 122, 122, 1); }
+
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.history-delete {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.history-delete:hover {
+  background: rgba(255, 122, 122, 0.2);
+  border-color: rgba(255, 122, 122, 0.45);
+}
+
+.history-delete.confirm-pending {
+  min-width: 44px;
+  width: auto;
+  padding: 0 10px;
+  background: rgba(61, 220, 151, 0.18);
+  border-color: rgba(61, 220, 151, 0.45);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.history-delete svg {
+  width: 17px;
+  height: 17px;
+}
+
 /* Scrollbar per drawer */
 .drawer-content::-webkit-scrollbar { width: 6px; }
 .drawer-content::-webkit-scrollbar-track { background: transparent; }

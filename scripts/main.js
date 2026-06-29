@@ -1,7 +1,7 @@
 /** @module main */
 import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
-import { loadDb, loadDb3d, renderDbStats, clearDb } from './db.js';
+import { loadDb, loadDb3d, persistDb, persistDb3d, renderDbStats, clearDb } from './db.js';
 import { saveFace, compositeAndDetect } from './engine.js';
 import { loadMobileNet, saveFace3d, compositeAndDetect3d } from './engine-3d.js';
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
@@ -12,6 +12,7 @@ import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEff
 import { exportMakeup } from './export-makeup.js';
 import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY, OVERLAY_MODES } from './bbox-overlay.js';
 import { openAnalyzePanel } from './analyze-panel.js';
+import { captureThumbnail, deleteThumbnail, getThumbnail, saveThumbnail } from './face-thumbnails.js';
 
 function overlayModeLabel(mode) {
    return OVERLAY_MODES[mode] || OVERLAY_MODES.bbox;
@@ -208,6 +209,204 @@ function buildMediapipeSaveSection(saved3d, id) {
    };
 }
 
+let historyInitialized = false;
+
+function collectCurrentFaceIds() {
+   const ids = new Set();
+   for (const face of (state.db?.faces || [])) ids.add(face.id);
+   for (const face of (state.db3d?.faces || [])) ids.add(face.id);
+   return Array.from(ids).sort((a, b) => b - a);
+}
+
+function has2dRecord(id) {
+   return (state.db?.faces || []).some((face) => face.id === id);
+}
+
+function has3dRecord(id) {
+   return (state.db3d?.faces || []).some((face) => face.id === id);
+}
+
+function getSavedAtForHistory(id) {
+   const record2d = (state.db?.faces || []).find((face) => face.id === id);
+   if (record2d?.savedAt) return record2d.savedAt;
+
+   const record3d = (state.db3d?.faces || []).find((face) => face.id === id);
+   return record3d?.savedAt || null;
+}
+
+function formatHistoryTime(savedAt) {
+   if (!savedAt) return '--:--';
+   const date = new Date(savedAt);
+   if (Number.isNaN(date.getTime())) return '--:--';
+
+   const hours = String(date.getHours()).padStart(2, '0');
+   const minutes = String(date.getMinutes()).padStart(2, '0');
+   return `${hours}:${minutes}`;
+}
+
+function createHistoryStatus(label, present) {
+   const status = document.createElement('div');
+   status.className = 'history-status';
+
+   const dot = document.createElement('span');
+   dot.className = `history-dot ${present ? 'present' : 'missing'}`;
+   status.appendChild(dot);
+
+   const text = document.createElement('span');
+   text.textContent = label;
+   status.appendChild(text);
+
+   return status;
+}
+
+function removeFaceById(id) {
+   state.db.faces = state.db.faces.filter((face) => face.id !== id);
+   state.db3d.faces = state.db3d.faces.filter((face) => face.id !== id);
+
+   deleteThumbnail(id);
+   persistDb3d();
+   persistDb();
+   renderDbStats(state, els);
+}
+
+function createHistoryCard(id) {
+   const card = document.createElement('article');
+   card.className = 'history-card';
+   card.dataset.id = String(id);
+   const savedAt = getSavedAtForHistory(id);
+
+   const dataUrl = getThumbnail(id);
+   if (dataUrl) {
+      const thumb = document.createElement('img');
+      thumb.className = 'history-thumb';
+      thumb.alt = `Face thumbnail ID ${id}`;
+      thumb.src = dataUrl;
+      card.appendChild(thumb);
+   } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'history-placeholder';
+      placeholder.textContent = 'no preview';
+      card.appendChild(placeholder);
+   }
+
+   const idRow = document.createElement('div');
+   idRow.className = 'history-id-row';
+
+   const idLabel = document.createElement('div');
+   idLabel.className = 'history-id';
+   idLabel.textContent = `ID ${id}`;
+   idRow.appendChild(idLabel);
+
+   const timeLabel = document.createElement('div');
+   timeLabel.className = 'history-time';
+   timeLabel.textContent = formatHistoryTime(savedAt);
+   if (savedAt) timeLabel.title = savedAt;
+   idRow.appendChild(timeLabel);
+
+   card.appendChild(idRow);
+
+   const statusRow = document.createElement('div');
+   statusRow.className = 'history-status-row';
+   statusRow.appendChild(createHistoryStatus('2D', has2dRecord(id)));
+   statusRow.appendChild(createHistoryStatus('3D', has3dRecord(id)));
+   card.appendChild(statusRow);
+
+   const actions = document.createElement('div');
+   actions.className = 'history-actions';
+
+   const deleteBtn = document.createElement('button');
+   deleteBtn.type = 'button';
+   deleteBtn.className = 'history-delete';
+   deleteBtn.title = `Cancella ID ${id}`;
+   const deleteIconMarkup = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+   let confirmTimeoutId = null;
+
+   function resetDeleteButton() {
+      if (confirmTimeoutId) {
+         clearTimeout(confirmTimeoutId);
+         confirmTimeoutId = null;
+      }
+      deleteBtn.classList.remove('confirm-pending');
+      deleteBtn.innerHTML = deleteIconMarkup;
+      deleteBtn.title = `Cancella ID ${id}`;
+      deleteBtn.setAttribute('aria-label', `Cancella ID ${id}`);
+   }
+
+   deleteBtn.innerHTML = deleteIconMarkup;
+   deleteBtn.setAttribute('aria-label', `Cancella ID ${id}`);
+   deleteBtn.addEventListener('click', () => {
+      if (!deleteBtn.classList.contains('confirm-pending')) {
+         deleteBtn.classList.add('confirm-pending');
+         deleteBtn.textContent = 'OK';
+         deleteBtn.title = `Conferma cancellazione ID ${id}`;
+         deleteBtn.setAttribute('aria-label', `Conferma cancellazione ID ${id}`);
+         confirmTimeoutId = setTimeout(resetDeleteButton, 2000);
+         return;
+      }
+
+      resetDeleteButton();
+      removeFaceById(id);
+   });
+
+   actions.appendChild(deleteBtn);
+   card.appendChild(actions);
+
+   return card;
+}
+
+function renderHistoryEntries() {
+   if (!els.historyEntries) return;
+
+   // TODO: optimize with diff against current visible IDs to avoid full rebuilds.
+   els.historyEntries.innerHTML = '';
+   const ids = collectCurrentFaceIds();
+
+   if (!ids.length) {
+      const empty = document.createElement('p');
+      empty.className = 'history-empty';
+      empty.textContent = 'Nessun volto salvato.';
+      els.historyEntries.appendChild(empty);
+      return;
+   }
+
+   for (const id of ids) {
+      els.historyEntries.appendChild(createHistoryCard(id));
+   }
+}
+
+function openHistoryDrawer() {
+   if (!els.historyDrawer) return;
+   if (els.settingsDrawer) els.settingsDrawer.classList.add('hidden');
+   if (!historyInitialized) {
+      historyInitialized = true;
+      renderHistoryEntries();
+   }
+   els.historyDrawer.classList.remove('hidden');
+}
+
+function closeHistoryDrawer() {
+   if (!els.historyDrawer) return;
+   els.historyDrawer.classList.add('hidden');
+}
+
+function toggleHistoryDrawer() {
+   if (!els.historyDrawer) return;
+   if (els.historyDrawer.classList.contains('hidden')) {
+      openHistoryDrawer();
+      return;
+   }
+   closeHistoryDrawer();
+}
+
+async function tryCaptureThumbnailOnSave() {
+   const detection = state.lastKnownEffectResult?.detection?.box
+      ? { box: state.lastKnownEffectResult.detection.box }
+      : await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
+
+   if (!detection?.box) return null;
+   return captureThumbnail(els.video, detection.box);
+}
+
 /**
  * Initializes the application: loads the database, renders statistics, sets up the canvas,
  * registers UI event listeners, loads models, ghostyle plugins, and starts the webcam.
@@ -221,6 +420,24 @@ async function init() {
    state.db3d = loadDb3d();
    renderDbStats(state, els);
    resizeCanvas(els);
+
+   if (els.toggleHistoryBtn) {
+      els.toggleHistoryBtn.addEventListener('click', toggleHistoryDrawer);
+   }
+   if (els.closeHistoryBtn) {
+      els.closeHistoryBtn.addEventListener('click', closeHistoryDrawer);
+   }
+   if (els.toggleSettingsBtn && els.historyDrawer && els.settingsDrawer) {
+      els.toggleSettingsBtn.addEventListener('click', () => {
+         if (!els.settingsDrawer.classList.contains('hidden')) {
+            closeHistoryDrawer();
+         }
+      });
+   }
+   if (els.closeSettingsBtn && els.historyDrawer) {
+      els.closeSettingsBtn.addEventListener('click', closeHistoryDrawer);
+   }
+   state.ghostatiEvents.addEventListener('dbChanged', renderHistoryEntries);
 
    const initialOverlayMode = readInitialOverlayMode();
    setOverlayMode(initialOverlayMode);
@@ -257,13 +474,30 @@ async function init() {
    els.saveBtn.addEventListener('click', async () => {
       setBusy(true);
       try {
+         let thumbnailDataUrl = null;
+         try {
+            thumbnailDataUrl = await tryCaptureThumbnailOnSave();
+         } catch (thumbErr) {
+            setLog(`Thumbnail capture failed: ${thumbErr.message || thumbErr}`, 'thumbnails');
+         }
+
          // 1. 2D engine: detect + save; returns { id, result } or null
          const saved2d = await saveFace();
          if (!saved2d) return;
          const { id } = saved2d;
 
+         if (thumbnailDataUrl) saveThumbnail(id, thumbnailDataUrl);
+
          // 2. 3D engine: extract ImageEmbedder embedding + save under the same ID
          const saved3d = await saveFace3d(id);
+
+         // Keep listeners synced with potential 3D-only status changes on the card.
+         state.ghostatiEvents.dispatchEvent(new CustomEvent('dbChanged', {
+            detail: {
+               count: state.db.faces.length,
+               nextId: state.db.nextId,
+            }
+         }));
 
          // 3. Build unified payload
          const faceapiSection = buildFaceapiSaveSection(saved2d);

@@ -47,6 +47,7 @@
   <!-- Mobile Floating UI Layers -->
   <!-- Top Left: Main Actions -->
   <div class="floating-container top-left">
+    <!--
     <button id="scanBtn" class="floating-btn main-action" title="Scansiona Faccia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         stroke-linejoin="round">
@@ -59,6 +60,7 @@
         <path d="M15 9h.01" />
       </svg>
     </button>
+    -->
     <button id="copyMakeupBtn" class="floating-btn main-action" disabled title="Copia volto truccato">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         stroke-linejoin="round">
@@ -96,6 +98,17 @@
 
   <!-- Middle Right: Vertical Actions -->
   <div class="floating-container right-sidebar">
+    <button id="toggleHistoryBtn" class="floating-btn side-action" title="Storico volti">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </button>
     <button id="saveBtn" class="floating-btn side-action" title="Salva faccia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         stroke-linejoin="round">
@@ -132,6 +145,22 @@
         <path d="M3 3v5h5"></path>
       </svg>
     </button>
+  </div>
+
+  <div id="historyDrawer" class="settings-drawer history-drawer hidden">
+    <div class="drawer-header">
+      <h2>Storico volti</h2>
+      <button id="closeHistoryBtn" class="icon-btn" title="Chiudi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-content scrollable">
+      <div id="historyEntries" class="history-entries"></div>
+    </div>
   </div>
 
   <!-- Plugin 3D parameters panel — visible only when an active 3D plugin declares `params` -->

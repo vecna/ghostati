@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Avoid triggering on elements that actually need to scroll (like the settings drawer)
   const isScrollableElement = (el) => {
-    return el.closest('.scrollable') || el.closest('#settingsDrawer');
+    return el.closest('.scrollable') || el.closest('#settingsDrawer') || el.closest('#historyDrawer');
   };
 
   document.addEventListener('touchstart', (e) => {
