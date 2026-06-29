@@ -31,7 +31,7 @@ export async function detectFaceInCam(drawOverlay) {
 
       if (!result) {
          state.lastKnownEffectResult = null;
-         // setLog('Nessun volto rilevato nella webcam.');
+         setLog('Nessun volto rilevato nella webcam.');
          return null;
       }
 

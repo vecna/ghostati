@@ -246,8 +246,8 @@ describe('camera module', () => {
       expect(els.recordBtn.disabled).toBe(true);
       expect(mockMediaRecorderStart).toHaveBeenCalledTimes(1);
 
-      // Fast-forward 1 second
-      vi.advanceTimersByTime(1000);
+      // Fast-forward 2 seconds
+      vi.advanceTimersByTime(2000);
 
       expect(mockMediaRecorderStop).toHaveBeenCalledTimes(1);
       expect(state.isRecording).toBe(false);

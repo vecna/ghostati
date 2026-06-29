@@ -6,8 +6,9 @@ import { saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDe
 import { loadMobileNet, saveFace3d, findFace3d, evaluateMatch3d, compositeAndDetect3d } from './engine-3d.js';
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
-import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
-import { fetchGhostyleMetadata, importGhostyleModule, toggleEffect } from './ghostyles-manager.js';
+import { els, setStatus, clearOverlay } from './dom.js';
+import { loadGhostyle } from './ghostyles-manager.js';
+import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEffect3d, toggleEffect3d, reloadPlugins3d } from './plugins3d-loader.js';
 import { exportMakeup } from './export-makeup.js';
 
 // Mirror toggle logic (fallback, hidden in UI)
@@ -66,55 +67,17 @@ window.Ghostati = {
    getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => state.MATCH_THRESHOLD,
    getMatchThreshold3d: () => state.MATCH_THRESHOLD_3D,
+      getActiveEffect3d: () => getActiveEffect3d(),
+      activateEffect3d: (id) => activateEffect3d(id),
+      deactivateEffect3d: () => deactivateEffect3d(),
+      toggleEffect3d: (id) => toggleEffect3d(id),
+      reloadPlugins3d: () => reloadPlugins3d(),
    get lastLandmarks3d() { return state.lastLandmarks3d; },
    set lastLandmarks3d(v) { state.lastLandmarks3d = v; },
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
    compositeAndDetect3d: () => compositeAndDetect3d(),
    detectorOptions: DETECTOR_OPTIONS
 };
-
-/**
- * Loads a Ghostyle plugin from a given URL.
- * Fetches its metadata, imports the module, runs its optional `onInit` hook, and registers
- * a UI button that toggles the effect.
- *
- * @param {string} url - The URL of the Ghostyle script.
- * @param {string} expectedName - Optional expected display name for logging.
- * @see init – called during application startup to load all Ghostyles from `ghostylist.json`.
- * @see fetchGhostyleMetadata – retrieves the plugin metadata.
- * @see importGhostyleModule – imports the actual Ghostyle module.
- */
-async function loadGhostyle(url, expectedName) {
-   let ghostyle = null;
-   try {
-      const moduleMetadata = await fetchGhostyleMetadata(url);
-      ghostyle = await importGhostyleModule(moduleMetadata);
-
-   } catch (err) {
-      throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
-   }
-
-   if (ghostyle.module.onInit) {
-      console.log(`Funzione di inizializzazione trovata in '${ghostyle.name}'`);
-      try {
-
-         const message = ghostyle.module.onInit();
-         if (message) {
-            setLog(`${ghostyle.name}: ${message}`);
-         }
-      } catch (err) {
-         throw new Error(`Errore durante l'inizializzazione del modulo: ${err.message}`);
-      }
-   }
-
-   /* add the changes in the DOM */
-   const btn = addGhostyleBtn(ghostyle);
-   btn.onclick = () => {
-      toggleEffect(ghostyle.id, btn);
-      startEffectLoop(state, els);
-   }
-   setLog(`Caricato con successo ghostyle ${expectedName} da ${url}`);
-}
 
 
 /**
@@ -401,6 +364,10 @@ async function init() {
 
    setLog('Caricamento plugin di makeup in corso...')
    try {
+      initPlugins3dLoader({
+         getFaceLandmarker: () => (window.Ghostati && window.Ghostati.FaceLandmarker) || null
+      });
+
       /* This is still supporting remote loading assuming it might be useful in the future,
        * but for now we load a static list of Ghostyles from ghostylist.json */
       const relurl = window.location.pathname.split('/').slice(0, -1).join('/')
@@ -410,13 +377,27 @@ async function init() {
          const list = await ghostylistRes.json();
          for (const item of list) {
             let effectiveUrl = relurl + '/' + item.url;
-            await loadGhostyle(effectiveUrl, item.name);
+            await loadGhostyle(effectiveUrl, item.name, {
+               onFaceapiToggle: () => startEffectLoop(state, els)
+            });
          }
       }
       else
          throw new Error(`HTTP ${ghostylistRes.status}`);
+
+      const ghostList3dUrl = relurl + '/ghostylist3d.json';
+      const ghostylist3dRes = await fetch(ghostList3dUrl);
+      if (ghostylist3dRes.ok) {
+         const list3d = await ghostylist3dRes.json();
+         for (const item of list3d) {
+            const effectiveUrl = relurl + '/' + item.url;
+            await loadGhostyle(effectiveUrl, item.name);
+         }
+      } else {
+         throw new Error(`HTTP ${ghostylist3dRes.status}`);
+      }
    } catch (err) {
-      setLog('Errore durante la lettura di ghostylist.json: ' + err.message);
+      setLog('Errore durante la lettura di ghostylist/ghostylist3d: ' + err.message);
    }
 
    setLog('Inizializzazione completata. Avvio webcam in corso...');

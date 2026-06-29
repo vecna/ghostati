@@ -1,75 +1,51 @@
 /**
  * @module ghostyle3d-uv-renderer
  * @description
- * Ghostyle3D UV renderer — modulo condiviso per tutti i plugin 3D.
- *
- * I plugin 3D devono solo:
- *   - dichiarare `params` (schema controlli UI)
- *   - implementare `paintUV(ctx, paramsValues, helpers)` che disegna in spazio
- *     UV su un canvas quadrato `textureSize × textureSize` (default 256)
- *   - opzionalmente esportare `textureSize` (numero) per scegliere la
- *     risoluzione della texture
- *   - opzionalmente esportare `region = { include?, exclude? }` per limitare il
- *     disegno a regioni del volto (gestito automaticamente come post-mask)
- *
- * Helpers passati come 3° argomento di paintUV:
- *   helpers.regionAt(u, v)    → string|null   nome regione del pixel UV [0..1]²
- *   helpers.labels            → Uint8Array    etichette regione, w*h byte
- *   helpers.regions           → { name: id }  mappa nome → id (per confronti veloci)
- *   helpers.regionsList       → string[]      nomi disponibili
- *
- * Il framework si occupa di:
- *   - caricare `data/face_canonical_uv.json` (lazy, una volta)
- *   - precomputare la label map regionale per ogni textureSize, una volta
- *   - mantenere una cache della texture per (plugin, hash dei params), così
- *     `paintUV` viene chiamato solo quando i parametri cambiano
- *   - per ogni frame, calcolare l'affine UV→screen di ciascuno dei 906
- *     triangoli della mesh canonica, fare clip + setTransform + drawImage
- *
- * Regioni native costruite dalle costanti FACE_LANDMARKS_* di MediaPipe:
- *   `faceOval`, `eye` (entrambi gli occhi), `eyebrow` (entrambi, area engrossata),
- *   `lips`, `iris`. Pixel fuori da `faceOval` non hanno regione (regionAt → null).
- *
- * TODO backface culling: i triangoli del lato non visibile (volto di profilo)
- * vengono attualmente disegnati. Un primo tentativo basato sul confronto del
- * segno del det in spazio UV vs screen ha azzerato il rendering — la
- * convenzione di orientamento dei triangoli MediaPipe canonical mesh va
- * verificata sperimentalmente prima di reintrodurre il check.
- *
- * Esposto come `window.Ghostati.UvRenderer.render(module, ctx, landmarks, params)`.
+ * Libreria UV renderer pura per Ghostyle 3D.
+ * Nessun side effect al load e nessuna dipendenza diretta da `window.*`.
  */
 
-window.addEventListener('ghostatiReady', render3DUV, { once: true });
+/**
+ * Crea un renderer UV 3D side-effect free.
+ *
+ * @param {{
+ *   uvPath: string,
+ *   getFaceLandmarker?: () => any,
+ *   log?: (message:string) => void
+ * }} options
+ * @returns {{ ensureLoaded: () => Promise<void>, render: (module:any, ctx:CanvasRenderingContext2D, landmarks:any[], params:object) => void }}
+ */
+export function createUvRenderer(options) {
+   const uvPath = options && options.uvPath;
+   const getFaceLandmarker = (options && options.getFaceLandmarker)
+      ? options.getFaceLandmarker
+      : () => null;
+   const log = (options && options.log) ? options.log : () => {};
 
-function render3DUV() {
-   const UV_PATH = (() => {
-      const rel = window.location.pathname.split('/').slice(0, -1).join('/');
-      return rel + '/data/face_canonical_uv.json';
-   })();
+   if (!uvPath) throw new Error('[uv-renderer] uvPath obbligatorio');
 
-   let UV_DATA = null;
+   let uvData = null;
    let loadPromise = null;
 
    function ensureLoaded() {
-      if (UV_DATA || loadPromise) return loadPromise;
-      loadPromise = fetch(UV_PATH)
-         .then(r => {
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            return r.json();
+      if (uvData) return Promise.resolve();
+      if (loadPromise) return loadPromise;
+
+      loadPromise = fetch(uvPath)
+         .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
          })
-         .then(d => {
-            UV_DATA = d;
-            if (window.Ghostati && Ghostati.log) {
-               Ghostati.log(`UV map caricata (${d.numLandmarks} landmark, ${d.numTriangles} triangoli)`, 'uv-renderer');
-            }
+         .then((data) => {
+            uvData = data;
+            log(`UV map caricata (${data.numLandmarks} landmark, ${data.numTriangles} triangoli)`);
          })
-         .catch(err => {
+         .catch((err) => {
             console.error('[uv-renderer] errore caricamento UV:', err);
-            if (window.Ghostati && Ghostati.log) {
-               Ghostati.log('Errore caricamento UV map: ' + err.message, 'uv-renderer');
-            }
+            log('Errore caricamento UV map: ' + err.message);
             loadPromise = null;
          });
+
       return loadPromise;
    }
 
@@ -181,9 +157,9 @@ function render3DUV() {
    // sbagliato). Le regioni interne vengono passate dopo quelle esterne, così
    // sovrascrivono nel buffer labels finale. Outside-of-faceOval = 0.
    function buildLabels(size) {
-      const F = window.Ghostati && window.Ghostati.FaceLandmarker;
-      if (!F || !UV_DATA) return null;
-      const uv = UV_DATA.uv;
+      const faceLandmarker = getFaceLandmarker();
+      if (!faceLandmarker || !uvData) return null;
+      const uv = uvData.uv;
 
       const tmp = document.createElement('canvas');
       tmp.width = size;
@@ -213,31 +189,28 @@ function render3DUV() {
       }
 
       // Ordine di pittura = ordine di sovrascrittura. Le interne vincono.
-      paintAndLabel(REGION_IDS.skin,    F.FACE_LANDMARKS_FACE_OVAL);
-      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_LEFT_EYEBROW);
-      paintAndLabel(REGION_IDS.eyebrow, F.FACE_LANDMARKS_RIGHT_EYEBROW);
-      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_LEFT_EYE);
-      paintAndLabel(REGION_IDS.eye,     F.FACE_LANDMARKS_RIGHT_EYE);
-      paintAndLabel(REGION_IDS.lips,    F.FACE_LANDMARKS_LIPS);
-      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_LEFT_IRIS);
-      paintAndLabel(REGION_IDS.iris,    F.FACE_LANDMARKS_RIGHT_IRIS);
+      paintAndLabel(REGION_IDS.skin,    faceLandmarker.FACE_LANDMARKS_FACE_OVAL);
+      paintAndLabel(REGION_IDS.eyebrow, faceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW);
+      paintAndLabel(REGION_IDS.eyebrow, faceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW);
+      paintAndLabel(REGION_IDS.eye,     faceLandmarker.FACE_LANDMARKS_LEFT_EYE);
+      paintAndLabel(REGION_IDS.eye,     faceLandmarker.FACE_LANDMARKS_RIGHT_EYE);
+      paintAndLabel(REGION_IDS.lips,    faceLandmarker.FACE_LANDMARKS_LIPS);
+      paintAndLabel(REGION_IDS.iris,    faceLandmarker.FACE_LANDMARKS_LEFT_IRIS);
+      paintAndLabel(REGION_IDS.iris,    faceLandmarker.FACE_LANDMARKS_RIGHT_IRIS);
 
       // Diagnostica: conta i pixel etichettati per regione.
-      if (window.Ghostati && Ghostati.log) {
-         const counts = {};
-         for (let i = 0; i < labels.length; i++) {
-            const id = labels[i];
-            counts[id] = (counts[id] || 0) + 1;
-         }
-         const tot = labels.length;
-         const pct = id => ((counts[id] || 0) / tot * 100).toFixed(1);
-         Ghostati.log(
-            `Label map ${size}×${size}: outside ${pct(0)}% · skin ${pct(REGION_IDS.skin)}% ` +
-            `· eyebrow ${pct(REGION_IDS.eyebrow)}% · eye ${pct(REGION_IDS.eye)}% ` +
-            `· lips ${pct(REGION_IDS.lips)}% · iris ${pct(REGION_IDS.iris)}%`,
-            'uv-renderer'
-         );
+      const counts = {};
+      for (let i = 0; i < labels.length; i++) {
+         const id = labels[i];
+         counts[id] = (counts[id] || 0) + 1;
       }
+      const tot = labels.length;
+      const pct = id => ((counts[id] || 0) / tot * 100).toFixed(1);
+      log(
+         `Label map ${size}×${size}: outside ${pct(0)}% · skin ${pct(REGION_IDS.skin)}% ` +
+         `· eyebrow ${pct(REGION_IDS.eyebrow)}% · eye ${pct(REGION_IDS.eye)}% ` +
+         `· lips ${pct(REGION_IDS.lips)}% · iris ${pct(REGION_IDS.iris)}%`
+      );
 
       return { labels, size };
    }
@@ -315,9 +288,7 @@ function render3DUV() {
       // costruita male o spec degenere), salta la mask invece di azzerare
       // tutta la texture. Loggiamo per diagnosi.
       if (included === 0) {
-         if (window.Ghostati && Ghostati.log) {
-            Ghostati.log(`Mask region degenere (0 px inclusi) per spec ${JSON.stringify(spec)} — skip applicazione`, 'uv-renderer');
-         }
+         log(`Mask region degenere (0 px inclusi) per spec ${JSON.stringify(spec)} - skip applicazione`);
          maskCache.set(key, null);
          return null;
       }
@@ -398,15 +369,15 @@ function render3DUV() {
 
    function render(module, ctx, landmarks, params) {
       if (!module || typeof module.paintUV !== 'function') return;
-      if (!UV_DATA) { ensureLoaded(); return; }
+      if (!uvData) { ensureLoaded(); return; }
       if (!landmarks || !ctx) return;
 
       const tex = ensureTexture(module, params || {});
       const texSize = tex.size;
       const w = ctx.canvas.width;
       const h = ctx.canvas.height;
-      const uv = UV_DATA.uv;
-      const tri = UV_DATA.triangles;
+      const uv = uvData.uv;
+      const tri = uvData.triangles;
 
       for (let i = 0; i < tri.length; i++) {
          const t = tri[i];
@@ -449,9 +420,8 @@ function render3DUV() {
       }
    }
 
-   function ensureNamespace() {
-      if (!window.Ghostati) window.Ghostati = {};
-      window.Ghostati.UvRenderer = { render, ensureLoaded };
-   }
-   ensureNamespace();
+   return {
+      ensureLoaded,
+      render
+   };
 }
