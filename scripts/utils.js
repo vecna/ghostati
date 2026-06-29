@@ -505,6 +505,62 @@ export function formatTime() {
 }
 
 /**
+ * Convert a date-like value into a compact Italian relative-time label.
+ * Used by plugin buttons to show freshness metadata ("aggiornato X fa").
+ *
+ * @param {Date|string|number|null|undefined} dateLike
+ * @returns {string} Relative time label (e.g. "ora", "17 minuti fa",
+ *   "2 mesi fa") or "n/d" when input is invalid.
+ */
+export function formatRelativeTime(dateLike) {
+   if (!dateLike) return 'n/d';
+
+   const date = dateLike instanceof Date ? dateLike : new Date(dateLike);
+   if (Number.isNaN(date.getTime())) return 'n/d';
+
+   const diffMs = Date.now() - date.getTime();
+   const inFuture = diffMs < 0;
+   const absMs = Math.abs(diffMs);
+
+   const minute = 60 * 1000;
+   const hour = 60 * minute;
+   const day = 24 * hour;
+   const month = 30 * day;
+   const year = 365 * day;
+
+   if (absMs < minute) return 'ora';
+
+   const suffix = inFuture ? 'tra' : 'fa';
+   const asLabel = (value, singular, plural) => {
+      const unit = value === 1 ? singular : plural;
+      return inFuture ? `${suffix} ${value} ${unit}` : `${value} ${unit} ${suffix}`;
+   };
+
+   if (absMs < hour) {
+      const value = Math.floor(absMs / minute);
+      return asLabel(value, 'minuto', 'minuti');
+   }
+
+   if (absMs < day) {
+      const value = Math.floor(absMs / hour);
+      return asLabel(value, 'ora', 'ore');
+   }
+
+   if (absMs < month) {
+      const value = Math.floor(absMs / day);
+      return asLabel(value, 'giorno', 'giorni');
+   }
+
+   if (absMs < year) {
+      const value = Math.floor(absMs / month);
+      return asLabel(value, 'mese', 'mesi');
+   }
+
+   const value = Math.floor(absMs / year);
+   return asLabel(value, 'anno', 'anni');
+ }
+
+/**
  * Re-render the on-screen log box from `state.logsArchive`. Has two modes:
  * expanded (full archive, oldest at top, autoscrolled to bottom — for
  * post-mortem) and collapsed (latest four lines, newest at top — for live

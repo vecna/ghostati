@@ -82,6 +82,66 @@ describe('Time utilities', () => {
       vi.useRealTimers();
     }
   });
+
+  test('formatRelativeTime returns "ora" for current time', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2026-06-29T12:00:00.000Z')).toBe('ora');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('formatRelativeTime returns minutes ago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2026-06-29T11:43:00.000Z')).toBe('17 minuti fa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('formatRelativeTime returns hours ago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2026-06-29T09:00:00.000Z')).toBe('3 ore fa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('formatRelativeTime returns days ago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2026-06-26T12:00:00.000Z')).toBe('3 giorni fa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('formatRelativeTime returns months ago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2026-04-20T12:00:00.000Z')).toBe('2 mesi fa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('formatRelativeTime returns years ago', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-06-29T12:00:00.000Z'));
+      expect(utils.formatRelativeTime('2024-06-20T12:00:00.000Z')).toBe('2 anni fa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('Geometry utilities', () => {

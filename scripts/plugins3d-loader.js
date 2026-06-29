@@ -11,6 +11,7 @@
 import { state } from './state.js';
 import { setLog } from './utils.js';
 import { createUvRenderer } from './ghostyle3d-uv-renderer.js';
+import { clearActiveEffect } from './dom.js';
 
 const runtime = {
    initialized: false,
@@ -27,6 +28,34 @@ const runtime = {
 
 function log3d(message) {
    setLog(message, 'plugins3d');
+}
+
+function asErrorLabel(err) {
+   if (err instanceof Error) return `${err.name}: ${err.message}`;
+   return String(err);
+}
+
+function deactivateBroken3dPlugin(entry, err) {
+   const pluginId = entry?.id || runtime.activePluginId;
+   if (!pluginId) return;
+
+   setLog(`Plugin ${pluginId} ha lanciato: ${asErrorLabel(err)} (paintUV)`, pluginId);
+   console.error(`[plugins3d] paintUV errore in ${entry?.name || pluginId}:`, err);
+
+   const btn = document.querySelector(`[data-effect="${pluginId}"]`);
+   if (btn) btn.classList.remove('active');
+
+   if (state.activeEffect === pluginId) {
+      const previous = pluginId;
+      clearActiveEffect();
+      runtime.activePluginId = null;
+      runtime.events.dispatchEvent(new CustomEvent('effectChanged', {
+         detail: { activeEffect: null, previous }
+      }));
+      runtime.events.dispatchEvent(new CustomEvent('effectChanged3d', {
+         detail: { active: null, previous }
+      }));
+   }
 }
 
 function requireInit() {
@@ -371,7 +400,7 @@ export function initPlugins3dLoader(options = {}) {
          runtime.renderer.render(entry.module, runtime.ctx, landmarks, runtime.paramValues.get(runtime.activePluginId) || {});
          runtime.ctx.restore();
       } catch (err) {
-         console.error(`[plugins3d] render errore in ${entry.name}:`, err);
+         deactivateBroken3dPlugin(entry, err);
       }
    });
 

@@ -48,6 +48,7 @@ export const els = {
    historyEntries: document.getElementById('historyEntries'),
    overlayModeBtn: document.getElementById('overlayModeBtn'),
    clearDbBtn: document.getElementById('clearDbBtn'),
+   reloadPluginsBtn: document.getElementById('reloadPluginsBtn'),
    ghostylesContainer: document.getElementById('ghostylesContainer'),
    // Fallback toggle: kept for builds without auto-mirroring. Normally the
    // mirror state is driven by camera facingMode (see camera.js).

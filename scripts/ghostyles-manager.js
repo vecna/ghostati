@@ -1,6 +1,6 @@
 /** @module ghostyles-manager */
 import { state } from './state.js';
-import { setLog } from './utils.js';
+import { setLog, formatRelativeTime } from './utils.js';
 import { els, clearActiveEffect, effectSelected } from './dom.js';
 
 /**
@@ -26,21 +26,33 @@ import { els, clearActiveEffect, effectSelected } from './dom.js';
  * }} Metadata for the ghostyle.
  */
 export async function fetchGhostyleMetadata(url) {
-   const res = await fetch(url);
+   const res = await fetch(url, { cache: 'no-store' });
    if (!res.ok) throw new Error(`HTTP ${res.status}`);
    const text = await res.text();
    const matchName = text.match(/@name\s+(.+)/);
-    const matchVersion = text.match(/@version\s+([^\n\r*]+)/i);
-    const matchAuthor = text.match(/@author\s+([^\n\r*]+)/i);
-    const matchDescription = text.match(/@description\s+([^\n\r*]+)/i);
+   const matchVersion = text.match(/@version\s+([^\n\r*]+)/i);
+   const matchAuthor = text.match(/@author\s+([^\n\r*]+)/i);
+   const matchDescription = text.match(/@description\s+([^\n\r*]+)/i);
    const matchReleaseDate = text.match(/@release_date\s+([^\n\r*]+)/i);
-   const id = url.split('/').pop().replace('.js', '');
+   const filename = (url.split('/').pop() || '').split('?')[0];
+   const id = filename.replace(/\.js$/i, '');
    const name = matchName ? matchName[1].trim() : id;
-    const version = matchVersion ? matchVersion[1].trim() : null;
-    const author = matchAuthor ? matchAuthor[1].trim() : null;
-    const description = matchDescription ? matchDescription[1].trim() : null;
+   const version = matchVersion ? matchVersion[1].trim() : null;
+   const author = matchAuthor ? matchAuthor[1].trim() : null;
+   const description = matchDescription ? matchDescription[1].trim() : null;
    const releaseDate = matchReleaseDate ? matchReleaseDate[1].trim() : null;
-    return { id, name, url, version, author, description, releaseDate };
+   return {
+      id,
+      name,
+      url,
+      version,
+      author,
+      description,
+      releaseDate,
+      hasName: Boolean(matchName),
+      hasVersion: Boolean(matchVersion),
+      hasReleaseDate: Boolean(matchReleaseDate)
+   };
 }
 
 /**
@@ -78,14 +90,37 @@ export async function loadGhostyle(url, expectedName, options = {}) {
       throw new Error(`Errore metadata plugin (${expectedName || url}): ${err.message}`);
    }
 
-   const displayName = expectedName || metadata.name;
-
    let ghostyle = null;
    try {
       ghostyle = await importGhostyleModule(metadata);
    } catch (err) {
       throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
    }
+
+   if (!metadata.hasName) {
+      setLog(`Plugin ${metadata.id} senza @name nell'header, uso fallback ${metadata.id}`, 'loader');
+      ghostyle.name = metadata.id;
+   } else {
+      ghostyle.name = metadata.name;
+   }
+
+   if (!metadata.hasVersion) {
+      setLog(`Plugin ${metadata.id} senza @version`, 'loader');
+   }
+
+   if (!hasRenderableCallback(ghostyle.module)) {
+      setLog(`Plugin ${metadata.id} non esporta ne onDraw ne paintUV, ignorato`, 'loader');
+      return null;
+   }
+
+   if (metadata.hasReleaseDate && !isValidDate(metadata.releaseDate)) {
+      setLog(`Plugin ${metadata.id} ha @release_date non valida (${metadata.releaseDate}), ignorata`, 'loader');
+      ghostyle.releaseDate = null;
+   }
+
+   ghostyle.freshnessLabel = await resolveFreshnessLabel(ghostyle);
+
+   ghostyle.module = wrapPluginCallbacks(ghostyle);
 
    if (ghostyle.module.onInit) {
       try {
@@ -94,7 +129,7 @@ export async function loadGhostyle(url, expectedName, options = {}) {
             setLog(`${ghostyle.name}: ${message}`);
          }
       } catch (err) {
-         throw new Error(`Errore durante l'inizializzazione del modulo: ${err.message}`);
+         reportPluginRuntimeError(ghostyle.id, err, 'onInit');
       }
    }
 
@@ -105,36 +140,110 @@ export async function loadGhostyle(url, expectedName, options = {}) {
          options.onFaceapiToggle();
       }
    };
-   setLog(`Caricato con successo ghostyle ${displayName} da ${url}`);
+   setLog(`Caricato con successo ghostyle ${ghostyle.name} da ${url}`);
    return ghostyle;
 }
 
-function formatRelativeReleaseDate(releaseDate) {
-   if (!releaseDate) return null;
+function hasRenderableCallback(module) {
+   const onDraw = module && 'onDraw' in module ? module.onDraw : undefined;
+   const paintUV = module && 'paintUV' in module ? module.paintUV : undefined;
+   return Boolean(
+      module &&
+      (typeof onDraw === 'function' || typeof paintUV === 'function')
+   );
+}
 
-   const parsed = new Date(releaseDate);
-   if (Number.isNaN(parsed.getTime())) return null;
+function isValidDate(dateLike) {
+   if (!dateLike) return false;
+   const parsed = new Date(dateLike);
+   return !Number.isNaN(parsed.getTime());
+}
 
-   const now = Date.now();
-   const diffMs = parsed.getTime() - now;
+function asErrorLabel(err) {
+   if (err instanceof Error) return `${err.name}: ${err.message}`;
+   return String(err);
+}
 
-   const units = [
-      { unit: 'year', ms: 1000 * 60 * 60 * 24 * 365 },
-      { unit: 'month', ms: 1000 * 60 * 60 * 24 * 30 },
-      { unit: 'week', ms: 1000 * 60 * 60 * 24 * 7 },
-      { unit: 'day', ms: 1000 * 60 * 60 * 24 },
-      { unit: 'hour', ms: 1000 * 60 * 60 },
-      { unit: 'minute', ms: 1000 * 60 }
-   ];
+function reportPluginRuntimeError(pluginId, err, hookName) {
+   const message = asErrorLabel(err);
+   setLog(`Plugin ${pluginId} ha lanciato: ${message} (${hookName})`, pluginId);
+   console.error(`[plugin:${pluginId}] errore in ${hookName}:`, err);
+   deactivatePluginOnError(pluginId);
+}
 
-   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-   for (const { unit, ms } of units) {
-      if (Math.abs(diffMs) >= ms) {
-         return rtf.format(Math.round(diffMs / ms), unit);
-      }
+function deactivatePluginOnError(pluginId) {
+   const btn = document.querySelector(`.preview-btn[data-effect="${pluginId}"]`);
+   if (btn) btn.classList.remove('active');
+
+   if (state.activeEffect === pluginId) {
+      clearActiveEffect();
+      messageEffectChange(null, pluginId);
+   }
+}
+
+function wrapPluginCallbacks(ghostyle) {
+   const module = ghostyle.module || {};
+   const wrappedModule = { ...module };
+
+   const originalOnClear = 'onClear' in module ? module.onClear : undefined;
+   const originalOnDraw = 'onDraw' in module ? module.onDraw : undefined;
+   const originalPaintUV = 'paintUV' in module ? module.paintUV : undefined;
+
+   if (typeof originalOnClear === 'function') {
+      wrappedModule.onClear = (ctx) => {
+         try {
+            return originalOnClear(ctx);
+         } catch (err) {
+            reportPluginRuntimeError(ghostyle.id, err, 'onClear');
+            return undefined;
+         }
+      };
    }
 
-   return 'just now';
+   if (typeof originalOnDraw === 'function') {
+      wrappedModule.onDraw = (ctx, landmarks, box) => {
+         try {
+            return originalOnDraw(ctx, landmarks, box);
+         } catch (err) {
+            reportPluginRuntimeError(ghostyle.id, err, 'onDraw');
+            return undefined;
+         }
+      };
+   }
+
+   if (typeof originalPaintUV === 'function') {
+      wrappedModule.paintUV = (ctx, params, helpers) => {
+         try {
+            return originalPaintUV(ctx, params, helpers);
+         } catch (err) {
+            reportPluginRuntimeError(ghostyle.id, err, 'paintUV');
+            return undefined;
+         }
+      };
+   }
+
+   return wrappedModule;
+}
+
+async function getLastModifiedLabel(url) {
+   try {
+      const headRes = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      if (!headRes.ok) return null;
+      const lastModified = headRes.headers.get('Last-Modified');
+      if (!isValidDate(lastModified)) return null;
+      return formatRelativeTime(lastModified);
+   } catch {
+      return null;
+   }
+}
+
+async function resolveFreshnessLabel(record) {
+   if (record.releaseDate && isValidDate(record.releaseDate)) {
+      return formatRelativeTime(record.releaseDate);
+   }
+
+   const fromHead = await getLastModifiedLabel(record.url);
+   return fromHead || 'n/d';
 }
 
 function addGhostyleBtn(record) {
@@ -149,14 +258,11 @@ function addGhostyleBtn(record) {
    title.textContent = record.name;
    btn.appendChild(title);
 
-   const relTime = formatRelativeReleaseDate(record.releaseDate);
-   if (relTime) {
-      const meta = document.createElement('span');
-      meta.className = 'preview-btn__meta';
-      meta.textContent = relTime;
-      meta.title = record.releaseDate;
-      btn.appendChild(meta);
-   }
+   const meta = document.createElement('span');
+   meta.className = 'preview-btn__meta';
+   meta.textContent = `aggiornato ${record.freshnessLabel || 'n/d'}`;
+   if (record.releaseDate) meta.title = record.releaseDate;
+   btn.appendChild(meta);
 
    btn.dataset.effect = record.id;
    els.ghostylesContainer.appendChild(btn);
@@ -178,7 +284,11 @@ function deactivateEffect() {
 
    const style = state.loadedGhostyles.get(state.activeEffect);
    if (style && style.module.onClear) {
-      style.module.onClear(els.overlay.getContext('2d'));
+      try {
+         style.module.onClear(els.overlay.getContext('2d'));
+      } catch (err) {
+         reportPluginRuntimeError(style.id || state.activeEffect, err, 'onClear');
+      }
    }
 
    return style;
@@ -238,4 +348,48 @@ export function toggleEffect(effect, button) {
 
    effectSelected(button);
 
+}
+
+function withCacheBust(url, token) {
+   const sep = url.includes('?') ? '&' : '?';
+   return `${url}${sep}t=${token}`;
+}
+
+/**
+ * Reload all plugins from the unified manifest with cache busting.
+ * The currently active plugin is deactivated and must be reselected.
+ *
+ * @param {{manifestUrl?: string, baseUrl?: string, onFaceapiToggle?: Function}} [options]
+ * @returns {Promise<number>} Number of plugins loaded.
+ */
+export async function reloadPlugins(options = {}) {
+   const relurl = options.baseUrl || window.location.pathname.split('/').slice(0, -1).join('/');
+   const manifestUrl = options.manifestUrl || `${relurl}/ghostyles.json`;
+   const bust = Date.now();
+
+   if (state.activeEffect) {
+      const previous = state.activeEffect;
+      deactivateEffect();
+      clearActiveEffect();
+      messageEffectChange(null, previous);
+   }
+
+   state.loadedGhostyles = new Map();
+   if (els.ghostylesContainer) els.ghostylesContainer.innerHTML = '';
+
+   const manifestRes = await fetch(withCacheBust(manifestUrl, bust), { cache: 'no-store' });
+   if (!manifestRes.ok) throw new Error(`HTTP ${manifestRes.status}`);
+
+   const list = await manifestRes.json();
+   let loaded = 0;
+
+   for (const item of list) {
+      const pluginUrl = withCacheBust(`${relurl}/${item.url}`, bust);
+      const loadedPlugin = await loadGhostyle(pluginUrl, item.id || item.name, {
+         onFaceapiToggle: options.onFaceapiToggle
+      });
+      if (loadedPlugin) loaded += 1;
+   }
+
+   return loaded;
 }

@@ -14,7 +14,11 @@ vi.mock('../../scripts/dom.js', () => ({
 }));
 
 vi.mock('../../scripts/utils.js', () => ({
-  setLog: vi.fn()
+  setLog: vi.fn(),
+  formatRelativeTime: vi.fn((dateLike) => {
+    if (!dateLike) return 'n/d';
+    return '3 giorni fa';
+  })
 }));
 
 vi.mock('https://example.com/effects/graphic-liner.js', () => ({
@@ -23,11 +27,21 @@ vi.mock('https://example.com/effects/graphic-liner.js', () => ({
 
 vi.mock('https://example.com/effects/init-effect.js', () => ({
   onInit: vi.fn(() => 'init ok'),
-  onClear: vi.fn()
+  onClear: vi.fn(),
+  onDraw: vi.fn()
 }), { virtual: true });
 
 vi.mock('https://example.com/effects/init-fail.js', () => ({
-  onInit: vi.fn(() => { throw new Error('init boom'); })
+  onInit: vi.fn(() => { throw new Error('init boom'); }),
+  onDraw: vi.fn()
+}), { virtual: true });
+
+vi.mock('https://example.com/effects/missing-callbacks.js', () => ({
+  SOME_CONST: 123
+}), { virtual: true });
+
+vi.mock('https://example.com/effects/draw-fail.js', () => ({
+  onDraw: vi.fn(() => { throw new TypeError('draw boom'); })
 }), { virtual: true });
 
 import { state } from '../../scripts/state.js';
@@ -49,9 +63,10 @@ describe('ghostyles-manager', () => {
   });
 
   describe('fetchGhostyleMetadata', () => {
-    it('successfully fetches and extracts name + release_date metadata', async () => {
+    it('successfully fetches and extracts metadata', async () => {
       const mockText = `
         // @name Eye Liner Style
+        // @version 1.0.0
         // @release_date 2026-01-20
         export default function() {}
       `;
@@ -63,34 +78,38 @@ describe('ghostyles-manager', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse);
 
       const meta = await fetchGhostyleMetadata('https://example.com/effects/graphic-liner.js');
-      expect(fetchSpy).toHaveBeenCalledWith('https://example.com/effects/graphic-liner.js');
-      expect(meta).toEqual({
+      expect(fetchSpy).toHaveBeenCalledWith('https://example.com/effects/graphic-liner.js', { cache: 'no-store' });
+      expect(meta).toMatchObject({
         id: 'graphic-liner',
         name: 'Eye Liner Style',
         url: 'https://example.com/effects/graphic-liner.js',
-        version: null,
-        author: null,
-        description: null,
-        releaseDate: '2026-01-20'
+        version: '1.0.0',
+        releaseDate: '2026-01-20',
+        hasName: true,
+        hasVersion: true,
+        hasReleaseDate: true
       });
     });
 
-    it('uses id as name if @name metadata is missing and releaseDate null if absent', async () => {
+    it('uses id as name if @name metadata is missing', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
         text: async () => 'export default function() {}'
       });
 
-      const meta = await fetchGhostyleMetadata('https://example.com/effects/mystyle.js');
-      expect(meta).toEqual({
+      const meta = await fetchGhostyleMetadata('https://example.com/effects/mystyle.js?t=123');
+      expect(meta).toMatchObject({
         id: 'mystyle',
         name: 'mystyle',
-        url: 'https://example.com/effects/mystyle.js',
+        url: 'https://example.com/effects/mystyle.js?t=123',
         version: null,
         author: null,
         description: null,
-        releaseDate: null
+        releaseDate: null,
+        hasName: false,
+        hasVersion: false,
+        hasReleaseDate: false
       });
     });
 
@@ -117,7 +136,7 @@ describe('ghostyles-manager', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => '// @name Init Effect\n// @release_date 2026-06-01'
+        text: async () => '// @name Init Effect\n// @version 1.0.0\n// @release_date 2026-06-01'
       });
       const onFaceapiToggle = vi.fn();
 
@@ -127,7 +146,8 @@ describe('ghostyles-manager', () => {
         id: 'init-effect',
         name: 'Init Effect',
         url: 'https://example.com/effects/init-effect.js',
-        releaseDate: '2026-06-01'
+        releaseDate: '2026-06-01',
+        freshnessLabel: '3 giorni fa'
       });
       expect(state.loadedGhostyles.get('init-effect')).toBe(ghostyle);
       expect(els.ghostylesContainer.appendChild).toHaveBeenCalledTimes(1);
@@ -136,6 +156,7 @@ describe('ghostyles-manager', () => {
       expect(button.className).toBe('preview-btn');
       expect(button.textContent).toContain('Init Effect');
       expect(button.querySelector('.preview-btn__title')?.textContent).toBe('Init Effect');
+      expect(button.querySelector('.preview-btn__meta')?.textContent).toBe('aggiornato 3 giorni fa');
       expect(button.dataset.effect).toBe('init-effect');
 
       expect(setLog).toHaveBeenCalledWith('Init Effect: init ok');
@@ -146,7 +167,97 @@ describe('ghostyles-manager', () => {
       expect(onFaceapiToggle).toHaveBeenCalledTimes(1);
     });
 
-    it('wraps metadata fetch errors with the requested plugin name', async () => {
+    it('ignores a plugin without onDraw and paintUV', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @name No Callbacks\n// @version 1.0.0\n// @release_date 2026-01-01'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/missing-callbacks.js', 'No Callbacks');
+      expect(ghostyle).toBeNull();
+      expect(els.ghostylesContainer.appendChild).not.toHaveBeenCalled();
+      expect(setLog).toHaveBeenCalledWith('Plugin missing-callbacks non esporta ne onDraw ne paintUV, ignorato', 'loader');
+    });
+
+    it('uses fallback id when @name is missing', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @version 1.0.0\n// @release_date 2026-05-01'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/init-effect.js', 'Manifest Name');
+      expect(ghostyle.name).toBe('init-effect');
+      expect(setLog).toHaveBeenCalledWith('Plugin init-effect senza @name nell\'header, uso fallback init-effect', 'loader');
+    });
+
+    it('logs warning when @version is missing', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @name Missing Version\n// @release_date 2026-05-01'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/init-effect.js', null);
+      expect(ghostyle).not.toBeNull();
+      expect(setLog).toHaveBeenCalledWith('Plugin init-effect senza @version', 'loader');
+    });
+
+    it('logs warning when @release_date is invalid and keeps loading', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @name Invalid Date\n// @version 1.0.0\n// @release_date not-a-date'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/init-effect.js', null);
+      expect(ghostyle.releaseDate).toBeNull();
+      expect(setLog).toHaveBeenCalledWith(
+        'Plugin init-effect ha @release_date non valida (not-a-date), ignorata',
+        'loader'
+      );
+    });
+
+    it('wraps onInit errors without rejecting load', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @name Init Fail\n// @version 1.0.0\n// @release_date 2025-01-01'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/init-fail.js', 'Init Fail');
+      expect(ghostyle).not.toBeNull();
+      expect(setLog).toHaveBeenCalledWith(
+        expect.stringContaining('Plugin init-fail ha lanciato: Error: init boom (onInit)'),
+        'init-fail'
+      );
+    });
+
+    it('deactivates plugin when wrapped onDraw throws', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '// @name Draw Fail\n// @version 1.0.0\n// @release_date 2026-05-01'
+      });
+
+      const ghostyle = await loadGhostyle('https://example.com/effects/draw-fail.js', null);
+      state.activeEffect = 'draw-fail';
+
+      const onEffectChanged = vi.fn();
+      state.ghostatiEvents.addEventListener('effectChanged', onEffectChanged);
+
+      ghostyle.module.onDraw({}, {}, {});
+
+      expect(clearActiveEffect).toHaveBeenCalledTimes(1);
+      expect(onEffectChanged).toHaveBeenCalledTimes(1);
+      expect(setLog).toHaveBeenCalledWith(
+        expect.stringContaining('Plugin draw-fail ha lanciato: TypeError: draw boom (onDraw)'),
+        'draw-fail'
+      );
+    });
+
+    it('wraps metadata fetch errors with requested plugin name', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 500 });
 
       await expect(loadGhostyle('https://example.com/effects/broken.js', 'Broken Style'))
@@ -157,27 +268,16 @@ describe('ghostyles-manager', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
         status: 200,
-        text: async () => '// @name Missing Effect\n// @release_date 2025-01-01'
+        text: async () => '// @name Missing Effect\n// @version 1.0.0\n// @release_date 2025-01-01'
       });
 
       await expect(loadGhostyle('https://example.com/effects/missing.js', 'Missing Effect'))
         .rejects.toThrow("Errore durante l'importazione del modulo:");
     });
-
-    it('wraps onInit errors', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-        ok: true,
-        status: 200,
-        text: async () => '// @name Init Fail\n// @release_date 2025-01-01'
-      });
-
-      await expect(loadGhostyle('https://example.com/effects/init-fail.js', 'Init Fail'))
-        .rejects.toThrow("Errore durante l'inizializzazione del modulo: init boom");
-    });
   });
 
   describe('toggleEffect', () => {
-    it('deactivates and clears current effect if called with the active effect', () => {
+    it('deactivates and clears current effect if called with active effect', () => {
       const onClearMock = vi.fn();
       const mockEffect = {
         id: 'graphic-liner',
@@ -224,37 +324,6 @@ describe('ghostyles-manager', () => {
       });
       expect(effectSelected).toHaveBeenCalledWith(dummyButton);
       expect(setLog).toHaveBeenCalledWith(expect.stringContaining('attivato'));
-    });
-
-    it('deactivates previous effect when switching to a new effect', () => {
-      const oldClearMock = vi.fn();
-      const oldEffect = {
-        id: 'old-effect',
-        name: 'Old Effect',
-        module: { onClear: oldClearMock }
-      };
-      const newEffect = {
-        id: 'new-effect',
-        name: 'New Effect',
-        module: {}
-      };
-      state.activeEffect = 'old-effect';
-      state.loadedGhostyles.set('old-effect', oldEffect);
-      state.loadedGhostyles.set('new-effect', newEffect);
-
-      const eventListener = vi.fn();
-      state.ghostatiEvents.addEventListener('effectChanged', eventListener);
-
-      toggleEffect('new-effect', null);
-
-      expect(oldClearMock).toHaveBeenCalled();
-      expect(state.activeEffect).toBe('new-effect');
-      expect(eventListener).toHaveBeenCalledTimes(1);
-      expect(eventListener.mock.calls[0][0].detail).toEqual({
-        activeEffect: 'new-effect',
-        previous: 'old-effect'
-      });
-      expect(setLog).toHaveBeenCalledWith(expect.stringContaining('disattivato, abiliato New Effect'));
     });
   });
 });

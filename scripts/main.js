@@ -7,7 +7,7 @@ import { loadMobileNet, saveFace3d, compositeAndDetect3d } from './engine-3d.js'
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay } from './dom.js';
-import { loadGhostyle } from './ghostyles-manager.js';
+import { loadGhostyle, reloadPlugins } from './ghostyles-manager.js';
 import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEffect3d, toggleEffect3d, reloadPlugins3d } from './plugins3d-loader.js';
 import { exportMakeup } from './export-makeup.js';
 import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY, OVERLAY_MODES } from './bbox-overlay.js';
@@ -25,6 +25,11 @@ function readInitialOverlayMode() {
    } catch {
       return 'bbox';
    }
+}
+
+function isLocalPluginDevHost() {
+   const host = window.location.hostname;
+   return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
 }
 
 // Mirror toggle logic (fallback, hidden in UI)
@@ -92,6 +97,9 @@ window.Ghostati = {
       deactivateEffect3d: () => deactivateEffect3d(),
       toggleEffect3d: (id) => toggleEffect3d(id),
       reloadPlugins3d: () => reloadPlugins3d(),
+      reloadPlugins: async () => reloadPlugins({
+         onFaceapiToggle: () => startEffectLoop(state, els)
+      }),
    get lastLandmarks3d() { return state.lastLandmarks3d; },
    set lastLandmarks3d(v) { state.lastLandmarks3d = v; },
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
@@ -110,7 +118,7 @@ window.Ghostati = {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.copyMakeupBtn, els.saveBtn, els.analyzeBtn, els.overlayModeBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+   [els.copyMakeupBtn, els.saveBtn, els.analyzeBtn, els.overlayModeBtn, els.clearDbBtn, els.recordBtn, els.reloadPluginsBtn].forEach(btn => {
       if (btn) {
          if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
          else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
@@ -441,6 +449,26 @@ async function init() {
    if (els.closeSettingsBtn && els.historyDrawer) {
       els.closeSettingsBtn.addEventListener('click', closeHistoryDrawer);
    }
+
+   if (els.reloadPluginsBtn) {
+      if (isLocalPluginDevHost()) {
+         els.reloadPluginsBtn.style.display = '';
+         els.reloadPluginsBtn.addEventListener('click', async () => {
+            setLog('Ricarica plugin in corso...', 'loader');
+            try {
+               const loaded = await reloadPlugins({
+                  onFaceapiToggle: () => startEffectLoop(state, els)
+               });
+               setLog(`Reload completato: ${loaded} plugin caricati.`, 'loader');
+            } catch (err) {
+               setLog(`Errore durante reload plugins: ${err.message || err}`, 'loader');
+            }
+         });
+      } else {
+         els.reloadPluginsBtn.style.display = 'none';
+      }
+   }
+
    state.ghostatiEvents.addEventListener('dbChanged', renderHistoryEntries);
 
    const initialOverlayMode = readInitialOverlayMode();

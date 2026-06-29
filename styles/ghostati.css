@@ -664,24 +664,21 @@ body {
   position: relative;
   min-height: 52px;
   padding-right: 14px;
-  padding-bottom: 20px;
+  padding-bottom: 12px;
 }
 
 .preview-btn__title {
   display: block;
-  padding-right: 86px;
   line-height: 1.2;
 }
 
 .preview-btn__meta {
-  position: absolute;
-  right: 12px;
-  bottom: 8px;
+  display: block;
+  margin-top: 4px;
   font-size: 11px;
   line-height: 1;
   color: var(--muted);
   opacity: 0.92;
-  pointer-events: none;
 }
 
 .preview-btn.active {

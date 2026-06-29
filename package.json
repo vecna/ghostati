@@ -6,7 +6,8 @@
   "scripts": {
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "docs": "jsdoc -c jsdoc.clean.json"
+    "docs": "jsdoc -c jsdoc.clean.json",
+    "validate-plugin": "node scripts-dev/validate-plugin.js"
   },
   "keywords": [],
   "author": "",

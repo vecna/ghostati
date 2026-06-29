@@ -59,6 +59,7 @@ document.body.innerHTML = `
   <button id="overlayModeBtn">Vista: bbox</button>
   <span id="dbCountBadge"></span>
   <button id="clearDbBtn"></button>
+  <button id="reloadPluginsBtn" style="display:none"></button>
   <button id="switchCameraBtn"></button>
   <div id="logBox"></div>
   <div id="dbCount"></div>

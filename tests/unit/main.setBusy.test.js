@@ -73,7 +73,8 @@ vi.mock('../../scripts/config.js', () => ({
 }));
 
 vi.mock('../../scripts/ghostyles-manager.js', () => ({
-  loadGhostyle: vi.fn(async () => {})
+  loadGhostyle: vi.fn(async () => {}),
+  reloadPlugins: vi.fn(async () => 0)
 }));
 
 vi.mock('../../scripts/plugins3d-loader.js', () => ({
