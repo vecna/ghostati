@@ -27,8 +27,6 @@ export const MODEL_URLS = {
    expressions: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_expression'
 };
 
-export const ZONE_DELTA_STABLE = 0.015;
-export const ZONE_DELTA_MEDIUM = 0.040;
 export const ANALYZE_PANEL_MAX_WIDTH_DESKTOP = 900;
 
 /**

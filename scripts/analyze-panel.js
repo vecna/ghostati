@@ -5,13 +5,11 @@ import { setLog } from './utils.js';
 import { stopEffectLoop, startEffectLoop } from './camera.js';
 import { runEffectPass, hasActivePlugin } from './engine.js';
 import { getFaceEmbedding, cosineSimilarity } from './engine-3d.js';
+import { captureThumbnail, getThumbnail } from './face-thumbnails.js';
 import { ANALYZE_PANEL_MAX_WIDTH_DESKTOP, DETECTOR_OPTIONS } from './config.js';
 import {
-   ZONE_GROUPS,
    seekFaceInDb,
    decideMatchState,
-   computeZoneDeltas,
-   classifyZoneDelta,
    distanceToDiversity,
 } from './landmark-analysis.js';
 
@@ -22,14 +20,7 @@ const EXPLAINERS = {
    confidence: 'Quanto il rilevatore e sicuro di vedere un volto nello snapshot. Sotto 50% spesso non viene rilevato nulla.',
    distanceClosest: 'Quanto il tuo volto attuale e diverso dal volto base salvato con questo ID. Piu la percentuale e alta, meno il sistema riesce a riconoscerti.',
    threshold: 'Sopra questa percentuale di diversita il sistema non ti riconosce piu. Sotto, si.',
-   zones: 'Per ogni parte del volto, di quanto e diversa rispetto al volto base salvato (allineato per compensare posa e dimensione della testa). Le zone rosse sono dove il tuo trucco sta lavorando di piu.',
    embedder: 'Il motore 3D usa una scala diversa (cosine similarity, 0-1, piu alto = piu simile).',
-};
-
-const ZONE_COLORS = {
-   stable: 'rgba(61, 220, 151, 0.75)',
-   medium: 'rgba(255, 200, 100, 0.75)',
-   shifted: 'rgba(255, 122, 122, 0.85)',
 };
 
 let modalEls = null;
@@ -70,77 +61,20 @@ function pct(score) {
    return `${Math.round(score * 100)}%`;
 }
 
-function fixed3(v) {
-   if (!Number.isFinite(v)) return '-';
-   return v.toFixed(3);
-}
-
 function clearCanvas() {
    const ui = ensureModalEls();
+   if (!ui.canvas) return;
    const ctx = ui.canvas.getContext('2d');
    ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
 }
 
 function drawSnapshotToPanelCanvas(snapshotCanvas) {
    const ui = ensureModalEls();
+   if (!ui.canvas) return;
    ui.canvas.width = snapshotCanvas.width;
    ui.canvas.height = snapshotCanvas.height;
    const ctx = ui.canvas.getContext('2d');
    ctx.drawImage(snapshotCanvas, 0, 0, ui.canvas.width, ui.canvas.height);
-}
-
-function groupPointIndices(name) {
-   const spec = ZONE_GROUPS[name];
-   const out = [];
-   for (let i = spec.start; i <= spec.end; i += 1) out.push(i);
-   return out;
-}
-
-function drawLandmarksOverlay(landmarks, zoneStates = null) {
-   const ui = ensureModalEls();
-   if (!landmarks || !landmarks.positions || landmarks.positions.length < 68) return;
-   const ctx = ui.canvas.getContext('2d');
-
-   for (const groupName of Object.keys(ZONE_GROUPS)) {
-      const points = groupPointIndices(groupName).map((i) => landmarks.positions[i]);
-      const klass = zoneStates?.[groupName]?.classification || 'stable';
-      const color = zoneStates ? (ZONE_COLORS[klass] || ZONE_COLORS.stable) : 'rgba(200, 220, 255, 0.75)';
-
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i += 1) {
-         ctx.lineTo(points[i].x, points[i].y);
-      }
-      if (groupName === 'leftEye' || groupName === 'rightEye' || groupName === 'mouth') {
-         ctx.closePath();
-      }
-      ctx.stroke();
-
-      for (const p of points) {
-         ctx.beginPath();
-         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-         ctx.fill();
-      }
-   }
-}
-
-function buildZones(zoneDeltas) {
-   if (!zoneDeltas) return null;
-   const out = {};
-   for (const groupName of Object.keys(ZONE_GROUPS)) {
-      const delta = zoneDeltas[groupName] || 0;
-      const classification = classifyZoneDelta(delta);
-      out[groupName] = {
-         delta,
-         classification,
-         color: ZONE_COLORS[classification],
-         label: ZONE_GROUPS[groupName].label,
-      };
-   }
-   return out;
 }
 
 function computeEmbedderStats(embedding, closestId) {
@@ -171,18 +105,6 @@ function computeEmbedderStats(embedding, closestId) {
    };
 }
 
-function computeZoneSummary(zoneStates) {
-   if (!zoneStates) return null;
-   const entries = Object.entries(zoneStates).sort((a, b) => b[1].delta - a[1].delta);
-   const top2 = entries.slice(0, 2).map(([, v]) => v.label);
-   const bottom2 = entries.slice(-2).reverse().map(([, v]) => v.label);
-   return {
-      most: top2,
-      least: bottom2,
-      sentence: `Il tuo trucco modifica di piu: ${top2.join(', ')}. Modifica di meno: ${bottom2.join(', ')}.`,
-   };
-}
-
 function snapshotFromVideo() {
    const canvas = document.createElement('canvas');
    canvas.width = els.video.videoWidth || 1280;
@@ -202,12 +124,41 @@ function panelStateFromAnalysis(analysis) {
       ...analysis,
       closestDiversity,
       thresholdDiversity,
-      zoneSummary: computeZoneSummary(analysis.zoneStates),
    };
+}
+
+function buildVisualComparisonSection(analysis) {
+   const visual = analysis.visualComparison;
+   if (!visual || !visual.currentDataUrl || typeof visual.closestId !== 'number') {
+      return '';
+   }
+
+   const leftPreview = visual.baseDataUrl
+      ? `<img class="analyze-compare-image" src="${visual.baseDataUrl}" alt="Thumbnail volto base ID ${visual.closestId}" />`
+      : '<div class="history-placeholder analyze-compare-placeholder">no preview</div>';
+
+   return `
+      <section class="analyze-section">
+         <h3>Confronto visivo</h3>
+         <div class="analyze-compare-row" aria-label="Confronto visivo base vs attuale">
+            <div class="analyze-compare-col">
+               ${leftPreview}
+               <div class="analyze-compare-label">ID ${visual.closestId}</div>
+            </div>
+            <div class="analyze-compare-arrow" aria-hidden="true">↔</div>
+            <div class="analyze-compare-col">
+               <img class="analyze-compare-image" src="${visual.currentDataUrl}" alt="Thumbnail volto attuale" />
+               <div class="analyze-compare-label">Tu ora</div>
+            </div>
+         </div>
+      </section>
+   `;
 }
 
 function renderInfo(analysis) {
    const ui = ensureModalEls();
+   if (!ui.info) return;
+
    const hasFace = !!analysis.faceResult;
 
    if (!hasFace) {
@@ -224,16 +175,6 @@ function renderInfo(analysis) {
       return;
    }
 
-   const zoneRows = analysis.zoneStates
-      ? Object.entries(analysis.zoneStates).map(([name, z]) => `
-         <div class="analyze-zone-row">
-            <span class="analyze-zone-left"><span class="analyze-dot" style="background:${z.color}"></span>${ZONE_GROUPS[name].label}</span>
-            <span class="analyze-zone-mid">${z.classification}</span>
-            <span class="analyze-zone-val">(${fixed3(z.delta)})</span>
-         </div>
-      `).join('')
-      : '<p class="analyze-empty">Salva un volto base per vedere l\'analisi delle zone.</p>';
-
    const closestLine = typeof analysis.closestId === 'number'
       ? `ID ${analysis.closestId}`
       : 'Nessun ID trovato';
@@ -245,6 +186,8 @@ function renderInfo(analysis) {
    const section3dValue = Number.isFinite(analysis.embedderClosestSimilarity)
       ? analysis.embedderClosestSimilarity
       : analysis.embedderBestSimilarity;
+
+   const visualComparisonSection = buildVisualComparisonSection(analysis);
 
    ui.info.innerHTML = `
       <section class="analyze-section">
@@ -272,17 +215,14 @@ function renderInfo(analysis) {
          <p>${EXPLAINERS.embedder}</p>
       </section>
 
-      <section class="analyze-section">
-         <h3>Analisi del trucco per zona</h3>
-         <p>${EXPLAINERS.zones}</p>
-         <div class="analyze-zones">${zoneRows}</div>
-         ${analysis.zoneSummary ? `<p class="analyze-summary">${analysis.zoneSummary.sentence}</p>` : ''}
-      </section>
+      ${visualComparisonSection}
    `;
 }
 
 function wireModalEvents() {
    const ui = ensureModalEls();
+   if (!ui.copyBtn || !ui.closeBtn || !ui.backdrop) return;
+
    ui.copyBtn.onclick = async () => {
       const text = generateReportText();
       try {
@@ -301,6 +241,8 @@ function wireModalEvents() {
 
 function showModal(snapshot) {
    const ui = ensureModalEls();
+   if (!ui.root || !ui.backdrop || !ui.panel) return;
+
    const dataUrl = snapshot.toDataURL('image/png');
    ui.backdrop.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('${dataUrl}')`;
    ui.panel.style.maxWidth = `${ANALYZE_PANEL_MAX_WIDTH_DESKTOP}px`;
@@ -329,18 +271,36 @@ async function detectOnSnapshot(snapshotCanvas) {
    }
 }
 
-function findBaseRecordById(id) {
-   return state.db?.faces?.find((f) => f.id === id) || null;
+async function buildVisualComparison(faceResult, closestId) {
+   if (!faceResult || typeof closestId !== 'number') return null;
+
+   const box = faceResult?.detection?.box;
+   if (!box) return null;
+
+   let currentDataUrl = null;
+   try {
+      currentDataUrl = await captureThumbnail(els.video, box);
+   } catch {
+      currentDataUrl = null;
+   }
+
+   if (!currentDataUrl) return null;
+
+   return {
+      closestId,
+      baseDataUrl: getThumbnail(closestId),
+      currentDataUrl,
+   };
 }
 
-function composeAnalysisData(snapshot, faceResult, embedding) {
+async function composeAnalysisData(faceResult, embedding) {
    const dbHasFaces = !!(state.db && Array.isArray(state.db.faces) && state.db.faces.length > 0);
    const dominantEmotion = faceResult ? getDominantEmotion(faceResult.expressions) : null;
 
    let closestId = null;
    let closestDistance = null;
    let matchHeadline = null;
-   let zoneStates = null;
+   let visualComparison = null;
 
    if (!faceResult) {
       if (hasActivePlugin()) {
@@ -366,25 +326,19 @@ function composeAnalysisData(snapshot, faceResult, embedding) {
          detectionTotallyFailed: false,
       }).headline;
 
-      const baseRecord = findBaseRecordById(closestId);
-      const baseLandmarks = baseRecord?.landmarks;
-      if (Array.isArray(baseLandmarks) && baseLandmarks.length === 68) {
-         const zoneDeltas = computeZoneDeltas(faceResult.landmarks.positions, baseLandmarks);
-         zoneStates = buildZones(zoneDeltas);
-      }
+      visualComparison = await buildVisualComparison(faceResult, closestId);
    }
 
    const embedderStats = computeEmbedderStats(embedding, closestId);
 
    return panelStateFromAnalysis({
-      snapshot,
       faceResult,
       dominantEmotion,
       dbHasFaces,
       closestId,
       closestDistance,
       matchHeadline,
-      zoneStates,
+      visualComparison,
       embedderBestId: embedderStats.bestId,
       embedderBestSimilarity: embedderStats.bestSimilarity,
       embedderClosestSimilarity: embedderStats.closestIdSimilarity,
@@ -407,10 +361,10 @@ export async function openAnalyzePanel() {
       getFaceEmbedding(activeSnapshot).catch(() => null),
    ]);
 
-   latestReportData = composeAnalysisData(activeSnapshot, faceResult, embedding);
+   latestReportData = await composeAnalysisData(faceResult, embedding);
 
    if (faceResult) {
-      drawLandmarksOverlay(faceResult.landmarks, latestReportData.zoneStates);
+      drawSnapshotToPanelCanvas(activeSnapshot);
    } else {
       clearCanvas();
       drawSnapshotToPanelCanvas(activeSnapshot);
@@ -442,58 +396,53 @@ export function generateReportText() {
    const data = latestReportData;
    if (!data) {
       return [
-         'Ghostati - Analisi del trucco',
-         '-----------------------------',
+         '### Ghostati - Analisi del trucco',
+         '',
          'Volto rilevato: no',
          '',
          'Riconoscimento (face-api 2D)',
+         '',
          'Nessun dato disponibile.',
       ].join('\n');
    }
 
    const lines = [];
-   lines.push('Ghostati - Analisi del trucco');
-   lines.push('-----------------------------');
+   lines.push('### Ghostati - Analisi del trucco');
+   lines.push('');
    lines.push(`Volto rilevato: ${data.faceResult ? 'si' : 'no'}`);
 
    if (data.faceResult) {
+      lines.push('');
       lines.push(`Eta stimata: ${Math.round(data.faceResult.age || 0)}`);
+      lines.push('');
       lines.push(`Genere predetto: ${data.faceResult.gender || '-'}`);
+      lines.push('');
       lines.push(`Emozione dominante: ${data.dominantEmotion || '-'}`);
+      lines.push('');
       lines.push(`Confidence detection: ${pct(data.faceResult.detection?.score)}`);
    }
 
    lines.push('');
    lines.push('Riconoscimento (face-api 2D)');
+   lines.push('');
+
    if (!data.faceResult) {
       lines.push('Nessun volto rilevato nello snapshot.');
    } else if (!data.dbHasFaces) {
-      lines.push('Salva un volto base per vedere l\'analisi delle zone.');
+      lines.push('Nessun volto base nel database.');
    } else {
       lines.push(`Match con ID: ${data.closestId ?? '-'}`);
+      lines.push('');
       lines.push(`Diversita dal volto base: ${data.closestDiversity != null ? `${data.closestDiversity}%` : '-'}`);
+      lines.push('');
       lines.push(`Soglia di riconoscimento: ${data.thresholdDiversity}%`);
+      lines.push('');
       lines.push(`Stato: ${data.matchHeadline || '-'}`);
    }
 
    lines.push('');
-   lines.push('Analisi per zona (allineata)');
-   if (!data.zoneStates) {
-      lines.push('Sezione non disponibile.');
-   } else {
-      for (const groupName of Object.keys(ZONE_GROUPS)) {
-         const row = data.zoneStates[groupName];
-         lines.push(`${ZONE_GROUPS[groupName].label}: ${row.classification} (${fixed3(row.delta)})`);
-      }
-      if (data.zoneSummary) {
-         lines.push('');
-         lines.push(`Trucco piu efficace su: ${data.zoneSummary.most.join(', ')}`);
-         lines.push(`Trucco meno efficace su: ${data.zoneSummary.least.join(', ')}`);
-      }
-   }
-
-   lines.push('');
    lines.push('Embedder 3D (MediaPipe)');
+   lines.push('');
    if (Number.isFinite(data.embedderClosestSimilarity) && typeof data.closestId === 'number') {
       lines.push(`Cosine similarity con ID ${data.closestId}: ${data.embedderClosestSimilarity.toFixed(3)}`);
    } else if (Number.isFinite(data.embedderBestSimilarity)) {
@@ -514,10 +463,16 @@ export function _renderForTests(snapshot, faceapiResult, extra = {}) {
       closestId: extra.closestId ?? null,
       closestDistance: extra.closestDistance ?? null,
       matchHeadline: extra.matchHeadline || null,
-      zoneStates: extra.zoneStates || null,
+      visualComparison: extra.visualComparison || null,
       embedderBestId: extra.embedderBestId ?? null,
       embedderBestSimilarity: extra.embedderBestSimilarity ?? null,
       embedderClosestSimilarity: extra.embedderClosestSimilarity ?? null,
    });
    return latestReportData;
+}
+
+export function _renderInfoForTests(snapshot, faceapiResult, extra = {}) {
+   const analysis = _renderForTests(snapshot, faceapiResult, extra);
+   renderInfo(analysis);
+   return ensureModalEls().info?.innerHTML || '';
 }
