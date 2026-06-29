@@ -51,7 +51,6 @@ import {
   findFace,
   saveFace,
   seekFaceInDb,
-  testMakeupEfficacy,
   triggerOverlayFadeout
 } from '../../scripts/engine.js';
 
@@ -557,50 +556,6 @@ describe('engine core exports', () => {
     expect(setLog).toHaveBeenCalledWith('[face-api] Archivio 2D vuoto: nessun confronto face-api possibile.');
   });
 
-  it('testMakeupEfficacy logs and returns when no baseline face is found', async () => {
-    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
-
-    await testMakeupEfficacy();
-
-    expect(setLog).toHaveBeenCalledWith('Nessun volto di base trovato. Avvicinati alla webcam.');
-  });
-
-  it('testMakeupEfficacy dispatches metrics and enables makeup export after compositing', async () => {
-    const compositedCtx = createCtx();
-    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const result = {
-      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    const obfuscated = { detection: { score: 0.52 }, descriptor: [0.8, 0.9] };
-    faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
-
-    const onMatch = vi.fn();
-    state.ghostatiEvents.addEventListener('matchStateChanged', onMatch);
-
-    await testMakeupEfficacy();
-
-    expect(state.lastCompositedCanvas).toBeInstanceOf(HTMLCanvasElement);
-    expect(els.copyMakeupBtn.disabled).toBe(false);
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza self pre→post: 0.120'));
-    expect(onMatch).toHaveBeenCalledTimes(1);
-    expect(onMatch.mock.calls[0][0].detail).toMatchObject({
-      detectionState: 'matched',
-      source: 'efficacy',
-      score: 0.86,
-      obfuscatedScore: 0.52,
-      liveMinDist: null,
-      obfMinDist: null,
-      weakDetection: false,
-      distance: 0.12
-    });
-
-    canvasGetContextSpy.mockRestore();
-  });
-
   it('saveFace adds record, persists DB, logs and returns saved data for the orchestrator', async () => {
     state.db = { nextId: 7, faces: [] };
 
@@ -690,7 +645,7 @@ describe('engine core exports', () => {
 
     expect(evaluated.detail).toMatchObject({
       detectionState: 'eluded',
-      distance: 0.7,
+      distance: null,
       matchedId: null,
       ghostylePresent: true,
       obfMinDist: null,
@@ -738,64 +693,65 @@ describe('engine core exports', () => {
     canvasGetContextSpy.mockRestore();
   });
 
-  it('testMakeupEfficacy logs post-makeup missing when the DB is empty and compositing finds no face', async () => {
+  it('evaluateMatch treats composited total detection failure as ghostyle elusion even if live distance matches', () => {
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.12, liveMinId: 4 },
+      { obfuscatedResult: null, weakDetection: false }
+    );
+
+    expect(evaluated.detail).toMatchObject({
+      detectionState: 'eluded',
+      distance: null,
+      matchedId: null,
+      ghostylePresent: true,
+      obfMinDist: null,
+      obfMinId: null
+    });
+  });
+
+  it('evaluateMatch treats weak composited detections as ghostyle elusion even if live distance matches', () => {
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.12, liveMinId: 4 },
+      { obfuscatedResult: null, weakDetection: true }
+    );
+
+    expect(evaluated.detail).toMatchObject({
+      detectionState: 'eluded',
+      distance: null,
+      matchedId: null,
+      ghostylePresent: true,
+      obfMinDist: null,
+      obfMinId: null
+    });
+  });
+
+  it('findFace reports eluded when plugin compositing cannot detect a face', async () => {
+    state.db.faces = [{ id: 3, descriptor: [0.1, 0.2] }];
+    window.Ghostati.getActiveEffect = vi.fn(() => 'soft-contour');
+    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
+
     const compositedCtx = createCtx();
     const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const result = {
-      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
+    const liveResult = {
+      detection: { score: 0.88, box: { x: 1, y: 2, width: 3, height: 4 } },
       landmarks: createLandmarksFixture(),
       descriptor: [0.1, 0.2]
     };
     faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(liveResult))
       .mockReturnValueOnce(makeLandmarksDescriptorChain(null))
       .mockReturnValueOnce(makeLandmarksDescriptorChain(null));
 
-    await testMakeupEfficacy();
+    const payload = await findFace();
 
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza self pre→post: post-makeup non rilevato'));
-
-    canvasGetContextSpy.mockRestore();
-  });
-
-  it('testMakeupEfficacy logs live and post-makeup distances when the DB has faces', async () => {
-    state.db.faces = [{ id: 1, descriptor: [0.5, 0.6] }];
-    const compositedCtx = createCtx();
-    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const result = {
-      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    const obfuscated = { detection: { score: 0.52 }, descriptor: [0.8, 0.9] };
-    faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
-
-    await testMakeupEfficacy();
-
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza live: 0.120; distanza post-makeup: 0.120'));
-
-    canvasGetContextSpy.mockRestore();
-  });
-
-  it('testMakeupEfficacy logs only live distance when the DB has faces but compositing finds no face', async () => {
-    state.db.faces = [{ id: 1, descriptor: [0.5, 0.6] }];
-    const compositedCtx = createCtx();
-    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const result = {
-      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(null))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(null));
-
-    await testMakeupEfficacy();
-
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza live: 0.120'));
+    expect(payload.detail).toMatchObject({
+      detectionState: 'eluded',
+      matchedId: null,
+      ghostylePresent: true,
+      obfMinDist: null,
+      obfMinId: null
+    });
+    expect(setLog).toHaveBeenCalledWith('Rilevatore ingannato dal Ghostyle! face-api non trova un volto nel disegno composito.');
 
     canvasGetContextSpy.mockRestore();
   });

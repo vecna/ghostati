@@ -30,7 +30,6 @@ vi.mock('../../scripts/engine.js', () => ({
   scanFace: vi.fn(async () => {}),
   saveFace: vi.fn(async () => {}),
   findFace: vi.fn(async () => {}),
-  testMakeupEfficacy: vi.fn(async () => {}),
   hasActivePlugin: vi.fn(() => false),
   compositeAndDetect: vi.fn(async () => null)
 }));

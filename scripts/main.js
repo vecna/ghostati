@@ -2,7 +2,7 @@
 import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, loadDb3d, renderDbStats, clearDb } from './db.js';
-import { saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
+import { saveFace, findFace, hasActivePlugin, compositeAndDetect } from './engine.js';
 import { loadMobileNet, saveFace3d, findFace3d, evaluateMatch3d, compositeAndDetect3d } from './engine-3d.js';
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
@@ -255,10 +255,6 @@ async function init() {
       els.overlayModeBtn.dataset.overlayMode = initialOverlayMode;
    }
 
-   // Hide scanBtn: scanFace is deprecated; testMakeupEfficacy is accessible via
-   // the plugin-active branch if needed in future, but the button is not shown.
-   if (els.scanBtn) els.scanBtn.style.display = 'none';
-
    window.addEventListener('resize', function () {
       resizeCanvas(els);
    });
@@ -275,21 +271,6 @@ async function init() {
    if (els.recordBtn) {
       els.recordBtn.addEventListener('click', recordOneSecond);
    }
-
-   els.scanBtn.addEventListener('click', async () => {
-      setBusy(true);
-      try {
-         if (hasActivePlugin(state)) {
-            await testMakeupEfficacy(state, els);
-            // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
-         }
-      }
-      catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
-      finally {
-         setBusy(false);
-         if (state.activeEffect) startEffectLoop(state, els);
-      }
-   });
 
    els.saveBtn.addEventListener('click', async () => {
       setBusy(true);

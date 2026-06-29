@@ -62,7 +62,7 @@
  *   `loadedGhostyles`.
  *   **Used in:** ghostyles-manager.js (toggleEffect/deactivateEffect), dom.js
  *   (clearActiveEffect/effectSelected), engine.js (runEffectPass,
- *   testMakeupEfficacy, hasActivePlugin), main.js (scan branch, `Ghostati.getActiveEffect`).
+ *   hasActivePlugin), main.js (scan branch, `Ghostati.getActiveEffect`).
  *
  * @property {boolean} effectInferenceInFlight
  *   Re-entrancy guard: `true` while an async face-api inference for the effect
@@ -142,7 +142,7 @@
  *   **Range:** no enforced bounds. Conventionally an L2 distance in ~0.4–0.6 for
  *   face-api; default `0.58`. Lower = stricter matching.
  *   **Used in:** utils.js (computeMatchState), engine.js (match classification in
- *   findFace/testMakeupEfficacy), db.js (threshold label), main.js (`Ghostati.getMatchThreshold`).
+ *   findFace), db.js (threshold label), main.js (`Ghostati.getMatchThreshold`).
  *
  * @property {number} MATCH_THRESHOLD_3D
  *   ImageEmbedder cosine-similarity threshold. A similarity `>=` this value is a match.

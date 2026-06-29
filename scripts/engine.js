@@ -15,7 +15,7 @@ import { overlayModeNeedsDetailedFaceapi, view as overlayView } from './bbox-ove
  * @returns {Promise<Object|null>} Detection result, faceapi object.
  * @see saveFace - uses detectFaceInCam before saving a face.
  * @see findFace - uses detectFaceInCam to compare against stored faces.
- * @see testMakeupEfficacy - uses detectFaceInCam as the baseline detection.
+ * @see computeCompositeMetrics - uses detectFaceInCam as the baseline detection.
  */
 export async function detectFaceInCam(drawOverlay) {
    clearOverlay();
@@ -80,7 +80,7 @@ export function triggerOverlayFadeout() {
 function decideMatchState({ liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed }) {
 
    /* there is a ghostyle running */
-   if (obfMinDist != null) {
+   if (obfMinDist != null || weakDetection || detectionTotallyFailed) {
       // console.log("ghostyle present! decideMatchState:", { liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed });
 
       if (typeof obfMinId === 'number' && obfMinDist <= state.MATCH_THRESHOLD) {
@@ -147,7 +147,7 @@ function decideMatchState({ liveMinDist, liveMinId, obfMinDist, obfMinId, weakDe
  * @param {Object} liveResult - Result from the live face detection.
  * @returns {Promise<Object>} An object with canvas, obfuscatedResult, and weakDetection.
  * @see findFace - uses this function to obtain a composite for post‑makeup comparison.
- * @see testMakeupEfficacy - uses this to evaluate makeup effect.
+ * @see computeCompositeMetrics - uses detectFaceInCam as the baseline detection.
  */
 export async function compositeAndDetect(liveResult) {
    const canvas = document.createElement('canvas');
@@ -478,70 +478,9 @@ export async function findFace() {
 }
 
 /**
- * testMakeupEfficacy
- * Goal: Evaluate makeup efficacy by comparing live and composited detections against stored faces.
- * 
- * Similar to `findFace`, the original `testMakeupEfficacy` blended UI updates,
- * state changes, and computational logic. To enable isolated testing we moved
- * all metric‑related calculations into pure helper functions (`computeEfficacyMetrics`,
- * `buildEfficacyDistLog`, and `decideEfficacyOutcome`).
- *
- * The top‑level function now:
- *   1. Acquires a baseline face detection without overlay.
- *   2. Generates a composited image (if possible) and updates UI state.
- *   3. Calls pure helpers to evaluate distances, scores, and overall outcome.
- *   4. Constructs a descriptive log string and dispatches a `matchStateChanged`
- *      event with a minimal payload.
- *
- * This separation ensures the core logic can be unit‑tested in isolation and
- * keeps side‑effects confined to clearly defined sections.
- */
-export async function testMakeupEfficacy() {
-   const result = await detectFaceInCam(false);
-   if (!result) {
-      setLog('Nessun volto di base trovato. Avvicinati alla webcam.');
-      return;
-   }
-   const { canvas, obfuscatedResult, weakDetection } = await compositeAndDetect(result);
-   state.lastCompositedCanvas = canvas;
-   els.copyMakeupBtn.disabled = false;
-
-   const liveScore = result.detection.score;
-   const { liveMinDist, obfMinDist, obfScore, weakDetection: weakDet, }
-      = computeEfficacyMetrics({ result, composite: { obfuscatedResult, weakDetection } });
-
-   const distLog = buildEfficacyDistLog({ liveMinDist, obfMinDist, dbEmpty: state.db.faces.length === 0, result, obfuscatedResult });
-   const { detectionState, headline, dist, } = decideEfficacyOutcome({
-      result,
-      liveMinDist,
-      obfMinDist,
-      weakDetection,
-      obfuscatedResult,
-      dbEmpty: state.db.faces.length === 0,
-   });
-
-   // Prepare payload for event dispatch
-   const detail = {
-      detectionState,
-      source: 'efficacy',
-      score: liveScore,
-      obfuscatedScore: obfScore,
-      liveMinDist,
-      obfMinDist,
-      weakDetection,
-   };
-   if (dist !== undefined) detail.distance = dist;
-
-   setLog(`${headline} ${distLog}.`);
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', { detail }));
-}
-
-
-/**
  * Determine whether a 2D or 3D effect plugin is currently active.
  * @returns {boolean} True if an effect plugin is active.
  * @see findFace - checks plugin status before compositing.
- * @see testMakeupEfficacy - checks plugin status.
  */
 export function hasActivePlugin() {
    const G = window.Ghostati;
@@ -607,114 +546,5 @@ function computeCompositeMetrics(composite) {
       weakDetection: !!composite.weakDetection,
       detectionTotallyFailed: false
    };
-}
-
-
-
-// ---- Efficacy helpers -------------------------------------------------
-/**
- * Compute efficacy metrics comparing live and composited detections against the DB.
- *
- * Determines the closest stored face distance for the live result and, if a
- * composited result exists, its distance and detection score.
- *
- * @param {Object} params
- * @param {Object} params.result - Live detection result.
- * @param {Object} params.composite - Composite detection result containing `obfuscatedResult` and `weakDetection`.
- * @returns {{liveMinDist:(number|null), obfMinDist:(number|null), obfScore:(number|null), weakDetection:boolean}}
- *   Metrics used by `testMakeupEfficacy`.
- * @see testMakeupEfficacy – uses this helper for outcome calculation.
- */
-function computeEfficacyMetrics({ result, composite }) {
-   const liveMinDist = state.db.faces.length
-      ? Math.min(...state.db.faces.map(e => distance(result.descriptor, e.descriptor)))
-      : null;
-   let obfScore = null,
-      obfMinDist = null;
-   if (composite.obfuscatedResult) {
-      obfScore = composite.obfuscatedResult.detection.score;
-      if (state.db.faces.length) {
-         obfMinDist = Math.min(...state.db.faces.map(e => distance(composite.obfuscatedResult.descriptor, e.descriptor)));
-      }
-   }
-   return {
-      liveMinDist,
-      obfMinDist,
-      obfScore,
-      weakDetection: composite.weakDetection
-   };
-}
-
-/**
- * Build a descriptive log for makeup efficacy testing.
- *
- * Handles cases where the database is empty, where no composited result is
- * detected, and where distances are available.
- *
- * @param {Object} params
- * @param {number|null} params.liveMinDist - Live detection distance.
- * @param {number|null} params.obfMinDist - Post‑makeup detection distance.
- * @param {boolean} params.dbEmpty - Whether the face DB has any entries.
- * @param {Object} params.result - Live detection result.
- * @param {Object} params.obfuscatedResult - Composited detection result.
- * @returns {string} Formatted distance description.
- * @see testMakeupEfficacy – incorporates this log into UI feedback.
- */
-function buildEfficacyDistLog({ liveMinDist, obfMinDist, dbEmpty, result, obfuscatedResult }) {
-   if (dbEmpty) {
-      if (obfuscatedResult) {
-         return `distanza self pre→post: ${distance(result.descriptor, obfuscatedResult.descriptor).toFixed(3)}`;
-      }
-      return 'distanza self pre→post: post-makeup non rilevato';
-   }
-   if (obfMinDist != null) {
-      return `distanza live: ${liveMinDist.toFixed(3)}; distanza post-makeup: ${obfMinDist.toFixed(3)}`;
-   }
-   return `distanza live: ${liveMinDist.toFixed(3)}`;
-}
-
-/**
- * Decide the outcome of a makeup efficacy test.
- *
- * Evaluates detection success, weak detection flags, and distance thresholds to
- * produce a human‑readable headline and a detection state.
- *
- * @param {Object} params
- * @param {Object} params.result - Live detection result.
- * @param {number|null} params.liveMinDist - Live detection distance.
- * @param {number|null} params.obfMinDist - Post‑makeup detection distance.
- * @param {boolean} params.weakDetection - Whether composited detection was weak.
- * @param {Object|null} params.obfuscatedResult - Result of composited detection.
- * @param {boolean} params.dbEmpty - Whether the DB contains any faces.
- * @returns {{detectionState:string, headline:string, dist: ?number}} Outcome description.
- * @see testMakeupEfficacy – uses this decision to dispatch events and log.
- */
-export function decideEfficacyOutcome({ result, liveMinDist, obfMinDist, weakDetection, obfuscatedResult, dbEmpty }) {
-   const threshold = state.MATCH_THRESHOLD;
-   if (!obfuscatedResult) {
-      const detectionState = dbEmpty ? 'unknown' : 'eluded';
-      const headline = dbEmpty
-         ? 'Risultato: NESSUN VOLTO INDIVIDUATO. Rilevatore ingannato! Salva un volto nel DB per testare il riconoscimento.'
-         : 'Risultato: ECCELLENTE. Il trucco ha frammentato il volto al punto da distruggere l\'algoritmo di rilevamento.';
-      return { detectionState, headline };
-   }
-   if (weakDetection) {
-      const detectionState = dbEmpty ? 'unknown' : 'eluded';
-      const headline = 'Risultato: BUONO. Detection sul composito forzata a confidenza bassa — face-api non vede chiaramente un volto.';
-      return { detectionState, headline };
-   }
-   if (dbEmpty) {
-      const dist = distance(result.descriptor, obfuscatedResult.descriptor);
-      const detectionState = dist > threshold ? 'eluded' : 'matched';
-      const headline = dist > threshold
-         ? 'Risultato: IDENTITÀ NASCOSTA. La tua impronta è irriconoscibile rispetto al volto base. Salva un volto nel DB per testare contro i salvataggi!'
-         : 'Risultato: INSUFFICIENTE. L\'identità biometrica è ancora intatta.';
-      return { detectionState, headline, dist };
-   }
-   const detectionState = obfMinDist > threshold ? 'eluded' : 'matched';
-   const headline = obfMinDist > threshold
-      ? 'Risultato: BUONO (Spoofed). Volto rilevato ma l\'identità è irriconoscibile.'
-      : 'Risultato: INSUFFICIENTE. Il sistema ti riconosce ancora in archivio. Aggiungi geometrie.';
-   return { detectionState, headline };
 }
 
