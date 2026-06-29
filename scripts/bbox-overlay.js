@@ -25,6 +25,7 @@
  */
 
 import { state } from './state.js';
+import { avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
 
 // ---------- Style constants ----------
 
@@ -37,6 +38,7 @@ export const COLORS = {
    matched: 'rgba(255, 122, 122, 0.95)',
    eluded:  'rgba(61, 220, 151, 0.95)',
    unclear: 'rgba(122, 192, 255, 0.95)',
+   'partial-elusion': 'rgba(122, 192, 255, 0.95)',
    unknown: 'rgba(170, 180, 195, 0.85)',
 };
 
@@ -59,6 +61,10 @@ export const OVERLAY_SUPPRESS_MS = 4000;
 /** Numeric `matchStateChanged.detail` fields that map 1:1 onto `view`. */
 const COPYABLE_FIELDS = ['liveMinDist', 'obfMinDist', 'liveMinId', 'obfMinId'];
 
+export const OVERLAY_MODE_STORAGE_KEY = 'ghostati-overlay-mode-v1';
+
+export const OVERLAY_MODES = ['bbox', 'mesh', 'entrambi', '2d'];
+
 // ---------- Module state ----------
 
 /** Pristine values for the rendering view; used as the reset baseline. */
@@ -68,6 +74,9 @@ const INITIAL_VIEW = Object.freeze({
    obfMinDist:  null,
    liveMinId:   null,
    obfMinId:    null,
+   overlayMode: 'bbox',
+   lastLandmarks3d: null,
+   lastDetection: null,
 });
 
 /**
@@ -105,7 +114,11 @@ export function init() {
    }
    ctx = canvas.getContext('2d');
 
+   const persistedMode = readPersistedOverlayMode();
+   if (persistedMode) view.overlayMode = persistedMode;
+
    state.ghostatiEvents.addEventListener('detection', onDetection);
+   state.ghostatiEvents.addEventListener('landmarks3d', onLandmarks3d);
    state.ghostatiEvents.addEventListener('matchStateChanged', onMatchStateChanged);
    state.ghostatiEvents.addEventListener('dbChanged', onDbChanged);
    return true;
@@ -121,23 +134,20 @@ export function init() {
  */
 export function onDetection(e) {
    const result = e.detail && e.detail.result;
-   syncSize();
-   syncMirror();
-   clearBbox();
-   // Skip drawing during the overlay suppression window: the engine's overlay
-   // is on top of the video and the bbox would visually compete with it.
-   if (performance.now() < suppressUntil) return;
-   if (!result) return;
+   view.lastDetection = result || null;
+   renderOverlay();
+}
 
-   const resized = faceapi.resizeResults(result, {
-      width: canvas.width,
-      height: canvas.height,
-   });
-   const box = extractBox(resized);
-   if (!box) return;
-
-   drawBox(box);
-   drawLabels(box, extractScore(result));
+/**
+ * Handle a `landmarks3d` event by caching the latest 478-point MediaPipe mesh
+ * and repainting according to the current overlay mode.
+ *
+ * @param {CustomEvent<{ landmarks: Array|null }>} e
+ */
+export function onLandmarks3d(e) {
+   const landmarks = e.detail && e.detail.landmarks;
+   view.lastLandmarks3d = Array.isArray(landmarks) ? landmarks : null;
+   renderOverlay();
 }
 
 /**
@@ -155,11 +165,18 @@ export function onDetection(e) {
 export function onMatchStateChanged(e) {
    const d = e.detail;
    if (!d) return;
-   if (d.detectionState) view.matchState = d.detectionState;
-   for (const k of COPYABLE_FIELDS) if (k in d) view[k] = d[k];
+   const faceapiSection = d.faceapi || null;
+   const nextMatchState = d.overall || d.detectionState || faceapiSection?.detectionState;
+   if (nextMatchState) view.matchState = nextMatchState;
+   for (const k of COPYABLE_FIELDS) {
+      if (k in d) view[k] = d[k];
+      else if (faceapiSection && k in faceapiSection) view[k] = faceapiSection[k];
+   }
    // Any non-auto source has just painted an overlay onto the video; mute the
    // bbox for OVERLAY_SUPPRESS_MS to keep the two visuals from fighting.
    if (d.source && d.source !== 'auto') suppressUntil = performance.now() + OVERLAY_SUPPRESS_MS;
+
+   renderOverlay();
 }
 
 /**
@@ -169,7 +186,34 @@ export function onMatchStateChanged(e) {
  * @param {CustomEvent<{ count: number }>} e
  */
 export function onDbChanged(e) {
-   if (e.detail?.count === 0) Object.assign(view, INITIAL_VIEW);
+   if (e.detail?.count === 0) Object.assign(view, {
+      ...INITIAL_VIEW,
+      overlayMode: view.overlayMode,
+      lastLandmarks3d: view.lastLandmarks3d,
+      lastDetection: view.lastDetection,
+   });
+}
+
+/**
+ * Change the overlay mode, persist it and repaint immediately.
+ *
+ * @param {'bbox'|'mesh'|'entrambi'|'2d'} mode
+ * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
+ */
+export function setOverlayMode(mode) {
+   if (!OVERLAY_MODES.includes(mode)) return view.overlayMode;
+   view.overlayMode = mode;
+   persistOverlayMode(mode);
+   renderOverlay();
+   return view.overlayMode;
+}
+
+/**
+ * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
+ */
+export function cycleOverlayMode() {
+   const index = OVERLAY_MODES.indexOf(view.overlayMode);
+   return setOverlayMode(OVERLAY_MODES[(index + 1) % OVERLAY_MODES.length]);
 }
 
 // ---------- Geometry / rendering helpers ----------
@@ -191,6 +235,65 @@ function syncMirror() {
 /** Clear the entire bbox canvas. */
 function clearBbox() {
    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/** Repaint the shared overlay canvas from the latest cached streams. */
+function renderOverlay() {
+   if (!canvas || !overlayEl || !ctx) return;
+   syncSize();
+   syncMirror();
+   clearBbox();
+   if (performance.now() < suppressUntil) return;
+
+   if (view.overlayMode === '2d') {
+      drawFaceapiScaffold2d();
+      return;
+   }
+
+   const box = getLastBox();
+   if (includesBbox() && box) {
+      drawBox(box);
+      drawLabels(box, extractScore(view.lastDetection));
+   }
+   if (includesMesh()) drawMesh478();
+}
+
+function includesBbox() {
+   return view.overlayMode === 'bbox' || view.overlayMode === 'entrambi';
+}
+
+function includesMesh() {
+   return view.overlayMode === 'mesh' || view.overlayMode === 'entrambi';
+}
+
+export function overlayModeNeedsDetailedFaceapi(mode = view.overlayMode) {
+   return mode === '2d';
+}
+
+function getLastBox() {
+   if (!view.lastDetection) return null;
+   const resized = faceapi.resizeResults(view.lastDetection, {
+      width: canvas.width,
+      height: canvas.height,
+   });
+   return extractBox(resized) || null;
+}
+
+function readPersistedOverlayMode() {
+   try {
+      const raw = localStorage.getItem(OVERLAY_MODE_STORAGE_KEY);
+      return OVERLAY_MODES.includes(raw) ? raw : null;
+   } catch {
+      return null;
+   }
+}
+
+function persistOverlayMode(mode) {
+   try {
+      localStorage.setItem(OVERLAY_MODE_STORAGE_KEY, mode);
+   } catch {
+      // Persistence is optional; rendering still works without storage access.
+   }
 }
 
 /**
@@ -257,6 +360,113 @@ function drawBox(box) {
    ctx.strokeStyle = currentColor();
    ctx.strokeRect(box.x, box.y, box.width, box.height);
    ctx.restore();
+}
+
+function drawMesh478() {
+   if (!Array.isArray(view.lastLandmarks3d) || view.lastLandmarks3d.length !== 478) return;
+
+   const scale = cssScale();
+   const radius = 1.5 * scale;
+   ctx.save();
+   ctx.fillStyle = currentColor();
+   for (const point of view.lastLandmarks3d) {
+      ctx.beginPath();
+      ctx.arc(point.x * canvas.width, point.y * canvas.height, radius, 0, Math.PI * 2);
+      ctx.fill();
+   }
+   ctx.restore();
+}
+
+function drawFaceapiScaffold2d() {
+   const resized = getResizedDetection();
+   const box = resized && extractBox(resized);
+   const landmarks = resized && resized.landmarks;
+
+   if (!landmarks || typeof landmarks.getLeftEye !== 'function') {
+      if (box) {
+         drawBox(box);
+         drawLabels(box, extractScore(view.lastDetection));
+      }
+      return;
+   }
+
+   const leftEye = landmarks.getLeftEye();
+   const rightEye = landmarks.getRightEye();
+   const nose = landmarks.getNose();
+   const jaw = landmarks.getJawOutline();
+   const mouth = landmarks.getMouth();
+   const scale = cssScale();
+
+   ctx.save();
+   ctx.lineWidth = 2.2 * scale;
+   ctx.strokeStyle = currentColor();
+   ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+   const leftCenter = avgPoint(leftEye);
+   const rightCenter = avgPoint(rightEye);
+   ctx.beginPath();
+   ctx.moveTo(leftCenter.x, leftCenter.y);
+   ctx.lineTo(rightCenter.x, rightCenter.y);
+   ctx.stroke();
+
+   drawClosedPath(ctx, leftEye, null, 'rgba(255, 122, 122, 0.85)', 2 * scale);
+   drawClosedPath(ctx, rightEye, null, 'rgba(255, 122, 122, 0.85)', 2 * scale);
+   drawOpenPath(ctx, jaw, 'rgba(159, 122, 234, 0.88)', 2 * scale);
+   drawOpenPath(ctx, nose, 'rgba(61, 220, 151, 0.88)', 2 * scale);
+   drawClosedPath(ctx, mouth, null, 'rgba(255, 204, 102, 0.88)', 2 * scale);
+
+   ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+   for (const point of [leftCenter, rightCenter, avgPoint(nose.slice(3)), avgPoint(mouth.slice(0, 7))]) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3.4 * scale, 0, Math.PI * 2);
+      ctx.fill();
+   }
+
+   drawFaceapiScaffoldLabels(box, resized, scale);
+   ctx.restore();
+}
+
+function drawFaceapiScaffoldLabels(box, resized, scale) {
+   const lines = ['volto rilevato'];
+   if (typeof resized.age === 'number') lines.push(`eta stimata: ${Math.round(resized.age)}`);
+   if (resized.gender) lines.push(`genere stimato: ${resized.gender}`);
+
+   const fontSize = 14 * scale;
+   const pad = 6 * scale;
+   const lineHeight = 18 * scale;
+
+   ctx.font = `${fontSize}px ${LABEL_FONT_FAMILY}`;
+   const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+   const labelWidth = maxWidth + pad * 2;
+   const labelHeight = lines.length * lineHeight + pad * 2;
+   const startX = Math.max(0, Math.min(box.x, canvas.width - labelWidth));
+   const startY = Math.max(16 * scale, box.y - labelHeight - 8 * scale);
+
+   if ((canvas.style.transform || '').includes('scaleX(-1)')) {
+      ctx.translate(startX + labelWidth / 2, startY + labelHeight / 2);
+      ctx.scale(-1, 1);
+      ctx.translate(-(startX + labelWidth / 2), -(startY + labelHeight / 2));
+   }
+
+   ctx.fillStyle = 'rgba(15, 17, 21, 0.78)';
+   ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+   ctx.lineWidth = scale;
+   roundRect(ctx, startX, startY, labelWidth, labelHeight, 8 * scale);
+   ctx.fill();
+   ctx.stroke();
+
+   ctx.fillStyle = 'rgba(238, 242, 255, 0.96)';
+   lines.forEach((line, index) => {
+      ctx.fillText(line, startX + pad, startY + pad + index * lineHeight + lineHeight * 0.15);
+   });
+}
+
+function getResizedDetection() {
+   if (!view.lastDetection) return null;
+   return faceapi.resizeResults(view.lastDetection, {
+      width: canvas.width,
+      height: canvas.height,
+   });
 }
 
 /**

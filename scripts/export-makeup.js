@@ -112,7 +112,7 @@ export async function exportMakeup() {
    }
 }
 
-function collectExportInput(appState, domEls) {
+export function collectExportInput(appState, domEls) {
    const style = appState.loadedGhostyles.get(appState.activeEffect);
 
    return {
@@ -181,7 +181,7 @@ function drawHeader(ctx, data) {
    );
 }
 
-function buildHeaderText(pluginName) {
+export function buildHeaderText(pluginName) {
    return `${EXPORT_COPY.headerPrefix} | Modulo: ${pluginName} | URL: ${EXPORT_COPY.reportUrl}`;
 }
 
@@ -214,7 +214,7 @@ function canvasToBlob(canvas) {
    });
 }
 
-function makeImageFile(blob, copy) {
+export function makeImageFile(blob, copy) {
    return new File([blob], copy.filename, { type: copy.mimeType });
 }
 
@@ -227,7 +227,7 @@ function copyBlobToClipboard(blob) {
    return navigator.clipboard.write([item]);
 }
 
-function canUseClipboard(browserNavigator) {
+export function canUseClipboard(browserNavigator) {
    return Boolean(
       browserNavigator.clipboard &&
       browserNavigator.clipboard.write &&
@@ -247,7 +247,7 @@ function shareImageFile(file, copy) {
    });
 }
 
-function canShareFile(file) {
+export function canShareFile(file) {
    if (!navigator.share) return false;
 
    if (!navigator.canShare) return true;

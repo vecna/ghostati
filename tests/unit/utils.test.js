@@ -120,28 +120,7 @@ describe('Geometry utilities', () => {
   });
 });
 
-describe('Match state utilities', () => {
-  beforeEach(() => {
-    // Reset the mock state before each test.
-    state.db = { faces: [], nextId: 0 };
-    state.MATCH_THRESHOLD = 0.58;
-  });
-
-  /* -- this has been moved in enginge.js - this is kept to complete the unit test refactoring
-  test('computeMatchState returns unknown when descriptor missing or empty db', () => {
-    expect(utils.computeMatchState(null)).toBe('unknown');
-    expect(utils.computeMatchState([0.1, 0.2])).toBe('unknown');
-  });
-
-  test('computeMatchState returns matched or eluded based on threshold', () => {
-    const descriptor = [0, 0];
-    state.db.faces.push({ descriptor: [0.1, 0.1] });
-    expect(utils.computeMatchState(descriptor)).toBe('matched');
-    state.db.faces = [{ descriptor: [10, 10] }];
-    expect(utils.computeMatchState(descriptor)).toBe('eluded');
-  });
-*/
-});
+// Match state utilities suite removed as computeMatchState was moved to engine.js
 
 
 describe('Canvas drawing utilities', () => {

@@ -112,6 +112,7 @@
       </button>
       <span id="dbCountBadge" class="notification-badge" style="display: none;">0</span>
     </div>
+    <button id="overlayModeBtn" class="floating-btn side-action" title="Cambia overlay">Vista: bbox</button>
     <button id="clearDbBtn" class="floating-btn side-action" title="Azzera archivio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         stroke-linejoin="round">
@@ -213,12 +214,13 @@
 
   <!-- Scripts che aspettano evento custom per caricarsi -->
   <script src="scripts/ghostati-mobile-ui.js"></script>
-  <script src="scripts/ghostyle3d-uv-renderer.js"></script>
-  <script src="scripts/plugins3d-loader.js"></script>
+  <script type="module" src="scripts/ghostyle3d-uv-renderer.js"></script>
+  <script type="module" src="scripts/plugins3d-loader.js"></script>
   <script type="module" src="scripts/mediapipe-loop.js"></script>
 
   <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- face-api.js — required by engine.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
   <script type="module" src="scripts/bbox-overlay.js"></script>
   <script type="module" src="scripts/auto-find-loop.js"></script>
   <script type="module" src="scripts/main.js"></script>

@@ -4,9 +4,55 @@ import { state } from './state.js';
 import { setLog } from './utils.js';
 
 export const STORAGE_KEY = 'local-face-lab-db-v1';
+export const STORAGE_KEY_3D = 'local-face-lab-db-3d-v1';
+export const DB3D_MODEL_VERSION = 'image-embedder-v1';
+
+function createEmptyDb3d() {
+   return { faces: [], modelVersion: DB3D_MODEL_VERSION };
+}
 
 /**
- * Loads the application’s face database from `localStorage`.
+ * Loads the 3D face database (ImageEmbedder embeddings) from `localStorage`.
+ *
+ * @returns {{faces: Array}} The current 3D database state (no nextId — IDs come from the 2D DB).
+ */
+export function loadDb3d() {
+   try {
+      const raw = localStorage.getItem(STORAGE_KEY_3D);
+      if (!raw) return createEmptyDb3d();
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.faces)) return createEmptyDb3d();
+      if (parsed.modelVersion !== DB3D_MODEL_VERSION) {
+         if (parsed.faces.length > 0) {
+            setLog('Database 3D incompatibile col nuovo modello, svuoto', 'db');
+         }
+         state.db3d = createEmptyDb3d();
+         clearDb3d();
+         return state.db3d;
+      }
+      return parsed;
+   } catch {
+      return createEmptyDb3d();
+   }
+}
+
+/**
+ * Persists the current 3D database (`state.db3d`) to `localStorage`.
+ */
+export function persistDb3d() {
+   localStorage.setItem(STORAGE_KEY_3D, JSON.stringify(state.db3d));
+}
+
+/**
+ * Clears only the local 3D face database and persists the empty state.
+ */
+export function clearDb3d() {
+   state.db3d = createEmptyDb3d();
+   persistDb3d();
+}
+
+/**
+ * Loads the application's face database from `localStorage`.
  *
  * Returns a fresh default database if no stored data exists or if the data is malformed.
  *
@@ -75,7 +121,9 @@ export function renderDbStats() {
  */
 export function clearDb() {
    state.db = { nextId: 0, faces: [] };
+   if (state.db3d) state.db3d = createEmptyDb3d();
    persistDb();
+   if (state.db3d !== null) persistDb3d();
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: 'unknown', source: 'clear' }
    }));

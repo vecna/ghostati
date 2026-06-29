@@ -50,6 +50,7 @@ document.body.innerHTML = `
   <button id="toggleSettingsBtn"></button>
   <button id="saveBtn"></button>
   <button id="findBtn"></button>
+  <button id="overlayModeBtn">Vista: bbox</button>
   <span id="dbCountBadge"></span>
   <button id="clearDbBtn"></button>
   <button id="switchCameraBtn"></button>
@@ -76,6 +77,7 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   fill: vi.fn(),
   stroke: vi.fn(),
   strokeRect: vi.fn(),
+  fillRect: vi.fn(),
   measureText: vi.fn(() => ({ width: 10 })),
   fillText: vi.fn(),
   arc: vi.fn(),

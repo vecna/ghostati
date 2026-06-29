@@ -40,13 +40,13 @@ import { setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/u
 import { resizeCanvas } from '../../scripts/camera.js';
 import { persistDb, renderDbStats } from '../../scripts/db.js';
 import {
-  detectCurrentFace,
+  detectFaceInCam,
   compositeAndDetect,
   runEffectPass,
-  drawEffectOverlay,
+  drawGhostyleOverlay,
   drawDetectionScaffold,
   drawResult,
-  scanFace,
+  findFace,
   saveFace,
   triggerOverlayFadeout
 } from '../../scripts/engine.js';
@@ -163,10 +163,10 @@ describe('engine core exports', () => {
     }
   });
 
-  it('detectCurrentFace returns null and logs when no face is detected', async () => {
+  it('detectFaceInCam returns null and logs when no face is detected', async () => {
     faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
 
-    const result = await detectCurrentFace(false);
+    const result = await detectFaceInCam(false);
 
     expect(clearOverlay).toHaveBeenCalledTimes(1);
     expect(result).toBe(null);
@@ -174,11 +174,11 @@ describe('engine core exports', () => {
     expect(setLog).toHaveBeenCalledWith('Nessun volto rilevato nella webcam.');
   });
 
-  it('detectCurrentFace returns detection result when available', async () => {
+  it('detectFaceInCam returns detection result when available', async () => {
     const detected = { detection: { score: 0.9 }, descriptor: [0.1] };
     faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(detected));
 
-    const result = await detectCurrentFace(false);
+    const result = await detectFaceInCam(false);
 
     expect(result).toBe(detected);
     expect(setLog).not.toHaveBeenCalledWith('Nessun volto rilevato nella webcam.');

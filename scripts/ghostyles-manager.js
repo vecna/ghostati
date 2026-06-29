@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { setLog } from './utils.js';
 import { els, clearActiveEffect, effectSelected } from './dom.js';
+import { initPlugins3dLoader, loadPlugin3d } from './plugins3d-loader.js';
 
 /**
  * Retrieves ghostyle metadata from a remote script URL.
@@ -22,9 +23,15 @@ export async function fetchGhostyleMetadata(url) {
    if (!res.ok) throw new Error(`HTTP ${res.status}`);
    const text = await res.text();
    const matchName = text.match(/@name\s+(.+)/);
+   const matchEngine = text.match(/@engine\s+([^\n\r*]+)/i);
    const id = url.split('/').pop().replace('.js', '');
    const name = matchName ? matchName[1].trim() : id;
-   return { id, name, url };
+   const parsedEngine = matchEngine ? matchEngine[1].trim().toLowerCase() : null;
+   const fallbackEngine = url.includes('/ghostyles3d/') ? 'mediapipe' : 'faceapi';
+   const engine = (parsedEngine === 'mediapipe' || parsedEngine === 'faceapi')
+      ? parsedEngine
+      : fallbackEngine;
+   return { id, name, url, engine };
 }
 
 /**
@@ -39,6 +46,74 @@ export async function fetchGhostyleMetadata(url) {
 export async function importGhostyleModule({ id, name, url }) {
    const module = await import(url);
    return { id, name, module, url };
+}
+
+/**
+ * Unified plugin loader for both engines.
+ *
+ * Engine dispatch:
+ * - `faceapi`    -> loads as classic 2D ghostyle module
+ * - `mediapipe`  -> delegates loading to plugins3d-loader.js
+ *
+ * @param {string} url
+ * @param {string} expectedName
+ * @param {{onFaceapiToggle?: Function}} options
+ * @returns {Promise<object|null>}
+ */
+export async function loadGhostyle(url, expectedName, options = {}) {
+   let metadata;
+   try {
+      metadata = await fetchGhostyleMetadata(url);
+   } catch (err) {
+      throw new Error(`Errore metadata plugin (${expectedName || url}): ${err.message}`);
+   }
+
+   const displayName = expectedName || metadata.name;
+
+   if (metadata.engine === 'mediapipe') {
+      initPlugins3dLoader();
+      return loadPlugin3d(url, displayName);
+   }
+
+   let ghostyle = null;
+   try {
+      ghostyle = await importGhostyleModule(metadata);
+   } catch (err) {
+      throw new Error(`Errore durante l'importazione del modulo: ${err.message}`);
+   }
+
+   if (ghostyle.module.onInit) {
+      try {
+         const message = ghostyle.module.onInit();
+         if (message) {
+            setLog(`${ghostyle.name}: ${message}`);
+         }
+      } catch (err) {
+         throw new Error(`Errore durante l'inizializzazione del modulo: ${err.message}`);
+      }
+   }
+
+   const btn = addGhostyleBtn(ghostyle);
+   btn.onclick = () => {
+      toggleEffect(ghostyle.id, btn);
+      if (typeof options.onFaceapiToggle === 'function') {
+         options.onFaceapiToggle();
+      }
+   };
+   setLog(`Caricato con successo ghostyle ${displayName} da ${url}`);
+   return ghostyle;
+}
+
+function addGhostyleBtn(record) {
+   state.loadedGhostyles.set(record.id, record);
+
+   const btn = document.createElement('button');
+   btn.className = 'preview-btn';
+   btn.textContent = record.name;
+   btn.dataset.effect = record.id;
+   els.ghostylesContainer.appendChild(btn);
+
+   return btn;
 }
 
 /* if there is onClear function, it will be called */
