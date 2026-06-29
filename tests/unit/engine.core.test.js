@@ -36,9 +36,10 @@ vi.mock('../../scripts/db.js', () => ({
 
 import { state } from '../../scripts/state.js';
 import { els, clearOverlay } from '../../scripts/dom.js';
-import { setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/utils.js';
+import { distance, setLog, drawClosedPath, drawOpenPath, roundRect } from '../../scripts/utils.js';
 import { resizeCanvas } from '../../scripts/camera.js';
 import { persistDb, renderDbStats } from '../../scripts/db.js';
+import { view as overlayView } from '../../scripts/bbox-overlay.js';
 import {
   detectFaceInCam,
   compositeAndDetect,
@@ -46,8 +47,11 @@ import {
   drawGhostyleOverlay,
   drawDetectionScaffold,
   drawResult,
+  evaluateMatch,
   findFace,
   saveFace,
+  seekFaceInDb,
+  testMakeupEfficacy,
   triggerOverlayFadeout
 } from '../../scripts/engine.js';
 
@@ -115,6 +119,7 @@ describe('engine core exports', () => {
     vi.clearAllMocks();
     overlayCtx = createCtx();
     els.overlay.getContext.mockReturnValue(overlayCtx);
+    distance.mockReturnValue(0.12);
 
     state.db = { nextId: 0, faces: [] };
     state.MATCH_THRESHOLD = 0.58;
@@ -124,6 +129,8 @@ describe('engine core exports', () => {
     state.isSystemBusy = false;
     state.effectInferenceInFlight = false;
     state.ghostatiEvents = new EventTarget();
+
+    overlayView.overlayMode = 'bbox';
 
     window.Ghostati = {
       computeMatchState: vi.fn(() => 'matched')
@@ -236,7 +243,7 @@ describe('engine core exports', () => {
     expect(onDetection.mock.calls[0][0].detail.activeEffect).toBe(null);
   });
 
-  it('drawEffectOverlay applies active effect draw and updates lastKnownEffectResult', () => {
+  it('drawGhostyleOverlay applies active effect draw and updates lastKnownEffectResult', () => {
     const result = {
       detection: { box: { x: 1, y: 2, width: 3, height: 4 } },
       landmarks: { points: [] }
@@ -246,7 +253,7 @@ describe('engine core exports', () => {
     state.loadedGhostyles.set('soft-contour', { module: { onDraw: styleDraw } });
     faceapi.resizeResults.mockReturnValue(result);
 
-    drawEffectOverlay(result, false);
+    drawGhostyleOverlay(result, false);
 
     expect(resizeCanvas).toHaveBeenCalled();
     expect(overlayCtx.clearRect).toHaveBeenCalled();
@@ -285,7 +292,11 @@ describe('engine core exports', () => {
     expect(state.lastKnownEffectResult).toBe(result);
   });
 
-  it('scanFace logs result, triggers fade and dispatches matchStateChanged', async () => {
+  it('findFace logs result, triggers fade and returns match detail for the orchestrator', async () => {
+    state.db.faces = [{ id: 4, descriptor: [0.1, 0.2] }];
+    window.Ghostati.getActiveEffect = vi.fn(() => null);
+    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
+
     const result = {
       age: 31,
       gender: 'male',
@@ -299,15 +310,298 @@ describe('engine core exports', () => {
     const onMatch = vi.fn();
     state.ghostatiEvents.addEventListener('matchStateChanged', onMatch);
 
-    await scanFace();
+    const payload = await findFace();
 
     expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Volto trovato. Età stimata: 31.'));
-    expect(onMatch).toHaveBeenCalledTimes(1);
-    expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'scan', detectionState: 'matched', score: 0.78 });
+    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Corrispondenza trovata: ID 4'));
+    expect(onMatch).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      liveResult: result,
+      liveInfo: { liveScore: 0.78, liveMinDist: 0.12, liveMinId: 4 },
+      composite: null,
+      detail: { detectionState: 'matched', distance: 0.12, matchedId: 4 }
+    });
   });
 
-  it('saveFace adds record, persists DB, logs and dispatches matchStateChanged', async () => {
+
+
+  it('detectFaceInCam logs and returns null when face-api is unavailable', async () => {
+    globalThis.faceapi = null;
+
+    const result = await detectFaceInCam(false);
+
+    expect(result).toBe(null);
+    expect(state.lastKnownEffectResult).toBe(null);
+    expect(setLog).toHaveBeenCalledWith('[ERROR] face-api modelli non caricati. Riprova tra pochi secondi.');
+  });
+
+  it('detectFaceInCam catches detector errors and logs the message', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    faceapi.detectSingleFace.mockImplementation(() => { throw new Error('detector boom'); });
+
+    const result = await detectFaceInCam(false);
+
+    expect(result).toBe(null);
+    expect(state.lastKnownEffectResult).toBe(null);
+    expect(setLog).toHaveBeenCalledWith('[ERRORE face-api] detector boom');
+  });
+
+  it('compositeAndDetect returns a strong detection without fallback', async () => {
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const liveResult = {
+      detection: { box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture()
+    };
+    const obfuscated = { detection: { score: 0.8 }, descriptor: [0.2, 0.3] };
+    faceapi.detectSingleFace.mockReturnValue(makeLandmarksDescriptorChain(obfuscated));
+
+    const result = await compositeAndDetect(liveResult);
+
+    expect(result.obfuscatedResult).toBe(obfuscated);
+    expect(result.weakDetection).toBe(false);
+    expect(compositedCtx.drawImage).toHaveBeenCalled();
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('compositeAndDetect handles active style results without a resized detection box', async () => {
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    state.activeEffect = 'soft-contour';
+    const onDraw = vi.fn();
+    state.loadedGhostyles.set('soft-contour', { module: { onDraw } });
+    faceapi.resizeResults.mockReturnValue({ landmarks: createLandmarksFixture() });
+    const obfuscated = { detection: { score: 0.8 }, descriptor: [0.2, 0.3] };
+    faceapi.detectSingleFace.mockReturnValue(makeLandmarksDescriptorChain(obfuscated));
+
+    const result = await compositeAndDetect({ detection: { box: {} }, landmarks: createLandmarksFixture() });
+
+    expect(result.obfuscatedResult).toBe(obfuscated);
+    expect(onDraw).not.toHaveBeenCalled();
+    expect(console.log).toHaveBeenCalledWith('resized.detection non disponibile:', expect.any(Object));
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('compositeAndDetect catches detector errors and returns a null obfuscated result', async () => {
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    faceapi.detectSingleFace.mockImplementation(() => { throw new Error('composite boom'); });
+
+    const result = await compositeAndDetect({ detection: { box: {} }, landmarks: createLandmarksFixture() });
+
+    expect(result.obfuscatedResult).toBe(null);
+    expect(result.weakDetection).toBe(false);
+    expect(console.error).toHaveBeenCalledWith('[compositeAndDetect]', expect.any(Error));
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('runEffectPass clears active-effect overlay when no face is detected', async () => {
+    state.activeEffect = 'graphic-liner';
+    faceapi.detectSingleFace.mockReturnValue({ withFaceLandmarks: vi.fn(async () => null) });
+
+    const shouldClear = await runEffectPass();
+
+    expect(shouldClear).toBe(true);
+    expect(state.lastKnownEffectResult).toBe(null);
+    expect(state.effectInferenceInFlight).toBe(false);
+  });
+
+  it('runEffectPass renders active-effect detections', async () => {
+    const result = { detection: { box: { x: 1, y: 2, width: 3, height: 4 } }, landmarks: createLandmarksFixture() };
+    const onDraw = vi.fn();
+    state.activeEffect = 'graphic-liner';
+    state.loadedGhostyles.set('graphic-liner', { module: { onDraw } });
+    faceapi.detectSingleFace.mockReturnValue({ withFaceLandmarks: vi.fn(async () => result) });
+    faceapi.resizeResults.mockReturnValue(result);
+
+    const shouldClear = await runEffectPass();
+
+    expect(shouldClear).toBe(false);
+    expect(onDraw).toHaveBeenCalledWith(overlayCtx, result.landmarks, result.detection.box);
+    expect(state.lastKnownEffectResult).toBe(result);
+  });
+
+  it('runEffectPass catches detector errors and releases the inference lock', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    faceapi.detectSingleFace.mockImplementation(() => { throw new Error('pass boom'); });
+
+    await runEffectPass();
+
+    expect(console.error).toHaveBeenCalledWith(expect.any(Error));
+    expect(state.effectInferenceInFlight).toBe(false);
+  });
+
+  it('drawGhostyleOverlay returns early when resized detection is missing', () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = { landmarks: createLandmarksFixture() };
+    faceapi.resizeResults.mockReturnValue({ landmarks: createLandmarksFixture() });
+
+    drawGhostyleOverlay(result, false);
+
+    expect(console.log).toHaveBeenCalledWith('drawGhostyleOverlay: no detection?', expect.any(Object));
+    expect(state.lastKnownEffectResult).toBe(null);
+  });
+
+  it('drawDetectionScaffold mirrors labels when state is mirrored', () => {
+    state.isMirrored = true;
+    const resized = {
+      detection: { box: { x: 10, y: 20, width: 50, height: 60 } },
+      landmarks: createLandmarksFixture(),
+      age: 28,
+      gender: 'female'
+    };
+
+    drawDetectionScaffold(overlayCtx, resized);
+
+    expect(overlayCtx.translate).toHaveBeenCalled();
+    expect(overlayCtx.scale).toHaveBeenCalledWith(-1, 1);
+  });
+
+  it('drawResult applies the active effect after drawing the scaffold', () => {
+    const result = {
+      detection: { box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture()
+    };
+    const styleDraw = vi.fn();
+    state.activeEffect = 'stage-mask';
+    state.loadedGhostyles.set('stage-mask', { module: { onDraw: styleDraw } });
+    faceapi.resizeResults.mockReturnValue(result);
+
+    drawResult(result);
+
+    expect(styleDraw).toHaveBeenCalledWith(overlayCtx, result.landmarks, result.detection.box);
+    expect(state.lastKnownEffectResult).toBe(result);
+  });
+
+  it('saveFace returns undefined when no face is detected', async () => {
+    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
+
+    const saved = await saveFace();
+
+    expect(saved).toBeUndefined();
+    expect(persistDb).not.toHaveBeenCalled();
+  });
+
+  it('seekFaceInDb returns null match values for an empty database', () => {
+    const result = { detection: { score: 0.77 }, descriptor: [0.4, 0.5] };
+
+    expect(seekFaceInDb(result)).toEqual({ liveScore: 0.77, liveMinDist: null, liveMinId: null });
+  });
+
+  it('evaluateMatch returns eluded when no live archive distance is below threshold', () => {
+    const evaluated = evaluateMatch({ liveScore: 0.9, liveMinDist: 0.9, liveMinId: 3 }, null);
+
+    expect(evaluated.detail).toMatchObject({ detectionState: 'eluded', distance: 0.9, matchedId: null, ghostylePresent: false });
+  });
+
+  it('evaluateMatch returns unclear when a composited face still matches an archived ID', () => {
+    state.db.faces = [{ id: 9, descriptor: [0.1, 0.2] }];
+    distance.mockReturnValue(0.12);
+
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.12, liveMinId: 9 },
+      { obfuscatedResult: { detection: { score: 0.75 }, descriptor: [0.3, 0.4] }, weakDetection: false }
+    );
+
+    expect(evaluated.detail).toMatchObject({ detectionState: 'unclear', distance: 0.12, matchedId: 9, ghostylePresent: true, obfMinDist: 0.12, obfMinId: 9 });
+  });
+
+  it('evaluateMatch returns eluded for weak composited detections above the match threshold', () => {
+    state.db.faces = [{ id: 9, descriptor: [0.1, 0.2] }];
+    distance.mockReturnValue(0.9);
+
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.12, liveMinId: 9 },
+      { obfuscatedResult: { detection: { score: 0.18 }, descriptor: [0.3, 0.4] }, weakDetection: true }
+    );
+
+    expect(evaluated.detail).toMatchObject({ detectionState: 'eluded', distance: 0.9, matchedId: null, ghostylePresent: true });
+  });
+
+  it('evaluateMatch returns eluded for clear composited detections above the match threshold', () => {
+    state.db.faces = [{ id: 9, descriptor: [0.1, 0.2] }];
+    distance.mockReturnValue(0.9);
+
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.12, liveMinId: 9 },
+      { obfuscatedResult: { detection: { score: 0.8 }, descriptor: [0.3, 0.4] }, weakDetection: false }
+    );
+
+    expect(evaluated.detail).toMatchObject({ detectionState: 'eluded', distance: 0.9, matchedId: null, ghostylePresent: true });
+  });
+
+  it('findFace returns early when live detection fails', async () => {
+    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
+
+    const found = await findFace();
+
+    expect(found).toBeUndefined();
+  });
+
+  it('findFace returns an empty-archive payload when the 2D database has no faces', async () => {
+    const result = {
+      detection: { score: 0.78, box: { x: 10, y: 20, width: 40, height: 50 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(result));
+
+    const payload = await findFace();
+
+    expect(payload).toEqual({ liveResult: result, liveInfo: null, composite: null, headline: null, detail: null });
+    expect(setLog).toHaveBeenCalledWith('[face-api] Archivio 2D vuoto: nessun confronto face-api possibile.');
+  });
+
+  it('testMakeupEfficacy logs and returns when no baseline face is found', async () => {
+    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
+
+    await testMakeupEfficacy();
+
+    expect(setLog).toHaveBeenCalledWith('Nessun volto di base trovato. Avvicinati alla webcam.');
+  });
+
+  it('testMakeupEfficacy dispatches metrics and enables makeup export after compositing', async () => {
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const result = {
+      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    const obfuscated = { detection: { score: 0.52 }, descriptor: [0.8, 0.9] };
+    faceapi.detectSingleFace
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
+
+    const onMatch = vi.fn();
+    state.ghostatiEvents.addEventListener('matchStateChanged', onMatch);
+
+    await testMakeupEfficacy();
+
+    expect(state.lastCompositedCanvas).toBeInstanceOf(HTMLCanvasElement);
+    expect(els.copyMakeupBtn.disabled).toBe(false);
+    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza self pre→post: 0.120'));
+    expect(onMatch).toHaveBeenCalledTimes(1);
+    expect(onMatch.mock.calls[0][0].detail).toMatchObject({
+      detectionState: 'matched',
+      source: 'efficacy',
+      score: 0.86,
+      obfuscatedScore: 0.52,
+      liveMinDist: null,
+      obfMinDist: null,
+      weakDetection: false,
+      distance: 0.12
+    });
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('saveFace adds record, persists DB, logs and returns saved data for the orchestrator', async () => {
     state.db = { nextId: 7, faces: [] };
 
     const result = {
@@ -322,8 +616,9 @@ describe('engine core exports', () => {
     const onMatch = vi.fn();
     state.ghostatiEvents.addEventListener('matchStateChanged', onMatch);
 
-    await saveFace();
+    const saved = await saveFace();
 
+    expect(saved).toEqual({ id: 7, result });
     expect(state.db.nextId).toBe(8);
     expect(state.db.faces).toHaveLength(1);
     expect(state.db.faces[0]).toMatchObject({
@@ -337,7 +632,172 @@ describe('engine core exports', () => {
     expect(renderDbStats).toHaveBeenCalled();
     expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
     expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Impronta biometrica salvata con ID 7.'));
-    expect(onMatch).toHaveBeenCalledTimes(1);
-    expect(onMatch.mock.calls[0][0].detail).toMatchObject({ source: 'save', detectionState: 'matched', score: 0.91 });
+    expect(onMatch).not.toHaveBeenCalled();
   });
+
+  it('detectFaceInCam stringifies thrown non-Error values', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    faceapi.detectSingleFace.mockImplementation(() => { throw 'string boom'; });
+
+    const result = await detectFaceInCam(false);
+
+    expect(result).toBe(null);
+    expect(setLog).toHaveBeenCalledWith('[ERRORE face-api] string boom');
+  });
+
+  it('runEffectPass releases the inference lock when face-api becomes unavailable', async () => {
+    globalThis.faceapi = null;
+
+    const result = await runEffectPass();
+
+    expect(result).toBeUndefined();
+    expect(state.effectInferenceInFlight).toBe(false);
+  });
+
+  it('runEffectPass requests age and gender for detailed 2D overlay mode', async () => {
+    overlayView.overlayMode = '2d';
+    const result = { detection: { score: 0.7 }, age: 40, gender: 'female' };
+    const withAgeAndGender = vi.fn(async () => result);
+    const withFaceLandmarks = vi.fn(() => ({ withAgeAndGender }));
+    faceapi.detectSingleFace.mockReturnValue({ withFaceLandmarks });
+
+    await runEffectPass();
+
+    expect(withFaceLandmarks).toHaveBeenCalledTimes(1);
+    expect(withAgeAndGender).toHaveBeenCalledTimes(1);
+    expect(state.lastKnownEffectResult).toBe(result);
+  });
+
+  it('seekFaceInDb sorts multiple stored faces by distance', () => {
+    state.db.faces = [
+      { id: 1, descriptor: [1, 1] },
+      { id: 2, descriptor: [2, 2] }
+    ];
+    distance.mockReturnValueOnce(0.6).mockReturnValueOnce(0.2);
+
+    expect(seekFaceInDb({ detection: { score: 0.82 }, descriptor: [0, 0] })).toEqual({
+      liveScore: 0.82,
+      liveMinDist: 0.2,
+      liveMinId: 2
+    });
+  });
+
+  it('evaluateMatch computes null composite metrics when compositing fails', () => {
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.7, liveMinId: 5 },
+      { obfuscatedResult: null, weakDetection: true }
+    );
+
+    expect(evaluated.detail).toMatchObject({
+      detectionState: 'eluded',
+      distance: 0.7,
+      matchedId: null,
+      ghostylePresent: true,
+      obfMinDist: null,
+      obfMinId: null
+    });
+  });
+
+  it('evaluateMatch sorts multiple composited distances', () => {
+    state.db.faces = [
+      { id: 1, descriptor: [1, 1] },
+      { id: 2, descriptor: [2, 2] }
+    ];
+    distance.mockReturnValueOnce(0.5).mockReturnValueOnce(0.3);
+
+    const evaluated = evaluateMatch(
+      { liveScore: 0.9, liveMinDist: 0.2, liveMinId: 2 },
+      { obfuscatedResult: { detection: { score: 0.7 }, descriptor: [0, 0] }, weakDetection: false }
+    );
+
+    expect(evaluated.detail).toMatchObject({ obfMinDist: 0.3, obfMinId: 2 });
+  });
+
+  it('findFace runs compositing when a plugin is active', async () => {
+    state.db.faces = [{ id: 3, descriptor: [0.1, 0.2] }];
+    window.Ghostati.getActiveEffect = vi.fn(() => 'soft-contour');
+    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
+
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const liveResult = {
+      detection: { score: 0.88, box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    const obfuscated = { detection: { score: 0.66 }, descriptor: [0.3, 0.4] };
+    faceapi.detectSingleFace
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(liveResult))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
+
+    const payload = await findFace();
+
+    expect(payload.composite.obfuscatedResult).toBe(obfuscated);
+    expect(payload.detail.ghostylePresent).toBe(true);
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('testMakeupEfficacy logs post-makeup missing when the DB is empty and compositing finds no face', async () => {
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const result = {
+      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    faceapi.detectSingleFace
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(null))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(null));
+
+    await testMakeupEfficacy();
+
+    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza self pre→post: post-makeup non rilevato'));
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('testMakeupEfficacy logs live and post-makeup distances when the DB has faces', async () => {
+    state.db.faces = [{ id: 1, descriptor: [0.5, 0.6] }];
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const result = {
+      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    const obfuscated = { detection: { score: 0.52 }, descriptor: [0.8, 0.9] };
+    faceapi.detectSingleFace
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
+
+    await testMakeupEfficacy();
+
+    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza live: 0.120; distanza post-makeup: 0.120'));
+
+    canvasGetContextSpy.mockRestore();
+  });
+
+  it('testMakeupEfficacy logs only live distance when the DB has faces but compositing finds no face', async () => {
+    state.db.faces = [{ id: 1, descriptor: [0.5, 0.6] }];
+    const compositedCtx = createCtx();
+    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
+    const result = {
+      detection: { score: 0.86, box: { x: 1, y: 2, width: 3, height: 4 } },
+      landmarks: createLandmarksFixture(),
+      descriptor: [0.1, 0.2]
+    };
+    faceapi.detectSingleFace
+      .mockReturnValueOnce(makeAgeGenderDescriptorChain(result))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(null))
+      .mockReturnValueOnce(makeLandmarksDescriptorChain(null));
+
+    await testMakeupEfficacy();
+
+    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('distanza live: 0.120'));
+
+    canvasGetContextSpy.mockRestore();
+  });
+
 });

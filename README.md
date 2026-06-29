@@ -1,5 +1,5 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-66.92%25-lightgrey)
+![Unit Test Coverage](https://img.shields.io/badge/coverage-53.45%25-lightgrey)
 # ghòstati! | the _Face Confusion Assistant?_
 
 This is a: Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (also known as, Computer Vision Dazzle).
@@ -92,7 +92,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `ba4d356` – added webcam recording when pressed the button
+
+**Last commit:** `4d404cb` – Merge pull request #8 from vecna/refactor/inclusions
+
+
 
 
 
@@ -143,8 +146,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `ba4d356` added webcam recording when pressed the button
-- `f712181` completed a large engine.js refactor
-- `8e7738d` decoupled the most complex functions in engine.js
-- `444afb3` Create engine.efficacyoutcome.test.js
-- `df81ef9` JSDoc in state, cleaning in camera
+- `4d404cb` Merge pull request #8 from vecna/refactor/inclusions
+- `18f2acd` Merge remote-tracking branch 'origin/online' into refactor/inclusions
+- `a8d5c7c` revisited the inclusion logic
+- `4ee7943` took back the 2D landmark view
+- `75c7dba` fixed doc visualization
