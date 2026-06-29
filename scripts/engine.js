@@ -578,7 +578,7 @@ export function seekFaceInDb(liveResult) {
  *
  * @param {Object} composite - Result of `compositeAndDetect`, containing
  *   `obfuscatedResult` and `weakDetection`.
- * @returns {{obfScore:number|null, obfMinDist:number|null, obfMinId:number|null,
+ * @returns {{obfScore:(number|null), obfMinDist:(number|null), obfMinId:(number|null),
  *   weakDetection:boolean, detectionTotallyFailed:boolean}}
  *   Metrics used by `findFace`.
  * @see findFace – uses this helper to incorporate post‑makeup metrics.
@@ -621,7 +621,7 @@ function computeCompositeMetrics(composite) {
  * @param {Object} params
  * @param {Object} params.result - Live detection result.
  * @param {Object} params.composite - Composite detection result containing `obfuscatedResult` and `weakDetection`.
- * @returns {{liveMinDist:number|null, obfMinDist:number|null, obfScore:number|null, weakDetection:boolean}}
+ * @returns {{liveMinDist:(number|null), obfMinDist:(number|null), obfScore:(number|null), weakDetection:boolean}}
  *   Metrics used by `testMakeupEfficacy`.
  * @see testMakeupEfficacy – uses this helper for outcome calculation.
  */
@@ -686,7 +686,7 @@ function buildEfficacyDistLog({ liveMinDist, obfMinDist, dbEmpty, result, obfusc
  * @param {boolean} params.weakDetection - Whether composited detection was weak.
  * @param {Object|null} params.obfuscatedResult - Result of composited detection.
  * @param {boolean} params.dbEmpty - Whether the DB contains any faces.
- * @returns {{detectionState:string, headline:string, dist?:number}} Outcome description.
+ * @returns {{detectionState:string, headline:string, dist: ?number}} Outcome description.
  * @see testMakeupEfficacy – uses this decision to dispatch events and log.
  */
 export function decideEfficacyOutcome({ result, liveMinDist, obfMinDist, weakDetection, obfuscatedResult, dbEmpty }) {

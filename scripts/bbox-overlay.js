@@ -156,10 +156,10 @@ export function onLandmarks3d(e) {
  * each numeric field is only copied when present in the payload.
  *
  * @param {CustomEvent<{
- *   detectionState?: string,
- *   liveMinDist?: number, obfMinDist?: number,
- *   liveMinId?: number,   obfMinId?: number,
- *   source?: 'scan'|'save'|'find'|'efficacy'|'auto'
+ *   detectionState: ?string,
+ *   liveMinDist: ?number, obfMinDist: ?number,
+ *   liveMinId: ?number,   obfMinId: ?number,
+ *   source: ?('scan'|'save'|'find'|'efficacy'|'auto')
  * }>} e
  */
 export function onMatchStateChanged(e) {

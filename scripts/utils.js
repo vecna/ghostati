@@ -52,7 +52,7 @@ export function distance(a, b) {
  * or shapes at the visual centre of a feature (eye, mouth) without having to
  * reduce manually.
  *
- * @param {{x:number, y:number}[]} points  Non-empty array of points.
+ * @param {Array<{x:number, y:number}>} points  Non-empty array of points.
  * @returns {{x:number, y:number}} The averaged point.
  * @see expandEyePolygon – uses this to locate the eye centre.
  * @see ghostyles/smokey-eyes.js, ghostyles/lip-tint.js – representative
@@ -117,7 +117,7 @@ export function point(x, y) {
  * silently on an empty `points` array.
  *
  * @param {CanvasRenderingContext2D} ctx  Target canvas context.
- * @param {{x:number, y:number}[]} points  Polygon vertices.
+ * @param {Array<{x:number, y:number}>} points  Polygon vertices.
  * @param {string|null} [fillStyle=null]   Fill color, or `null` to skip.
  * @param {string|null} [strokeStyle=null] Stroke color, or `null` to skip.
  * @param {number} [lineWidth=2]           Stroke width (ignored if no stroke).
@@ -150,7 +150,7 @@ export function drawClosedPath(ctx, points, fillStyle = null, strokeStyle = null
  * drawing.
  *
  * @param {CanvasRenderingContext2D} ctx
- * @param {{x:number, y:number}[]} points
+ * @param {Array<{x:number, y:number}>} points
  * @param {string} strokeStyle    Stroke colour.
  * @param {number} [lineWidth=2]
  * @param {boolean} [dashed=false]  When `true`, applies a `[10, 8]` dash pattern.
@@ -245,11 +245,11 @@ export function roundRect(ctx, x, y, w, h, r) {
  * `eyebrowLift` controls how close the top of the shape sits to the eye
  * (`0` = right on the brow, `1` = right at the eye).
  *
- * @param {{x:number, y:number}[]} eye      Six face-api eye landmarks.
- * @param {{x:number, y:number}[]} eyebrow  Five face-api eyebrow landmarks.
+ * @param {Array<{x:number, y:number}>} eye      Six face-api eye landmarks.
+ * @param {Array<{x:number, y:number}>} eyebrow  Five face-api eyebrow landmarks.
  * @param {number} [scale=1.22]        Outward scaling factor of the lower lid.
  * @param {number} [eyebrowLift=0.72]  Lerp factor between eye and eyebrow.
- * @returns {{x:number, y:number}[]} Ring of points defining the eye region.
+ * @returns {Array<{x:number, y:number}>} Ring of points defining the eye region.
  * @see drawEyeWing – the primary caller.
  * @see avgPoint, scaleFrom, lerp – primitives composed here.
  */
@@ -275,13 +275,13 @@ export function expandEyePolygon(eye, eyebrow, scale = 1.22, eyebrowLift = 0.72)
  * object inline; see `graphic-liner.js` and `splash.js` for usage examples.
  *
  * @param {CanvasRenderingContext2D} ctx
- * @param {{x:number, y:number}[]} eye      Six face-api eye landmarks.
- * @param {{x:number, y:number}[]} eyebrow  Five face-api eyebrow landmarks.
+ * @param {Array<{x:number, y:number}>} eye      Six face-api eye landmarks.
+ * @param {Array<{x:number, y:number}>} eyebrow  Five face-api eyebrow landmarks.
  * @param {string} label                    Label drawn near the tail.
  * @param {{
  *   scale:number, brow:number,
  *   fill:string, stroke:string, line:string,
- *   side:'left'|'right',
+ *   side:('left'|'right'),
  *   tailX:number, tailY:number
  * }} tone  Styling and geometry knobs.
  * @see expandEyePolygon – called first to compute the base shape.
@@ -345,7 +345,7 @@ export function drawCheekSweep(ctx, anchor, noseSide, mouthCorner, jawPoint, lab
  * (jawline, nose ridge).
  *
  * @param {CanvasRenderingContext2D} ctx
- * @param {{x:number, y:number}[]} pts  Polyline points (e.g. a jawline slice).
+ * @param {Array<{x:number, y:number}>} pts  Polyline points (e.g. a jawline slice).
  * @param {string} label
  * @see drawOpenPath – called twice for the layered stroke effect.
  * @see drawLabel – places the caption at the midpoint of the band.

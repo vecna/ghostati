@@ -57,7 +57,7 @@ export async function importGhostyleModule({ id, name, url }) {
  *
  * @param {string} url
  * @param {string} expectedName
- * @param {{onFaceapiToggle?: Function}} options
+ * @param {{onFaceapiToggle: ?Function}} options
  * @returns {Promise<object|null>}
  */
 export async function loadGhostyle(url, expectedName, options = {}) {

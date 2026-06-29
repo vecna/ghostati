@@ -10,10 +10,10 @@
  *
  * @param {{
  *   uvPath: string,
- *   getFaceLandmarker?: () => any,
- *   log?: (message:string) => void
+ *   getFaceLandmarker: ?(function(): any),
+ *   log: ?(function(string): void)
  * }} options
- * @returns {{ ensureLoaded: () => Promise<void>, render: (module:any, ctx:CanvasRenderingContext2D, landmarks:any[], params:object) => void }}
+ * @returns {{ ensureLoaded: (function(): Promise<void>), render: (function(any, CanvasRenderingContext2D, any[], object): void) }}
  */
 export function createUvRenderer(options) {
    const uvPath = options && options.uvPath;
