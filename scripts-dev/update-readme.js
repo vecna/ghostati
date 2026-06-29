@@ -15,7 +15,7 @@ const path = require('path');
 const execSync = require('child_process').execSync;
 
 // ---------- Config ----------
-const README_PATH = path.resolve(__dirname, 'README.md');
+const README_PATH = path.resolve(__dirname, '..', 'README.md');
 const COVERAGE_BADGE_URL = (() => {
   const cov = getCoverage();
   if (cov != null) {
@@ -29,7 +29,7 @@ const CHANGELOG_COMMITS = 5; // how many recent commits to list
 // ---------------------------
 // Helper to compute coverage percentage from the JSON report produced by Vitest.
 function getCoverage() {
-  const coverageRoot = path.resolve(__dirname, 'coverage');
+  const coverageRoot = path.resolve(__dirname, '..', 'coverage');
   const jsonPath = path.join(coverageRoot, 'coverage-final.json');
 
   // If the JSON report does not exist, fall back to null.

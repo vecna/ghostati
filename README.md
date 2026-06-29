@@ -1,5 +1,5 @@
 ## Status
-![Unit Test Coverage](https://img.shields.io/badge/coverage-53.45%25-lightgrey)
+![Unit Test Coverage](https://img.shields.io/badge/coverage-52.02%25-lightgrey)
 # ghòstati! | the _Face Confusion Assistant?_
 
 This is a: Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (also known as, Computer Vision Dazzle).
@@ -93,7 +93,10 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 
-**Last commit:** `4d404cb` – Merge pull request #8 from vecna/refactor/inclusions
+
+**Last commit:** `8296992` – added the UX content for ghostyles future developer
+
+
 
 
 
@@ -146,8 +149,8 @@ Presented as part of the **NINA Festival**, this tool aims to raise awareness re
 
 
 ## Recent changes
-- `4d404cb` Merge pull request #8 from vecna/refactor/inclusions
-- `18f2acd` Merge remote-tracking branch 'origin/online' into refactor/inclusions
-- `a8d5c7c` revisited the inclusion logic
-- `4ee7943` took back the 2D landmark view
-- `75c7dba` fixed doc visualization
+- `8296992` added the UX content for ghostyles future developer
+- `261c4f5` unified 2D and 3D ghostyle plugin
+- `0787760` thumbnail added in a list of small pictures per ID.
+- `4f47df3` infomodal added, but I'm not fully happy yet
+- `5404b34` removed some dead code
