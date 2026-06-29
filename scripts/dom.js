@@ -19,6 +19,7 @@ export const els = {
    copyMakeupBtn: document.getElementById('copyMakeupBtn'),
    saveBtn: document.getElementById('saveBtn'),
    findBtn: document.getElementById('findBtn'),
+   overlayModeBtn: document.getElementById('overlayModeBtn'),
    clearDbBtn: document.getElementById('clearDbBtn'),
    ghostylesContainer: document.getElementById('ghostylesContainer'),
    mirrorToggle: document.getElementById('mirrorToggle'), // Left for fallback, but managed by JS via camera direction

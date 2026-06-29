@@ -21,6 +21,7 @@ vi.mock('../../scripts/utils.js', () => ({
 
 vi.mock('../../scripts/db.js', () => ({
   loadDb: vi.fn(() => ({ nextId: 0, faces: [] })),
+  loadDb3d: vi.fn(() => ({ nextId: 0, faces: [] })),
   renderDbStats: vi.fn(),
   clearDb: vi.fn()
 }));
@@ -37,7 +38,43 @@ vi.mock('../../scripts/engine.js', () => ({
 vi.mock('../../scripts/camera.js', () => ({
   startCamera: vi.fn(async () => {}),
   resizeCanvas: vi.fn(),
-  startEffectLoop: vi.fn()
+  startEffectLoop: vi.fn(),
+  recordOneSecond: vi.fn()
+}));
+
+vi.mock('../../scripts/engine-3d.js', () => ({
+  loadMobileNet: vi.fn(async () => {}),
+  saveFace3d: vi.fn(async () => null),
+  findFace3d: vi.fn(async () => null),
+  evaluateMatch3d: vi.fn(() => null),
+  compositeAndDetect3d: vi.fn(async () => null)
+}));
+
+vi.mock('../../scripts/config.js', () => ({
+  MODEL_URLS: {
+    tiny: '/tiny',
+    landmarks: '/landmarks',
+    recognition: '/recognition',
+    ageGender: '/age-gender'
+  },
+  DETECTOR_OPTIONS: {}
+}));
+
+vi.mock('../../scripts/ghostyles-manager.js', () => ({
+  loadGhostyle: vi.fn(async () => {})
+}));
+
+vi.mock('../../scripts/plugins3d-loader.js', () => ({
+  initPlugins3dLoader: vi.fn(),
+  getActiveEffect3d: vi.fn(() => null),
+  activateEffect3d: vi.fn(),
+  deactivateEffect3d: vi.fn(),
+  toggleEffect3d: vi.fn(),
+  reloadPlugins3d: vi.fn()
+}));
+
+vi.mock('../../scripts/export-makeup.js', () => ({
+  exportMakeup: vi.fn()
 }));
 
 import { state } from '../../scripts/state.js';
@@ -63,6 +100,7 @@ describe('main.setBusy', () => {
       els.copyMakeupBtn,
       els.saveBtn,
       els.findBtn,
+      els.overlayModeBtn,
       els.clearDbBtn,
     ].forEach(btn => {
       if (btn) btn.disabled = false;
@@ -72,9 +110,9 @@ describe('main.setBusy', () => {
   it('disables action buttons and preview buttons when busy', () => {
     setBusy(true);
 
-    expect(els.scanBtn.disabled).toBe(true);
     expect(els.saveBtn.disabled).toBe(true);
     expect(els.findBtn.disabled).toBe(true);
+    expect(els.overlayModeBtn.disabled).toBe(true);
     expect(els.clearDbBtn.disabled).toBe(true);
     expect(els.copyMakeupBtn.disabled).toBe(true);
 
@@ -88,9 +126,9 @@ describe('main.setBusy', () => {
 
     setBusy(false);
 
-    expect(els.scanBtn.disabled).toBe(false);
     expect(els.saveBtn.disabled).toBe(false);
     expect(els.findBtn.disabled).toBe(false);
+    expect(els.overlayModeBtn.disabled).toBe(false);
     expect(els.copyMakeupBtn.disabled).toBe(true);
 
     const previewBtns = els.ghostylesContainer.querySelectorAll('.preview-btn');

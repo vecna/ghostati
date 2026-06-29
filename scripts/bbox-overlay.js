@@ -37,6 +37,7 @@ export const COLORS = {
    matched: 'rgba(255, 122, 122, 0.95)',
    eluded:  'rgba(61, 220, 151, 0.95)',
    unclear: 'rgba(122, 192, 255, 0.95)',
+   'partial-elusion': 'rgba(122, 192, 255, 0.95)',
    unknown: 'rgba(170, 180, 195, 0.85)',
 };
 
@@ -59,6 +60,10 @@ export const OVERLAY_SUPPRESS_MS = 4000;
 /** Numeric `matchStateChanged.detail` fields that map 1:1 onto `view`. */
 const COPYABLE_FIELDS = ['liveMinDist', 'obfMinDist', 'liveMinId', 'obfMinId'];
 
+export const OVERLAY_MODE_STORAGE_KEY = 'ghostati-overlay-mode-v1';
+
+const OVERLAY_MODES = ['bbox', 'mesh', 'entrambi'];
+
 // ---------- Module state ----------
 
 /** Pristine values for the rendering view; used as the reset baseline. */
@@ -68,6 +73,9 @@ const INITIAL_VIEW = Object.freeze({
    obfMinDist:  null,
    liveMinId:   null,
    obfMinId:    null,
+   overlayMode: 'bbox',
+   lastLandmarks3d: null,
+   lastDetection: null,
 });
 
 /**
@@ -105,7 +113,11 @@ export function init() {
    }
    ctx = canvas.getContext('2d');
 
+   const persistedMode = readPersistedOverlayMode();
+   if (persistedMode) view.overlayMode = persistedMode;
+
    state.ghostatiEvents.addEventListener('detection', onDetection);
+   state.ghostatiEvents.addEventListener('landmarks3d', onLandmarks3d);
    state.ghostatiEvents.addEventListener('matchStateChanged', onMatchStateChanged);
    state.ghostatiEvents.addEventListener('dbChanged', onDbChanged);
    return true;
@@ -121,23 +133,20 @@ export function init() {
  */
 export function onDetection(e) {
    const result = e.detail && e.detail.result;
-   syncSize();
-   syncMirror();
-   clearBbox();
-   // Skip drawing during the overlay suppression window: the engine's overlay
-   // is on top of the video and the bbox would visually compete with it.
-   if (performance.now() < suppressUntil) return;
-   if (!result) return;
+   view.lastDetection = result || null;
+   renderOverlay();
+}
 
-   const resized = faceapi.resizeResults(result, {
-      width: canvas.width,
-      height: canvas.height,
-   });
-   const box = extractBox(resized);
-   if (!box) return;
-
-   drawBox(box);
-   drawLabels(box, extractScore(result));
+/**
+ * Handle a `landmarks3d` event by caching the latest 478-point MediaPipe mesh
+ * and repainting according to the current overlay mode.
+ *
+ * @param {CustomEvent<{ landmarks: Array|null }>} e
+ */
+export function onLandmarks3d(e) {
+   const landmarks = e.detail && e.detail.landmarks;
+   view.lastLandmarks3d = Array.isArray(landmarks) ? landmarks : null;
+   renderOverlay();
 }
 
 /**
@@ -155,11 +164,18 @@ export function onDetection(e) {
 export function onMatchStateChanged(e) {
    const d = e.detail;
    if (!d) return;
-   if (d.detectionState) view.matchState = d.detectionState;
-   for (const k of COPYABLE_FIELDS) if (k in d) view[k] = d[k];
+   const faceapiSection = d.faceapi || null;
+   const nextMatchState = d.overall || d.detectionState || faceapiSection?.detectionState;
+   if (nextMatchState) view.matchState = nextMatchState;
+   for (const k of COPYABLE_FIELDS) {
+      if (k in d) view[k] = d[k];
+      else if (faceapiSection && k in faceapiSection) view[k] = faceapiSection[k];
+   }
    // Any non-auto source has just painted an overlay onto the video; mute the
    // bbox for OVERLAY_SUPPRESS_MS to keep the two visuals from fighting.
    if (d.source && d.source !== 'auto') suppressUntil = performance.now() + OVERLAY_SUPPRESS_MS;
+
+   renderOverlay();
 }
 
 /**
@@ -169,7 +185,34 @@ export function onMatchStateChanged(e) {
  * @param {CustomEvent<{ count: number }>} e
  */
 export function onDbChanged(e) {
-   if (e.detail?.count === 0) Object.assign(view, INITIAL_VIEW);
+   if (e.detail?.count === 0) Object.assign(view, {
+      ...INITIAL_VIEW,
+      overlayMode: view.overlayMode,
+      lastLandmarks3d: view.lastLandmarks3d,
+      lastDetection: view.lastDetection,
+   });
+}
+
+/**
+ * Change the overlay mode, persist it and repaint immediately.
+ *
+ * @param {'bbox'|'mesh'|'entrambi'} mode
+ * @returns {'bbox'|'mesh'|'entrambi'}
+ */
+export function setOverlayMode(mode) {
+   if (!OVERLAY_MODES.includes(mode)) return view.overlayMode;
+   view.overlayMode = mode;
+   persistOverlayMode(mode);
+   renderOverlay();
+   return view.overlayMode;
+}
+
+/**
+ * @returns {'bbox'|'mesh'|'entrambi'}
+ */
+export function cycleOverlayMode() {
+   const index = OVERLAY_MODES.indexOf(view.overlayMode);
+   return setOverlayMode(OVERLAY_MODES[(index + 1) % OVERLAY_MODES.length]);
 }
 
 // ---------- Geometry / rendering helpers ----------
@@ -191,6 +234,56 @@ function syncMirror() {
 /** Clear the entire bbox canvas. */
 function clearBbox() {
    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/** Repaint the shared overlay canvas from the latest cached streams. */
+function renderOverlay() {
+   if (!canvas || !overlayEl || !ctx) return;
+   syncSize();
+   syncMirror();
+   clearBbox();
+   if (performance.now() < suppressUntil) return;
+
+   const box = getLastBox();
+   if (includesBbox() && box) {
+      drawBox(box);
+      drawLabels(box, extractScore(view.lastDetection));
+   }
+   if (includesMesh()) drawMesh478();
+}
+
+function includesBbox() {
+   return view.overlayMode === 'bbox' || view.overlayMode === 'entrambi';
+}
+
+function includesMesh() {
+   return view.overlayMode === 'mesh' || view.overlayMode === 'entrambi';
+}
+
+function getLastBox() {
+   if (!view.lastDetection) return null;
+   const resized = faceapi.resizeResults(view.lastDetection, {
+      width: canvas.width,
+      height: canvas.height,
+   });
+   return extractBox(resized) || null;
+}
+
+function readPersistedOverlayMode() {
+   try {
+      const raw = localStorage.getItem(OVERLAY_MODE_STORAGE_KEY);
+      return OVERLAY_MODES.includes(raw) ? raw : null;
+   } catch {
+      return null;
+   }
+}
+
+function persistOverlayMode(mode) {
+   try {
+      localStorage.setItem(OVERLAY_MODE_STORAGE_KEY, mode);
+   } catch {
+      // Persistence is optional; rendering still works without storage access.
+   }
 }
 
 /**
@@ -256,6 +349,21 @@ function drawBox(box) {
    ctx.lineWidth = LINE_WIDTH_CSS * scale;
    ctx.strokeStyle = currentColor();
    ctx.strokeRect(box.x, box.y, box.width, box.height);
+   ctx.restore();
+}
+
+function drawMesh478() {
+   if (!Array.isArray(view.lastLandmarks3d) || view.lastLandmarks3d.length !== 478) return;
+
+   const scale = cssScale();
+   const radius = 1.5 * scale;
+   ctx.save();
+   ctx.fillStyle = currentColor();
+   for (const point of view.lastLandmarks3d) {
+      ctx.beginPath();
+      ctx.arc(point.x * canvas.width, point.y * canvas.height, radius, 0, Math.PI * 2);
+      ctx.fill();
+   }
    ctx.restore();
 }
 

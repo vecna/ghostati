@@ -10,6 +10,22 @@ import { els, setStatus, clearOverlay } from './dom.js';
 import { loadGhostyle } from './ghostyles-manager.js';
 import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEffect3d, toggleEffect3d, reloadPlugins3d } from './plugins3d-loader.js';
 import { exportMakeup } from './export-makeup.js';
+import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY } from './bbox-overlay.js';
+
+const OVERLAY_MODE_ORDER = ['bbox', 'mesh', 'entrambi'];
+
+function overlayModeLabel(mode) {
+   return `Vista: ${mode}`;
+}
+
+function readInitialOverlayMode() {
+   try {
+      const raw = localStorage.getItem(OVERLAY_MODE_STORAGE_KEY);
+      return OVERLAY_MODE_ORDER.includes(raw) ? raw : 'bbox';
+   } catch {
+      return 'bbox';
+   }
+}
 
 // Mirror toggle logic (fallback, hidden in UI)
 if (els.mirrorToggle) {
@@ -90,7 +106,7 @@ window.Ghostati = {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+   [els.copyMakeupBtn, els.saveBtn, els.findBtn, els.overlayModeBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
       if (btn) {
          if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
          else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
@@ -225,6 +241,20 @@ async function init() {
    state.db3d = loadDb3d();
    renderDbStats(state, els);
    resizeCanvas(els);
+
+   const initialOverlayMode = readInitialOverlayMode();
+   setOverlayMode(initialOverlayMode);
+   if (els.overlayModeBtn) {
+      els.overlayModeBtn.textContent = overlayModeLabel(initialOverlayMode);
+      els.overlayModeBtn.addEventListener('click', () => {
+         const currentMode = els.overlayModeBtn.dataset.overlayMode || initialOverlayMode;
+         const currentIndex = OVERLAY_MODE_ORDER.indexOf(currentMode);
+         const nextMode = OVERLAY_MODE_ORDER[(currentIndex + 1) % OVERLAY_MODE_ORDER.length];
+         els.overlayModeBtn.dataset.overlayMode = setOverlayMode(nextMode);
+         els.overlayModeBtn.textContent = overlayModeLabel(els.overlayModeBtn.dataset.overlayMode);
+      });
+      els.overlayModeBtn.dataset.overlayMode = initialOverlayMode;
+   }
 
    // Hide scanBtn: scanFace is deprecated; testMakeupEfficacy is accessible via
    // the plugin-active branch if needed in future, but the button is not shown.

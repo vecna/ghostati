@@ -1,14 +1,97 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fmt, currentColor, extractBox, extractScore, view, init, onMatchStateChanged, COLORS } from '../../scripts/bbox-overlay.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  fmt,
+  currentColor,
+  extractBox,
+  extractScore,
+  view,
+  init,
+  onDetection,
+  onLandmarks3d,
+  onMatchStateChanged,
+  setOverlayMode,
+  COLORS,
+  OVERLAY_MODE_STORAGE_KEY,
+} from '../../scripts/bbox-overlay.js';
+
+function makeLandmarks478() {
+  return Array.from({ length: 478 }, (_, index) => ({
+    x: (index % 20) / 20,
+    y: (index % 24) / 24,
+    z: index / 478,
+  }));
+}
+
+function makeDetection() {
+  return {
+    detection: {
+      score: 0.91,
+      box: { x: 10, y: 20, width: 100, height: 120 }
+    }
+  };
+}
 
 describe('bbox-overlay utilities', () => {
+  let ctx;
+  let nowSpy;
+
   beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    nowSpy = vi.spyOn(performance, 'now').mockReturnValue(100000);
+
+    ctx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      strokeRect: vi.fn(),
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 90 })),
+      fillText: vi.fn(),
+      arc: vi.fn(),
+      setLineDash: vi.fn(),
+      translate: vi.fn(),
+      scale: vi.fn(),
+      arcTo: vi.fn(),
+      textBaseline: '',
+      font: '',
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 0,
+    };
+
+    const overlay = document.getElementById('overlay');
+    const bboxOverlay = document.getElementById('bboxOverlay');
+    overlay.width = 640;
+    overlay.height = 480;
+    overlay.style.transform = 'scaleX(-1)';
+    bboxOverlay.width = 640;
+    bboxOverlay.height = 480;
+    bboxOverlay.style.transform = '';
+    Object.defineProperty(bboxOverlay, 'clientWidth', { value: 320, configurable: true });
+    bboxOverlay.getContext = vi.fn(() => ctx);
+
     // Reset view state
     view.matchState = 'unknown';
     view.liveMinDist = null;
     view.obfMinDist = null;
     view.liveMinId = null;
     view.obfMinId = null;
+    view.overlayMode = 'bbox';
+    view.lastLandmarks3d = null;
+    view.lastDetection = null;
+
+    init();
+  });
+
+  afterEach(() => {
+    nowSpy.mockRestore();
   });
 
   describe('fmt', () => {
@@ -83,15 +166,120 @@ describe('bbox-overlay utilities', () => {
     it('updates the view state from event detail', () => {
       const event = {
         detail: {
-          detectionState: 'eluded',
-          liveMinDist: 0.35,
-          liveMinId: 2
+          overall: 'partial-elusion',
+          faceapi: {
+            detectionState: 'eluded',
+            liveMinDist: 0.35,
+            liveMinId: 2
+          }
         }
       };
       onMatchStateChanged(event);
-      expect(view.matchState).toBe('eluded');
+      expect(view.matchState).toBe('partial-elusion');
       expect(view.liveMinDist).toBe(0.35);
       expect(view.liveMinId).toBe(2);
+    });
+  });
+
+  describe('overlay modes and rendering', () => {
+    it('cycles render output between bbox, mesh and entrambi and persists the mode', () => {
+      const landmarks = makeLandmarks478();
+      const detection = makeDetection();
+
+      onLandmarks3d({ detail: { landmarks } });
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      setOverlayMode('bbox');
+      onDetection({ detail: { result: detection } });
+      expect(view.overlayMode).toBe('bbox');
+      expect(localStorage.getItem(OVERLAY_MODE_STORAGE_KEY)).toBe('bbox');
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).not.toHaveBeenCalled();
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      setOverlayMode('mesh');
+      expect(view.overlayMode).toBe('mesh');
+      expect(localStorage.getItem(OVERLAY_MODE_STORAGE_KEY)).toBe('mesh');
+      expect(ctx.strokeRect).not.toHaveBeenCalled();
+      expect(ctx.arc).toHaveBeenCalledTimes(478);
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      setOverlayMode('entrambi');
+      expect(view.overlayMode).toBe('entrambi');
+      expect(localStorage.getItem(OVERLAY_MODE_STORAGE_KEY)).toBe('entrambi');
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).toHaveBeenCalledTimes(478);
+    });
+
+    it('reads the persisted overlay mode during init', () => {
+      localStorage.setItem(OVERLAY_MODE_STORAGE_KEY, 'mesh');
+      view.overlayMode = 'bbox';
+
+      init();
+
+      expect(view.overlayMode).toBe('mesh');
+    });
+
+    it('suppresses both bbox and mesh after non-auto overlay events', () => {
+      const landmarks = makeLandmarks478();
+      const detection = makeDetection();
+
+      setOverlayMode('entrambi');
+      nowSpy.mockReturnValue(1000);
+      onMatchStateChanged({ detail: { source: 'save', overall: 'matched' } });
+
+      ctx.clearRect.mockClear();
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      nowSpy.mockReturnValue(2000);
+      onDetection({ detail: { result: detection } });
+      onLandmarks3d({ detail: { landmarks } });
+
+      expect(ctx.clearRect).toHaveBeenCalledTimes(2);
+      expect(ctx.strokeRect).not.toHaveBeenCalled();
+      expect(ctx.arc).not.toHaveBeenCalled();
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      nowSpy.mockReturnValue(6001);
+      onLandmarks3d({ detail: { landmarks } });
+
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).toHaveBeenCalledTimes(478);
+    });
+
+    it('renders mesh when landmarks arrive before face-api detection', () => {
+      const landmarks = makeLandmarks478();
+
+      setOverlayMode('mesh');
+      onMatchStateChanged({ detail: { overall: 'partial-elusion', source: 'auto' } });
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      onLandmarks3d({ detail: { landmarks } });
+
+      expect(ctx.strokeRect).not.toHaveBeenCalled();
+      expect(ctx.arc).toHaveBeenCalledTimes(478);
+      expect(ctx.fillStyle).toBe(COLORS['partial-elusion']);
+    });
+
+    it('reuses the cached detection when landmarks arrive later', () => {
+      const landmarks = makeLandmarks478();
+      const detection = makeDetection();
+
+      setOverlayMode('entrambi');
+      onDetection({ detail: { result: detection } });
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).not.toHaveBeenCalled();
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      onLandmarks3d({ detail: { landmarks } });
+
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).toHaveBeenCalledTimes(478);
     });
   });
 });
