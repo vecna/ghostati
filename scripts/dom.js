@@ -38,7 +38,7 @@ export const els = {
    scanBtn: document.getElementById('scanBtn'),
    copyMakeupBtn: document.getElementById('copyMakeupBtn'),
    saveBtn: document.getElementById('saveBtn'),
-   findBtn: document.getElementById('findBtn'),
+   analyzeBtn: document.getElementById('analyzeBtn'),
    overlayModeBtn: document.getElementById('overlayModeBtn'),
    clearDbBtn: document.getElementById('clearDbBtn'),
    ghostylesContainer: document.getElementById('ghostylesContainer'),

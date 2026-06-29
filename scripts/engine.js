@@ -1,12 +1,15 @@
 /** @module engine */
 import { state } from './state.js';
 import { els, clearOverlay } from './dom.js';
-import { distance, avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
+import { avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
 import { resizeCanvas } from './camera.js';
 import { persistDb, renderDbStats } from './db.js';
 import { setLog } from './utils.js';
 import { DETECTOR_OPTIONS } from './config.js';
 import { overlayModeNeedsDetailedFaceapi, view as overlayView } from './bbox-overlay.js';
+import { computeCompositeMetrics, decideMatchState } from './landmark-analysis.js';
+
+export { seekFaceInDb, computeCompositeMetrics, decideMatchState } from './landmark-analysis.js';
 
 /**
  * Detect a face in the webcam video and optionally draw an overlay.
@@ -57,84 +60,6 @@ export function triggerOverlayFadeout() {
    state.overlayFadeTimeout = setTimeout(() => {
       els.overlay.style.opacity = '0';
    }, 5000);
-}
-
-/**
- * Decide the overall match state based on live and composited metrics.
- *
- * Applies the matching threshold and handles cases where detection failed
- * entirely or only a weak detection was possible, the priority is to talk
- * about obfuscation - so if there is a ghostyle we look at those vars, 
- * if not, then we calculate with live detection.
- *
- * @param {Object} params - Metric parameters.
- * @param {number|null} params.liveMinDist - Minimum distance for live detection.
- * @param {number|null} params.liveMinId - Matching face ID for live detection.
- * @param {number|null} params.obfMinDist - Minimum distance for composited detection.
- * @param {number|null} params.obfMinId - Matching face ID for composited detection.
- * @param {boolean} params.weakDetection - Whether composited detection was weak.
- * @param {boolean} params.detectionTotallyFailed - Whether composited detection failed.
- * @returns {{detectionState:string, headline:string}} Decision and message for UI.
- * @see findFace – consumes this decision to build event payload.
- */
-function decideMatchState({ liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed }) {
-
-   /* there is a ghostyle running */
-   if (obfMinDist != null || weakDetection || detectionTotallyFailed) {
-      // console.log("ghostyle present! decideMatchState:", { liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed });
-
-      if (typeof obfMinId === 'number' && obfMinDist <= state.MATCH_THRESHOLD) {
-         return {
-            detectionState: 'unclear',
-            headline: `Il rilevatore con il Ghostyle vede il volto con ID ${obfMinId} - confidenza ${obfMinDist.toFixed(3)}.`,
-            distance: obfMinDist,
-            matchedId: obfMinId,
-         };
-      }
-      if (detectionTotallyFailed) {
-         return {
-            detectionState: 'eluded',
-            headline: 'Rilevatore ingannato dal Ghostyle! face-api non trova un volto nel disegno composito.',
-            distance: obfMinDist,
-            matchedId: null,
-         };
-      }
-      if (weakDetection) {
-         return {
-            detectionState: 'eluded',
-            headline: 'Individuazione sul Ghostyle con bassa confidenza (face-api non vede chiaramente un volto).',
-            distance: obfMinDist,
-            matchedId: null,
-         };
-      }
-
-      // Ghostyle attivo, detection chiara, ma embedding lontano da ogni ID
-      // salvato: il riconoscimento biometrico è eluso pur restando "un volto".
-      return {
-         detectionState: 'eluded',
-         headline: `Ghostyle attivo: volto rilevato ma nessun ID sotto la soglia di ${state.MATCH_THRESHOLD.toFixed(2)} (distanza ${obfMinDist.toFixed(3)}).`,
-         distance: obfMinDist,
-         matchedId: null,
-      };
-
-   } else /* there is not a ghostyles running */ {
-      // console.log("ghostyle absent! decideMatchState:", { liveMinDist, liveMinId, obfMinDist, obfMinId, weakDetection, detectionTotallyFailed });
-
-      if (liveMinDist <= state.MATCH_THRESHOLD) {
-         return {
-            detectionState: 'matched',
-            headline: `Corrispondenza trovata: ID ${liveMinId} (distanza ${liveMinDist.toFixed(3)} ≤ ${state.MATCH_THRESHOLD.toFixed(2)}).`,
-            distance: liveMinDist,
-            matchedId: liveMinId,
-         };
-      }
-      return {
-         detectionState: 'eluded',
-         headline: `Nessuna corrispondenza sotto la soglia di ${state.MATCH_THRESHOLD.toFixed(2)}.`,
-         distance: liveMinDist,
-         matchedId: null,
-      };
-   }
 }
 
 /**
@@ -390,6 +315,9 @@ export async function saveFace() {
    state.db.faces.push({
       id,
       descriptor: Array.from(result.descriptor),
+      landmarks: result.landmarks?.positions
+         ? result.landmarks.positions.map((p) => ({ x: p.x, y: p.y }))
+         : null,
       age: Math.round(result.age),
       gender: result.gender || null,
       savedAt: new Date().toISOString()
@@ -404,7 +332,7 @@ export async function saveFace() {
 // This function shares the helper that are private, and so it can be 
 // used by the auto-loop-search-face
 export function evaluateMatch(liveInfo, composite) {
-   const { liveScore, liveMinDist, liveMinId } = liveInfo;
+   const { liveMinDist, liveMinId } = liveInfo;
 
    // here some boolean are computed to help the generation of color/message
 
@@ -437,46 +365,6 @@ export function evaluateMatch(liveInfo, composite) {
    };
 }
 
-
-/**
- * findFace
- * Goal: find the best matching face in the database, optionally using a composited
- * post‑makeup image when a plugin is active.
- *
- * `findFace` is the 2D leg of the find pipeline:
- *   1. Obtain a live detection result (guard for no face).
- *   2. Trigger UI feedback (overlay fade‑out).
- *   3. Return { liveResult, liveInfo, composite, headline, detail } for the
- *      orchestrator in main.js (or auto-find-loop.js) to compose into the
- *      unified `matchStateChanged` payload alongside the 3D engine result.
- *      Returns null if no face is detected.
- *      Returns { liveResult, liveInfo: null, ... } if the 2D DB is empty.
- *
- * Does NOT dispatch any event — that is the orchestrator's responsibility.
-*/
-export async function findFace() {
-
-   const liveResult = await detectFaceInCam(true);
-   if (!liveResult)
-      return;
-
-   triggerOverlayFadeout();
-
-   if (state.db.faces.length === 0) {
-      setLog('[face-api] Archivio 2D vuoto: nessun confronto face-api possibile.');
-      return { liveResult, liveInfo: null, composite: null, headline: null, detail: null };
-   }
-
-   // Pure metric computation
-   // liveInfo has liveScore, liveMinDist, liveMinId
-   const liveInfo = seekFaceInDb(liveResult);
-
-   const composite = hasActivePlugin() ? await compositeAndDetect(liveResult) : null;
-   const { headline, detail } = evaluateMatch(liveInfo, composite);
-   setLog(headline);
-   return { liveResult, liveInfo, composite, headline, detail };
-}
-
 /**
  * Determine whether a 2D or 3D effect plugin is currently active.
  * @returns {boolean} True if an effect plugin is active.
@@ -490,61 +378,4 @@ export function hasActivePlugin() {
    // state.activeEffect = string with the effect name
 }
 
-/* This is the function that computes the metrics for the live detection result. 
-It calculates the detection score and the minimum distance to any face in the database, 
-returning these values along with the ID of the closest match. */
-export function seekFaceInDb(liveResult) {
-   const liveScore = liveResult.detection.score;
-   const distances = state.db.faces.map(e => ({
-      id: e.id,
-      distance: distance(liveResult.descriptor, e.descriptor)
-   })).sort((a, b) => a.distance - b.distance);
-   const liveMinDist = distances.length ? distances[0].distance : null;
-   const liveMinId = distances.length ? distances[0].id : null;
-   return { liveScore, liveMinDist, liveMinId };
-}
-
-/**
- * Compute metrics for the composited (post‑makeup) detection.
- *
- * If a plugin is active a composited image is generated and this function
- * evaluates the detection score and the smallest distance between the
- * composited descriptor and the faces stored in the DB. It also reports whether
- * a weak detection was performed or if detection completely failed.
- *
- * The function is pure – it only reads from `state.db` and the supplied
- * `composite` object and does not mutate any global state.
- *
- * @param {Object} composite - Result of `compositeAndDetect`, containing
- *   `obfuscatedResult` and `weakDetection`.
- * @returns {{obfScore:(number|null), obfMinDist:(number|null), obfMinId:(number|null),
- *   weakDetection:boolean, detectionTotallyFailed:boolean}}
- *   Metrics used by `findFace`.
- * @see findFace – uses this helper to incorporate post‑makeup metrics.
- */
-function computeCompositeMetrics(composite) {
-   if (!composite || !composite.obfuscatedResult) {
-      return {
-         obfScore: null,
-         obfMinDist: null,
-         obfMinId: null,
-         weakDetection: !!composite?.weakDetection,
-         detectionTotallyFailed: true
-      };
-   }
-   const obfScore = composite.obfuscatedResult.detection.score;
-   const distances = state.db.faces.map(e => ({
-      id: e.id,
-      distance: distance(composite.obfuscatedResult.descriptor, e.descriptor)
-   })).sort((a, b) => a.distance - b.distance);
-   const obfMinDist = distances.length ? distances[0].distance : null;
-   const obfMinId = distances.length ? distances[0].id : null;
-   return {
-      obfScore,
-      obfMinDist,
-      obfMinId,
-      weakDetection: !!composite.weakDetection,
-      detectionTotallyFailed: false
-   };
-}
 

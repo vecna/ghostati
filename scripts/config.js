@@ -23,8 +23,13 @@ export const MODEL_URLS = {
    tiny:        'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/tiny_face_detector',
    landmarks:   'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_landmark_68',
    recognition: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_recognition',
-   ageGender:   'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/age_gender_model'
+   ageGender:   'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/age_gender_model',
+   expressions: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master/face_expression'
 };
+
+export const ZONE_DELTA_STABLE = 0.015;
+export const ZONE_DELTA_MEDIUM = 0.040;
+export const ANALYZE_PANEL_MAX_WIDTH_DESKTOP = 900;
 
 /**
  * Root CDN URL for the @mediapipe/tasks-vision package. Used as a base for

@@ -29,7 +29,6 @@ vi.mock('../../scripts/db.js', () => ({
 vi.mock('../../scripts/engine.js', () => ({
   scanFace: vi.fn(async () => {}),
   saveFace: vi.fn(async () => {}),
-  findFace: vi.fn(async () => {}),
   hasActivePlugin: vi.fn(() => false),
   compositeAndDetect: vi.fn(async () => null)
 }));
@@ -54,7 +53,8 @@ vi.mock('../../scripts/config.js', () => ({
     tiny: '/tiny',
     landmarks: '/landmarks',
     recognition: '/recognition',
-    ageGender: '/age-gender'
+    ageGender: '/age-gender',
+    expressions: '/expressions'
   },
   DETECTOR_OPTIONS: {}
 }));
@@ -98,7 +98,7 @@ describe('main.setBusy', () => {
       els.scanBtn,
       els.copyMakeupBtn,
       els.saveBtn,
-      els.findBtn,
+      els.analyzeBtn,
       els.overlayModeBtn,
       els.clearDbBtn,
     ].forEach(btn => {
@@ -110,7 +110,7 @@ describe('main.setBusy', () => {
     setBusy(true);
 
     expect(els.saveBtn.disabled).toBe(true);
-    expect(els.findBtn.disabled).toBe(true);
+    expect(els.analyzeBtn.disabled).toBe(true);
     expect(els.overlayModeBtn.disabled).toBe(true);
     expect(els.clearDbBtn.disabled).toBe(true);
     expect(els.copyMakeupBtn.disabled).toBe(true);
@@ -126,7 +126,7 @@ describe('main.setBusy', () => {
     setBusy(false);
 
     expect(els.saveBtn.disabled).toBe(false);
-    expect(els.findBtn.disabled).toBe(false);
+    expect(els.analyzeBtn.disabled).toBe(false);
     expect(els.overlayModeBtn.disabled).toBe(false);
     expect(els.copyMakeupBtn.disabled).toBe(true);
 

@@ -2,8 +2,8 @@
 import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
 import { loadDb, loadDb3d, renderDbStats, clearDb } from './db.js';
-import { saveFace, findFace, hasActivePlugin, compositeAndDetect } from './engine.js';
-import { loadMobileNet, saveFace3d, findFace3d, evaluateMatch3d, compositeAndDetect3d } from './engine-3d.js';
+import { saveFace, compositeAndDetect } from './engine.js';
+import { loadMobileNet, saveFace3d, compositeAndDetect3d } from './engine-3d.js';
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay } from './dom.js';
@@ -11,6 +11,7 @@ import { loadGhostyle } from './ghostyles-manager.js';
 import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEffect3d, toggleEffect3d, reloadPlugins3d } from './plugins3d-loader.js';
 import { exportMakeup } from './export-makeup.js';
 import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY, OVERLAY_MODES } from './bbox-overlay.js';
+import { openAnalyzePanel } from './analyze-panel.js';
 
 function overlayModeLabel(mode) {
    return OVERLAY_MODES[mode] || OVERLAY_MODES.bbox;
@@ -104,7 +105,7 @@ window.Ghostati = {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.copyMakeupBtn, els.saveBtn, els.findBtn, els.overlayModeBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+   [els.copyMakeupBtn, els.saveBtn, els.analyzeBtn, els.overlayModeBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
       if (btn) {
          if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
          else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
@@ -128,7 +129,8 @@ async function loadModels() {
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URLS.tiny),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URLS.landmarks),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URLS.recognition),
-      faceapi.nets.ageGenderNet.loadFromUri(MODEL_URLS.ageGender)
+      faceapi.nets.ageGenderNet.loadFromUri(MODEL_URLS.ageGender),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URLS.expressions)
    ]);
 }
 
@@ -167,26 +169,6 @@ function computeOverall(faceapiSection, mediapipeSection) {
    if (!f || !m) return 'unknown';
    if (f === m) return f; // both 'matched' or both 'eluded'
    return 'partial-elusion';
-}
-
-/**
- * Build the `faceapi` section from a findFace() result.
- * Returns null when the 2D DB was empty (result.detail === null).
- * @param {{ liveInfo, detail }} result2d
- * @returns {object|null}
- */
-function buildFaceapiSection(result2d) {
-   if (!result2d?.detail) return null;
-   const { detail, liveInfo } = result2d;
-   return {
-      detectionState: detail.detectionState,
-      distance:       detail.distance,
-      matchedId:      detail.matchedId,
-      liveMinDist:    liveInfo?.liveMinDist ?? null,
-      liveMinId:      liveInfo?.liveMinId   ?? null,
-      obfMinDist:     detail.obfMinDist     ?? null,
-      obfMinId:       detail.obfMinId       ?? null,
-   };
 }
 
 /**
@@ -306,38 +288,14 @@ async function init() {
       }
    });
 
-   els.findBtn.addEventListener('click', async () => {
+   els.analyzeBtn.addEventListener('click', async () => {
       setBusy(true);
       try {
-         if (state.db.faces.length === 0 && (!state.db3d || state.db3d.faces.length === 0)) {
-            setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
-            return;
-         }
-
-         // 1. 2D engine pipeline
-         const result2d = await findFace();
-         if (!result2d) return; // no face detected (already logged)
-
-         // 2. 3D engine pipeline
-         const result3d = await findFace3d();
-
-         // 3. Build sections
-         const faceapiSection   = buildFaceapiSection(result2d);
-         const mediapipeSection = evaluateMatch3d(result3d);
-
-         const payload = {
-            source: 'find',
-            ghostylePresent: hasActivePlugin(),
-            faceapi:    faceapiSection,
-            mediapipe:  mediapipeSection,
-            overall:    computeOverall(faceapiSection, mediapipeSection),
-         };
-         state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', { detail: payload }));
+         await openAnalyzePanel();
       }
-      catch (err) { handleError(err, 'Errore durante la ricerca del volto.'); }
+      catch (err) { handleError(err, 'Errore durante l\'analisi del trucco.'); }
       finally {
          setBusy(false);
-         if (state.activeEffect) startEffectLoop(state, els);
       }
    });
 

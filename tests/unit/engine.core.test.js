@@ -48,9 +48,7 @@ import {
   drawDetectionScaffold,
   drawResult,
   evaluateMatch,
-  findFace,
   saveFace,
-  seekFaceInDb,
   triggerOverlayFadeout
 } from '../../scripts/engine.js';
 
@@ -291,39 +289,6 @@ describe('engine core exports', () => {
     expect(state.lastKnownEffectResult).toBe(result);
   });
 
-  it('findFace logs result, triggers fade and returns match detail for the orchestrator', async () => {
-    state.db.faces = [{ id: 4, descriptor: [0.1, 0.2] }];
-    window.Ghostati.getActiveEffect = vi.fn(() => null);
-    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
-
-    const result = {
-      age: 31,
-      gender: 'male',
-      genderProbability: 0.87,
-      detection: { score: 0.78, box: { x: 10, y: 20, width: 40, height: 50 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(result));
-
-    const onMatch = vi.fn();
-    state.ghostatiEvents.addEventListener('matchStateChanged', onMatch);
-
-    const payload = await findFace();
-
-    expect(els.overlay.style.transition).toBe('opacity 2s ease-in-out');
-    expect(setLog).toHaveBeenCalledWith(expect.stringContaining('Corrispondenza trovata: ID 4'));
-    expect(onMatch).not.toHaveBeenCalled();
-    expect(payload).toMatchObject({
-      liveResult: result,
-      liveInfo: { liveScore: 0.78, liveMinDist: 0.12, liveMinId: 4 },
-      composite: null,
-      detail: { detectionState: 'matched', distance: 0.12, matchedId: 4 }
-    });
-  });
-
-
-
   it('detectFaceInCam logs and returns null when face-api is unavailable', async () => {
     globalThis.faceapi = null;
 
@@ -486,12 +451,6 @@ describe('engine core exports', () => {
     expect(persistDb).not.toHaveBeenCalled();
   });
 
-  it('seekFaceInDb returns null match values for an empty database', () => {
-    const result = { detection: { score: 0.77 }, descriptor: [0.4, 0.5] };
-
-    expect(seekFaceInDb(result)).toEqual({ liveScore: 0.77, liveMinDist: null, liveMinId: null });
-  });
-
   it('evaluateMatch returns eluded when no live archive distance is below threshold', () => {
     const evaluated = evaluateMatch({ liveScore: 0.9, liveMinDist: 0.9, liveMinId: 3 }, null);
 
@@ -532,28 +491,6 @@ describe('engine core exports', () => {
     );
 
     expect(evaluated.detail).toMatchObject({ detectionState: 'eluded', distance: 0.9, matchedId: null, ghostylePresent: true });
-  });
-
-  it('findFace returns early when live detection fails', async () => {
-    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(null));
-
-    const found = await findFace();
-
-    expect(found).toBeUndefined();
-  });
-
-  it('findFace returns an empty-archive payload when the 2D database has no faces', async () => {
-    const result = {
-      detection: { score: 0.78, box: { x: 10, y: 20, width: 40, height: 50 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    faceapi.detectSingleFace.mockReturnValue(makeAgeGenderDescriptorChain(result));
-
-    const payload = await findFace();
-
-    expect(payload).toEqual({ liveResult: result, liveInfo: null, composite: null, headline: null, detail: null });
-    expect(setLog).toHaveBeenCalledWith('[face-api] Archivio 2D vuoto: nessun confronto face-api possibile.');
   });
 
   it('saveFace adds record, persists DB, logs and returns saved data for the orchestrator', async () => {
@@ -623,20 +560,6 @@ describe('engine core exports', () => {
     expect(state.lastKnownEffectResult).toBe(result);
   });
 
-  it('seekFaceInDb sorts multiple stored faces by distance', () => {
-    state.db.faces = [
-      { id: 1, descriptor: [1, 1] },
-      { id: 2, descriptor: [2, 2] }
-    ];
-    distance.mockReturnValueOnce(0.6).mockReturnValueOnce(0.2);
-
-    expect(seekFaceInDb({ detection: { score: 0.82 }, descriptor: [0, 0] })).toEqual({
-      liveScore: 0.82,
-      liveMinDist: 0.2,
-      liveMinId: 2
-    });
-  });
-
   it('evaluateMatch computes null composite metrics when compositing fails', () => {
     const evaluated = evaluateMatch(
       { liveScore: 0.9, liveMinDist: 0.7, liveMinId: 5 },
@@ -666,31 +589,6 @@ describe('engine core exports', () => {
     );
 
     expect(evaluated.detail).toMatchObject({ obfMinDist: 0.3, obfMinId: 2 });
-  });
-
-  it('findFace runs compositing when a plugin is active', async () => {
-    state.db.faces = [{ id: 3, descriptor: [0.1, 0.2] }];
-    window.Ghostati.getActiveEffect = vi.fn(() => 'soft-contour');
-    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
-
-    const compositedCtx = createCtx();
-    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const liveResult = {
-      detection: { score: 0.88, box: { x: 1, y: 2, width: 3, height: 4 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    const obfuscated = { detection: { score: 0.66 }, descriptor: [0.3, 0.4] };
-    faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(liveResult))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(obfuscated));
-
-    const payload = await findFace();
-
-    expect(payload.composite.obfuscatedResult).toBe(obfuscated);
-    expect(payload.detail.ghostylePresent).toBe(true);
-
-    canvasGetContextSpy.mockRestore();
   });
 
   it('evaluateMatch treats composited total detection failure as ghostyle elusion even if live distance matches', () => {
@@ -723,37 +621,6 @@ describe('engine core exports', () => {
       obfMinDist: null,
       obfMinId: null
     });
-  });
-
-  it('findFace reports eluded when plugin compositing cannot detect a face', async () => {
-    state.db.faces = [{ id: 3, descriptor: [0.1, 0.2] }];
-    window.Ghostati.getActiveEffect = vi.fn(() => 'soft-contour');
-    window.Ghostati.getActiveEffect3d = vi.fn(() => null);
-
-    const compositedCtx = createCtx();
-    const canvasGetContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(compositedCtx);
-    const liveResult = {
-      detection: { score: 0.88, box: { x: 1, y: 2, width: 3, height: 4 } },
-      landmarks: createLandmarksFixture(),
-      descriptor: [0.1, 0.2]
-    };
-    faceapi.detectSingleFace
-      .mockReturnValueOnce(makeAgeGenderDescriptorChain(liveResult))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(null))
-      .mockReturnValueOnce(makeLandmarksDescriptorChain(null));
-
-    const payload = await findFace();
-
-    expect(payload.detail).toMatchObject({
-      detectionState: 'eluded',
-      matchedId: null,
-      ghostylePresent: true,
-      obfMinDist: null,
-      obfMinId: null
-    });
-    expect(setLog).toHaveBeenCalledWith('Rilevatore ingannato dal Ghostyle! face-api non trova un volto nel disegno composito.');
-
-    canvasGetContextSpy.mockRestore();
   });
 
 });

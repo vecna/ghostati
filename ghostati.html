@@ -103,11 +103,16 @@
       </svg>
     </button>
     <div class="badge-container">
-      <button id="findBtn" class="floating-btn side-action" title="Trova faccia">
+      <button id="analyzeBtn" class="floating-btn side-action" title="Analizza trucco">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+          <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <path d="M9 9h.01" />
+          <path d="M15 9h.01" />
         </svg>
       </button>
       <span id="dbCountBadge" class="notification-badge" style="display: none;">0</span>
@@ -208,6 +213,21 @@
         <div class="metric"><span>Effetto</span><strong id="effectName">nessuno</strong></div>
         <div class="metric"><span>Tracking</span><strong id="effectTracking">off</strong></div>
         <div class="metric"><span>Rendering</span><strong>live su landmark</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="analyzeModal" class="analyze-modal" hidden>
+    <div id="analyzeBackdrop" class="analyze-backdrop">
+      <div id="analyzePanel" class="analyze-panel" role="dialog" aria-modal="true" aria-label="Analisi trucco">
+        <div class="analyze-visual-wrap">
+          <canvas id="analyzeCanvas" class="analyze-canvas"></canvas>
+        </div>
+        <div id="analyzeInfo" class="analyze-info"></div>
+        <div class="analyze-actions">
+          <button id="analyzeCopyBtn" class="secondary-btn" type="button">Copia report</button>
+          <button id="analyzeCloseBtn" class="secondary-btn" type="button">Chiudi</button>
+        </div>
       </div>
     </div>
   </div>
