@@ -12,26 +12,38 @@ import { DETECTOR_OPTIONS } from './config.js';
  * Returns the face detection result or null if no face is found.
  * @param {boolean} drawOverlay - Whether to draw the detection overlay.
  * @returns {Promise<Object|null>} Detection result, faceapi object.
- * @see scanFace - uses detectFaceInCam to log and dispatch match state.
  * @see saveFace - uses detectFaceInCam before saving a face.
  * @see findFace - uses detectFaceInCam to compare against stored faces.
  * @see testMakeupEfficacy - uses detectFaceInCam as the baseline detection.
  */
 export async function detectFaceInCam(drawOverlay) {
    clearOverlay();
-   const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS)
-      .withFaceLandmarks()
-      .withAgeAndGender()
-      .withFaceDescriptor();
+   try {
+      if (!faceapi || !faceapi.detectSingleFace) {
+         setLog('[ERROR] face-api modelli non caricati. Riprova tra pochi secondi.');
+         state.lastKnownEffectResult = null;
+         return null;
+      }
+      const result = await faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS)
+         .withFaceLandmarks()
+         .withAgeAndGender()
+         .withFaceDescriptor();
 
-   if (!result) {
+      if (!result) {
+         state.lastKnownEffectResult = null;
+         // setLog('Nessun volto rilevato nella webcam.');
+         return null;
+      }
+
+      if (drawOverlay) drawResult(result);
+      return result;
+   } catch (err) {
+      console.error('[detectFaceInCam]', err);
+      const msg = err?.message || String(err);
+      setLog(`[ERRORE face-api] ${msg}`);
       state.lastKnownEffectResult = null;
-      setLog('Nessun volto rilevato nella webcam.');
       return null;
    }
-
-   if (drawOverlay) drawResult(result);
-   return result;
 }
 
 export function triggerOverlayFadeout() {
@@ -163,19 +175,23 @@ export async function compositeAndDetect(liveResult) {
       detail: { canvas, ctx, liveResult }
    }));
 
-   let obfuscatedResult = await faceapi.detectSingleFace(canvas, DETECTOR_OPTIONS)
-      .withFaceLandmarks()
-      .withFaceDescriptor();
-   let weakDetection = false;
-   if (!obfuscatedResult) {
-      const weakOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.1 });
-      obfuscatedResult = await faceapi.detectSingleFace(canvas, weakOpts)
+   try {
+      let obfuscatedResult = await faceapi.detectSingleFace(canvas, DETECTOR_OPTIONS)
          .withFaceLandmarks()
          .withFaceDescriptor();
-      weakDetection = !!obfuscatedResult;
+      let weakDetection = false;
+      if (!obfuscatedResult) {
+         const weakOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.1 });
+         obfuscatedResult = await faceapi.detectSingleFace(canvas, weakOpts)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+         weakDetection = !!obfuscatedResult;
+      }
+      return { canvas, obfuscatedResult, weakDetection };
+   } catch (err) {
+      console.error('[compositeAndDetect]', err);
+      return { canvas, obfuscatedResult: null, weakDetection: false };
    }
-
-   return { canvas, obfuscatedResult, weakDetection };
 }
 
 /**
@@ -190,6 +206,7 @@ export async function runEffectPass() {
    state.effectInferenceInFlight = true;
    let retToCleanOverlay = false; // do not clean except if no face detected and no active effect, otherwise keep last overlay
    try {
+      if (!faceapi || !faceapi.detectSingleFace) return;
       const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
       const result = state.activeEffect ? await detector.withFaceLandmarks() : await detector;
 
@@ -353,27 +370,6 @@ export function drawResult(result) {
 
 
 /**
- * Scan the current face. This is the button on the top left, it might be redundant already.
- * The effect trigger overlay fadeout, log details, and dispatch a match‑state change event.
- * @see detectFaceInCam - obtains the base detection used for scanning.
- */
-export async function scanFace() {
-   const result = await detectFaceInCam(true);
-   if (!result) return;
-   triggerOverlayFadeout();
-   const age = Math.round(result.age);
-   const gender = result.gender || 'N/A';
-   const confidence = typeof result.genderProbability === 'number' ? ` (${Math.round(result.genderProbability * 100)}%)` : '';
-   const score = result.detection.score;
-   setLog(`Volto trovato. Età stimata: ${age}. Genere stimato: ${gender}${confidence}. Detection score: ${score.toFixed(2)}.`);
-
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: seekFaceInDb(result), source: 'scan', score }
-   }));
-
-}
-
-/**
  * Capture the current face, save its descriptor and metadata to the local database, and log the action.
  * @see detectFaceInCam - obtains the face data to be saved.
  */
@@ -394,11 +390,7 @@ export async function saveFace() {
    renderDbStats();
    const score = result.detection.score;
    setLog(`Impronta biometrica salvata con ID ${id}. Detection score: ${score.toFixed(2)}.`);
-
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: { detectionState: seekFaceInDb(result), source: 'save', score }
-   }));
-
+   return { id, result };
 }
 
 // This function shares the helper that are private, and so it can be 
@@ -429,6 +421,10 @@ export function evaluateMatch(liveInfo, composite) {
          distance,
          matchedId,
          ghostylePresent: !!composite,
+         liveMinDist,
+         liveMinId,
+         obfMinDist: m.obfMinDist,
+         obfMinId: m.obfMinId,
       },
    };
 }
@@ -439,21 +435,16 @@ export function evaluateMatch(liveInfo, composite) {
  * Goal: find the best matching face in the database, optionally using a composited
  * post‑makeup image when a plugin is active.
  *
- * `findFace` now serves solely as an orchestrator:
- *   1. Guard against an empty database and obtain a live detection result.
- *   2. Trigger UI feedback (overlay fade‑out) – the only allowed side‑effects.
- *   3. Delegate metric calculations to pure helpers that receive explicit
- *     parameters and return immutable results.
- *   4. Use the helper outcomes to decide the match state and compose a user‑
- *      facing log message.
- *   5. Dispatch a `matchStateChanged` event with a concise payload.
+ * `findFace` is the 2D leg of the find pipeline:
+ *   1. Obtain a live detection result (guard for no face).
+ *   2. Trigger UI feedback (overlay fade‑out).
+ *   3. Return { liveResult, liveInfo, composite, headline, detail } for the
+ *      orchestrator in main.js (or auto-find-loop.js) to compose into the
+ *      unified `matchStateChanged` payload alongside the 3D engine result.
+ *      Returns null if no face is detected.
+ *      Returns { liveResult, liveInfo: null, ... } if the 2D DB is empty.
  *
- * By limiting mutable global interactions to these well‑defined steps we gain:
- * • Simple unit tests for each helper (no DOM or global state needed).
- * • Clear separation of concerns – UI logic vs. algorithmic logic.
- * • Easier future extensions (e.g., alternative matching algorithms) without
- *   touching the orchestration flow.
- *
+ * Does NOT dispatch any event — that is the orchestrator's responsibility.
 */
 export async function findFace() {
 
@@ -461,12 +452,12 @@ export async function findFace() {
    if (!liveResult)
       return;
 
-   if (state.db.faces.length === 0) {
-      setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
-      return;
-   }
-
    triggerOverlayFadeout();
+
+   if (state.db.faces.length === 0) {
+      setLog('[face-api] Archivio 2D vuoto: nessun confronto face-api possibile.');
+      return { liveResult, liveInfo: null, composite: null, headline: null, detail: null };
+   }
 
    // Pure metric computation
    // liveInfo has liveScore, liveMinDist, liveMinId
@@ -474,14 +465,8 @@ export async function findFace() {
 
    const composite = hasActivePlugin() ? await compositeAndDetect(liveResult) : null;
    const { headline, detail } = evaluateMatch(liveInfo, composite);
-   setLog(`${headline}`);
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: {
-         ...detail,
-         liveInfo,
-         source: 'find'
-      }
-   }));
+   setLog(headline);
+   return { liveResult, liveInfo, composite, headline, detail };
 }
 
 /**

@@ -18,36 +18,68 @@
  */
 
 import { compositeAndDetect, evaluateMatch, detectFaceInCam, hasActivePlugin, seekFaceInDb } from './engine.js';
+import { findFace3d, evaluateMatch3d } from './engine-3d.js';
 import { state } from './state.js';
 
 window.addEventListener('ghostatiReady', autoFindLoop, { once: true });
 
 function autoFindLoop() {
-
    const INTERVAL_MS = 2000;
+   let tickCount = 0;
 
-   setInterval(tick, INTERVAL_MS);
+   setInterval(async () => {
+      tickCount++;
+      // Guard: skip early ticks if models not ready
+      if (tickCount < 2) return; // allow brief stabilization
+      await tick();
+   }, INTERVAL_MS);
 }
 
 async function tick() {
-   const liveResult = await detectFaceInCam(false);
-   if (!liveResult)
-      return;
+   try {
+      const liveResult = await detectFaceInCam(false);
+      if (!liveResult) return;
 
-   let liveInfo = {};
-   if(state.db.faces.length > 0) {
-      liveInfo = seekFaceInDb(liveResult);
-      // liveInfo has liveScore, liveMinDist, liveMinId
-   }
-
-   const composite = hasActivePlugin() ? await compositeAndDetect(liveResult) : null;
-   // composite might have 'canvas', 'obfuscatedResult', and 'weakDetection' properties
-   const { detail } = evaluateMatch(liveInfo, composite);
-   state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
-      detail: {
-         ...detail,
-         ...liveInfo,
-         source: 'auto'
+      // ── 2D (face-api) ───────────────────────────────────────────────────────
+      let faceapiSection = null;
+      if (state.db.faces.length > 0) {
+         const liveInfo   = seekFaceInDb(liveResult);
+         const composite  = hasActivePlugin() ? await compositeAndDetect(liveResult) : null;
+         const { detail } = evaluateMatch(liveInfo, composite);
+         faceapiSection = {
+            detectionState: detail.detectionState,
+            distance:       detail.distance,
+            matchedId:      detail.matchedId,
+            liveMinDist:    liveInfo.liveMinDist,
+            liveMinId:      liveInfo.liveMinId,
+            obfMinDist:     detail.obfMinDist ?? null,
+            obfMinId:       detail.obfMinId   ?? null,
+         };
       }
-   }));
+
+      // ── 3D (MobileNet) ──────────────────────────────────────────────────────
+      const result3d         = await findFace3d();
+      const mediapipeSection = evaluateMatch3d(result3d);
+
+      // ── overall ─────────────────────────────────────────────────────────────
+      const f = faceapiSection?.detectionState;
+      const m = mediapipeSection?.detectionState;
+      const overall = (!f && !m)              ? 'unknown'
+         : (!f || !m)                         ? 'unknown'
+         : (f === m)                          ? f
+         :                                      'partial-elusion';
+
+      state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+         detail: {
+            source: 'auto',
+            ghostylePresent: hasActivePlugin(),
+            faceapi:    faceapiSection,
+            mediapipe:  mediapipeSection,
+            overall,
+         }
+      }));
+   } catch (err) {
+      console.error('[auto-find-loop] tick error:', err);
+      // Silently fail — don't spam logs, let UI show last known state
+   }
 }

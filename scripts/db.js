@@ -4,9 +4,34 @@ import { state } from './state.js';
 import { setLog } from './utils.js';
 
 export const STORAGE_KEY = 'local-face-lab-db-v1';
+export const STORAGE_KEY_3D = 'local-face-lab-db-3d-v1';
 
 /**
- * Loads the application’s face database from `localStorage`.
+ * Loads the 3D face database (MobileNet embeddings) from `localStorage`.
+ *
+ * @returns {{faces: Array}} The current 3D database state (no nextId — IDs come from the 2D DB).
+ */
+export function loadDb3d() {
+   try {
+      const raw = localStorage.getItem(STORAGE_KEY_3D);
+      if (!raw) return { faces: [] };
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.faces)) return { faces: [] };
+      return parsed;
+   } catch {
+      return { faces: [] };
+   }
+}
+
+/**
+ * Persists the current 3D database (`state.db3d`) to `localStorage`.
+ */
+export function persistDb3d() {
+   localStorage.setItem(STORAGE_KEY_3D, JSON.stringify(state.db3d));
+}
+
+/**
+ * Loads the application's face database from `localStorage`.
  *
  * Returns a fresh default database if no stored data exists or if the data is malformed.
  *
@@ -75,7 +100,9 @@ export function renderDbStats() {
  */
 export function clearDb() {
    state.db = { nextId: 0, faces: [] };
+   if (state.db3d) state.db3d = { faces: [] };
    persistDb();
+   if (state.db3d !== null) persistDb3d();
    state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
       detail: { detectionState: 'unknown', source: 'clear' }
    }));

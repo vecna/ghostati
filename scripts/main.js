@@ -1,8 +1,9 @@
 /** @module main */
 import { distance, avgPoint, lerp, scaleFrom, point, drawClosedPath, drawOpenPath, drawLabel, roundRect, expandEyePolygon, drawEyeWing, drawCheekSweep, drawContourBand, setLog, updateLogDisplay } from './utils.js';
 import { state } from './state.js';
-import { loadDb, renderDbStats, clearDb } from './db.js';
-import { scanFace, saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
+import { loadDb, loadDb3d, renderDbStats, clearDb } from './db.js';
+import { saveFace, findFace, testMakeupEfficacy, hasActivePlugin, compositeAndDetect } from './engine.js';
+import { loadMobileNet, saveFace3d, findFace3d, evaluateMatch3d, compositeAndDetect3d } from './engine-3d.js';
 import { startCamera, resizeCanvas, startEffectLoop, recordOneSecond } from './camera.js';
 import { MODEL_URLS, DETECTOR_OPTIONS } from './config.js';
 import { els, setStatus, clearOverlay, addGhostyleBtn } from './dom.js';
@@ -60,10 +61,15 @@ window.Ghostati = {
    /* fine delle funzioni usate nei plugin, ora implementate in utils.js */
    events: state.ghostatiEvents,
    getDb: () => structuredClone(state.db),
+   getDb3d: () => structuredClone(state.db3d),
    getActiveEffect: () => state.activeEffect,
    getLastResult: () => state.lastKnownEffectResult,
    getMatchThreshold: () => state.MATCH_THRESHOLD,
+   getMatchThreshold3d: () => state.MATCH_THRESHOLD_3D,
+   get lastLandmarks3d() { return state.lastLandmarks3d; },
+   set lastLandmarks3d(v) { state.lastLandmarks3d = v; },
    compositeAndDetect: (liveResult) => compositeAndDetect(liveResult),
+   compositeAndDetect3d: () => compositeAndDetect3d(),
    detectorOptions: DETECTOR_OPTIONS
 };
 
@@ -121,7 +127,7 @@ async function loadGhostyle(url, expectedName) {
  */
 export function setBusy(isBusy) {
    state.isSystemBusy = isBusy;
-   [els.scanBtn, els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
+   [els.copyMakeupBtn, els.saveBtn, els.findBtn, els.clearDbBtn, els.recordBtn].forEach(btn => {
       if (btn) {
          if (btn === els.copyMakeupBtn && !state.lastCompositedCanvas) btn.disabled = true;
          else if (btn === els.recordBtn && state.isRecording) btn.disabled = true;
@@ -167,6 +173,82 @@ function handleError(err, fallbackMessage) {
    setLog(fallbackMessage + detail);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Unified payload helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Compute the `overall` field of a matchStateChanged payload.
+ * @param {object|null} faceapiSection
+ * @param {object|null} mediapipeSection
+ * @returns {'matched'|'eluded'|'partial-elusion'|'unknown'}
+ */
+function computeOverall(faceapiSection, mediapipeSection) {
+   if (!faceapiSection && !mediapipeSection) return 'unknown';
+   const f = faceapiSection?.detectionState;
+   const m = mediapipeSection?.detectionState;
+   if (!f || !m) return 'unknown';
+   if (f === m) return f; // both 'matched' or both 'eluded'
+   return 'partial-elusion';
+}
+
+/**
+ * Build the `faceapi` section from a findFace() result.
+ * Returns null when the 2D DB was empty (result.detail === null).
+ * @param {{ liveInfo, detail }} result2d
+ * @returns {object|null}
+ */
+function buildFaceapiSection(result2d) {
+   if (!result2d?.detail) return null;
+   const { detail, liveInfo } = result2d;
+   return {
+      detectionState: detail.detectionState,
+      distance:       detail.distance,
+      matchedId:      detail.matchedId,
+      liveMinDist:    liveInfo?.liveMinDist ?? null,
+      liveMinId:      liveInfo?.liveMinId   ?? null,
+      obfMinDist:     detail.obfMinDist     ?? null,
+      obfMinId:       detail.obfMinId       ?? null,
+   };
+}
+
+/**
+ * Build the `faceapi` section for a save action.
+ * After saving, the best match IS the saved face (dist ≈ 0), so we report
+ * detectionState: 'matched' unconditionally.
+ * @param {{ id, result }} saved2d
+ * @returns {object}
+ */
+function buildFaceapiSaveSection(saved2d) {
+   return {
+      detectionState: 'matched',
+      distance: 0,
+      matchedId: saved2d.id,
+      liveMinDist: 0,
+      liveMinId: saved2d.id,
+      obfMinDist: null,
+      obfMinId: null,
+   };
+}
+
+/**
+ * Build the `mediapipe` section for a save action.
+ * @param {{ id, liveInfo3d }} saved3d
+ * @param {number} id
+ * @returns {object}
+ */
+function buildMediapipeSaveSection(saved3d, id) {
+   return {
+      detectionState: 'matched',
+      similarity: 1.0, // just saved — perfect self-match
+      matchedId: id,
+      liveMaxSim: saved3d.liveInfo3d?.liveMaxSim ?? 1.0,
+      liveMaxId:  id,
+      obfMaxSim: null,
+      obfMaxId: null,
+   };
+}
+
 /**
  * Initializes the application: loads the database, renders statistics, sets up the canvas,
  * registers UI event listeners, loads models, ghostyle plugins, and starts the webcam.
@@ -176,9 +258,14 @@ function handleError(err, fallbackMessage) {
  * @see init(); – the function is invoked at the bottom of the script to start the app.
  */
 async function init() {
-   state.db = loadDb();
+   state.db   = loadDb();
+   state.db3d = loadDb3d();
    renderDbStats(state, els);
    resizeCanvas(els);
+
+   // Hide scanBtn: scanFace is deprecated; testMakeupEfficacy is accessible via
+   // the plugin-active branch if needed in future, but the button is not shown.
+   if (els.scanBtn) els.scanBtn.style.display = 'none';
 
    window.addEventListener('resize', function () {
       resizeCanvas(els);
@@ -203,8 +290,6 @@ async function init() {
          if (hasActivePlugin(state)) {
             await testMakeupEfficacy(state, els);
             // Il trucco rimane bloccato sullo schermo, niente fadeout o clear
-         } else {
-            await scanFace(state, els);
          }
       }
       catch (err) { handleError(err, 'Errore durante la scansione o l\'analisi avversaria.'); }
@@ -216,7 +301,31 @@ async function init() {
 
    els.saveBtn.addEventListener('click', async () => {
       setBusy(true);
-      try { await saveFace(state, els); }
+      try {
+         // 1. 2D engine: detect + save; returns { id, result } or null
+         const saved2d = await saveFace();
+         if (!saved2d) return;
+         const { id } = saved2d;
+
+         // 2. 3D engine: extract MobileNet embedding + save under the same ID
+         const saved3d = await saveFace3d(id);
+
+         // 3. Build unified payload
+         const faceapiSection = buildFaceapiSaveSection(saved2d);
+         const mediapipeSection = saved3d
+            ? buildMediapipeSaveSection(saved3d, id)
+            : null;
+
+         state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', {
+            detail: {
+               source: 'save',
+               ghostylePresent: false,
+               faceapi: faceapiSection,
+               mediapipe: mediapipeSection,
+               overall: computeOverall(faceapiSection, mediapipeSection),
+            }
+         }));
+      }
       catch (err) { handleError(err, 'Errore durante il salvataggio del volto.'); }
       finally {
          setBusy(false);
@@ -226,7 +335,32 @@ async function init() {
 
    els.findBtn.addEventListener('click', async () => {
       setBusy(true);
-      try { await findFace(state, els); }
+      try {
+         if (state.db.faces.length === 0 && (!state.db3d || state.db3d.faces.length === 0)) {
+            setLog('Archivio locale vuoto. Salva almeno un volto prima della ricerca.');
+            return;
+         }
+
+         // 1. 2D engine pipeline
+         const result2d = await findFace();
+         if (!result2d) return; // no face detected (already logged)
+
+         // 2. 3D engine pipeline
+         const result3d = await findFace3d();
+
+         // 3. Build sections
+         const faceapiSection   = buildFaceapiSection(result2d);
+         const mediapipeSection = evaluateMatch3d(result3d);
+
+         const payload = {
+            source: 'find',
+            ghostylePresent: hasActivePlugin(),
+            faceapi:    faceapiSection,
+            mediapipe:  mediapipeSection,
+            overall:    computeOverall(faceapiSection, mediapipeSection),
+         };
+         state.ghostatiEvents.dispatchEvent(new CustomEvent('matchStateChanged', { detail: payload }));
+      }
       catch (err) { handleError(err, 'Errore durante la ricerca del volto.'); }
       finally {
          setBusy(false);
@@ -256,6 +390,13 @@ async function init() {
    } catch (err) {
       setLog('Errore durante il caricamento: ' + err.message);
       return;
+   }
+
+   setLog('Caricamento MobileNetV2 per il motore di riconoscimento 3D...');
+   try {
+      await loadMobileNet();
+   } catch (err) {
+      setLog('MobileNetV2 non disponibile: ' + err.message + ' — solo face-api attivo.');
    }
 
    setLog('Caricamento plugin di makeup in corso...')
