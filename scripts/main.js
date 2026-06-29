@@ -12,10 +12,17 @@ import { initPlugins3dLoader, getActiveEffect3d, activateEffect3d, deactivateEff
 import { exportMakeup } from './export-makeup.js';
 import { setOverlayMode, OVERLAY_MODE_STORAGE_KEY } from './bbox-overlay.js';
 
-const OVERLAY_MODE_ORDER = ['bbox', 'mesh', 'entrambi'];
+const OVERLAY_MODE_ORDER = ['bbox', 'mesh', 'entrambi', '2d'];
+
+const OVERLAY_MODE_LABELS = {
+   bbox: 'Vista: bbox',
+   mesh: 'Vista: mesh',
+   entrambi: 'Vista: entrambi',
+   '2d': 'Vista: 2D',
+};
 
 function overlayModeLabel(mode) {
-   return `Vista: ${mode}`;
+   return OVERLAY_MODE_LABELS[mode] || OVERLAY_MODE_LABELS.bbox;
 }
 
 function readInitialOverlayMode() {

@@ -25,6 +25,7 @@
  */
 
 import { state } from './state.js';
+import { avgPoint, drawClosedPath, drawOpenPath, roundRect } from './utils.js';
 
 // ---------- Style constants ----------
 
@@ -62,7 +63,7 @@ const COPYABLE_FIELDS = ['liveMinDist', 'obfMinDist', 'liveMinId', 'obfMinId'];
 
 export const OVERLAY_MODE_STORAGE_KEY = 'ghostati-overlay-mode-v1';
 
-const OVERLAY_MODES = ['bbox', 'mesh', 'entrambi'];
+export const OVERLAY_MODES = ['bbox', 'mesh', 'entrambi', '2d'];
 
 // ---------- Module state ----------
 
@@ -196,8 +197,8 @@ export function onDbChanged(e) {
 /**
  * Change the overlay mode, persist it and repaint immediately.
  *
- * @param {'bbox'|'mesh'|'entrambi'} mode
- * @returns {'bbox'|'mesh'|'entrambi'}
+ * @param {'bbox'|'mesh'|'entrambi'|'2d'} mode
+ * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
  */
 export function setOverlayMode(mode) {
    if (!OVERLAY_MODES.includes(mode)) return view.overlayMode;
@@ -208,7 +209,7 @@ export function setOverlayMode(mode) {
 }
 
 /**
- * @returns {'bbox'|'mesh'|'entrambi'}
+ * @returns {'bbox'|'mesh'|'entrambi'|'2d'}
  */
 export function cycleOverlayMode() {
    const index = OVERLAY_MODES.indexOf(view.overlayMode);
@@ -244,6 +245,11 @@ function renderOverlay() {
    clearBbox();
    if (performance.now() < suppressUntil) return;
 
+   if (view.overlayMode === '2d') {
+      drawFaceapiScaffold2d();
+      return;
+   }
+
    const box = getLastBox();
    if (includesBbox() && box) {
       drawBox(box);
@@ -258,6 +264,10 @@ function includesBbox() {
 
 function includesMesh() {
    return view.overlayMode === 'mesh' || view.overlayMode === 'entrambi';
+}
+
+export function overlayModeNeedsDetailedFaceapi(mode = view.overlayMode) {
+   return mode === '2d';
 }
 
 function getLastBox() {
@@ -365,6 +375,98 @@ function drawMesh478() {
       ctx.fill();
    }
    ctx.restore();
+}
+
+function drawFaceapiScaffold2d() {
+   const resized = getResizedDetection();
+   const box = resized && extractBox(resized);
+   const landmarks = resized && resized.landmarks;
+
+   if (!landmarks || typeof landmarks.getLeftEye !== 'function') {
+      if (box) {
+         drawBox(box);
+         drawLabels(box, extractScore(view.lastDetection));
+      }
+      return;
+   }
+
+   const leftEye = landmarks.getLeftEye();
+   const rightEye = landmarks.getRightEye();
+   const nose = landmarks.getNose();
+   const jaw = landmarks.getJawOutline();
+   const mouth = landmarks.getMouth();
+   const scale = cssScale();
+
+   ctx.save();
+   ctx.lineWidth = 2.2 * scale;
+   ctx.strokeStyle = currentColor();
+   ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+   const leftCenter = avgPoint(leftEye);
+   const rightCenter = avgPoint(rightEye);
+   ctx.beginPath();
+   ctx.moveTo(leftCenter.x, leftCenter.y);
+   ctx.lineTo(rightCenter.x, rightCenter.y);
+   ctx.stroke();
+
+   drawClosedPath(ctx, leftEye, null, 'rgba(255, 122, 122, 0.85)', 2 * scale);
+   drawClosedPath(ctx, rightEye, null, 'rgba(255, 122, 122, 0.85)', 2 * scale);
+   drawOpenPath(ctx, jaw, 'rgba(159, 122, 234, 0.88)', 2 * scale);
+   drawOpenPath(ctx, nose, 'rgba(61, 220, 151, 0.88)', 2 * scale);
+   drawClosedPath(ctx, mouth, null, 'rgba(255, 204, 102, 0.88)', 2 * scale);
+
+   ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+   for (const point of [leftCenter, rightCenter, avgPoint(nose.slice(3)), avgPoint(mouth.slice(0, 7))]) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 3.4 * scale, 0, Math.PI * 2);
+      ctx.fill();
+   }
+
+   drawFaceapiScaffoldLabels(box, resized, scale);
+   ctx.restore();
+}
+
+function drawFaceapiScaffoldLabels(box, resized, scale) {
+   const lines = ['volto rilevato'];
+   if (typeof resized.age === 'number') lines.push(`eta stimata: ${Math.round(resized.age)}`);
+   if (resized.gender) lines.push(`genere stimato: ${resized.gender}`);
+
+   const fontSize = 14 * scale;
+   const pad = 6 * scale;
+   const lineHeight = 18 * scale;
+
+   ctx.font = `${fontSize}px ${LABEL_FONT_FAMILY}`;
+   const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+   const labelWidth = maxWidth + pad * 2;
+   const labelHeight = lines.length * lineHeight + pad * 2;
+   const startX = Math.max(0, Math.min(box.x, canvas.width - labelWidth));
+   const startY = Math.max(16 * scale, box.y - labelHeight - 8 * scale);
+
+   if ((canvas.style.transform || '').includes('scaleX(-1)')) {
+      ctx.translate(startX + labelWidth / 2, startY + labelHeight / 2);
+      ctx.scale(-1, 1);
+      ctx.translate(-(startX + labelWidth / 2), -(startY + labelHeight / 2));
+   }
+
+   ctx.fillStyle = 'rgba(15, 17, 21, 0.78)';
+   ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+   ctx.lineWidth = scale;
+   roundRect(ctx, startX, startY, labelWidth, labelHeight, 8 * scale);
+   ctx.fill();
+   ctx.stroke();
+
+   ctx.fillStyle = 'rgba(238, 242, 255, 0.96)';
+   lines.forEach((line, index) => {
+      ctx.fillText(line, startX + pad, startY + pad + index * lineHeight + lineHeight * 0.15);
+   });
+}
+
+function getResizedDetection() {
+   if (!view.lastDetection) return null;
+   return faceapi.resizeResults(view.lastDetection, {
+      width: canvas.width,
+      height: canvas.height,
+   });
 }
 
 /**

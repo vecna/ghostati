@@ -6,6 +6,7 @@ import { resizeCanvas } from './camera.js';
 import { persistDb, renderDbStats } from './db.js';
 import { setLog } from './utils.js';
 import { DETECTOR_OPTIONS } from './config.js';
+import { overlayModeNeedsDetailedFaceapi, view as overlayView } from './bbox-overlay.js';
 
 /**
  * Detect a face in the webcam video and optionally draw an overlay.
@@ -208,7 +209,14 @@ export async function runEffectPass() {
    try {
       if (!faceapi || !faceapi.detectSingleFace) return;
       const detector = faceapi.detectSingleFace(els.video, DETECTOR_OPTIONS);
-      const result = state.activeEffect ? await detector.withFaceLandmarks() : await detector;
+      let result = null;
+      if (state.activeEffect) {
+         result = await detector.withFaceLandmarks();
+      } else if (overlayModeNeedsDetailedFaceapi(overlayView.overlayMode)) {
+         result = await detector.withFaceLandmarks().withAgeAndGender();
+      } else {
+         result = await detector;
+      }
 
       if (!result) {
          state.lastKnownEffectResult = null;

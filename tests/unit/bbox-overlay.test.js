@@ -31,6 +31,30 @@ function makeDetection() {
   };
 }
 
+function makeDetailedDetection() {
+  const leftEye = [{ x: 20, y: 30 }, { x: 24, y: 28 }, { x: 28, y: 29 }, { x: 30, y: 31 }, { x: 27, y: 34 }, { x: 22, y: 34 }];
+  const rightEye = [{ x: 70, y: 30 }, { x: 74, y: 28 }, { x: 78, y: 29 }, { x: 80, y: 31 }, { x: 77, y: 34 }, { x: 72, y: 34 }];
+  const nose = [{ x: 48, y: 36 }, { x: 49, y: 42 }, { x: 50, y: 48 }, { x: 47, y: 55 }, { x: 50, y: 56 }, { x: 53, y: 55 }];
+  const jaw = [{ x: 14, y: 60 }, { x: 22, y: 70 }, { x: 34, y: 78 }, { x: 50, y: 82 }, { x: 66, y: 78 }, { x: 78, y: 70 }, { x: 86, y: 60 }];
+  const mouth = [{ x: 36, y: 66 }, { x: 42, y: 64 }, { x: 50, y: 63 }, { x: 58, y: 64 }, { x: 64, y: 66 }, { x: 58, y: 71 }, { x: 50, y: 72 }, { x: 42, y: 71 }];
+
+  return {
+    detection: {
+      score: 0.91,
+      box: { x: 10, y: 20, width: 100, height: 120 }
+    },
+    age: 29,
+    gender: 'female',
+    landmarks: {
+      getLeftEye: () => leftEye,
+      getRightEye: () => rightEye,
+      getNose: () => nose,
+      getJawOutline: () => jaw,
+      getMouth: () => mouth,
+    }
+  };
+}
+
 describe('bbox-overlay utilities', () => {
   let ctx;
   let nowSpy;
@@ -182,9 +206,10 @@ describe('bbox-overlay utilities', () => {
   });
 
   describe('overlay modes and rendering', () => {
-    it('cycles render output between bbox, mesh and entrambi and persists the mode', () => {
+    it('cycles render output between bbox, mesh, entrambi and 2d and persists the mode', () => {
       const landmarks = makeLandmarks478();
       const detection = makeDetection();
+      const detailedDetection = makeDetailedDetection();
 
       onLandmarks3d({ detail: { landmarks } });
 
@@ -212,6 +237,20 @@ describe('bbox-overlay utilities', () => {
       expect(localStorage.getItem(OVERLAY_MODE_STORAGE_KEY)).toBe('entrambi');
       expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
       expect(ctx.arc).toHaveBeenCalledTimes(478);
+
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      ctx.fillText.mockClear();
+      setOverlayMode('2d');
+      ctx.strokeRect.mockClear();
+      ctx.arc.mockClear();
+      ctx.fillText.mockClear();
+      onDetection({ detail: { result: detailedDetection } });
+      expect(view.overlayMode).toBe('2d');
+      expect(localStorage.getItem(OVERLAY_MODE_STORAGE_KEY)).toBe('2d');
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).toHaveBeenCalledTimes(4);
+      expect(ctx.fillText).toHaveBeenCalledTimes(3);
     });
 
     it('reads the persisted overlay mode during init', () => {
@@ -280,6 +319,21 @@ describe('bbox-overlay utilities', () => {
 
       expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
       expect(ctx.arc).toHaveBeenCalledTimes(478);
+    });
+
+    it('renders the recovered 2d scaffold with age and gender labels', () => {
+      const detailedDetection = makeDetailedDetection();
+
+      setOverlayMode('2d');
+      onDetection({ detail: { result: detailedDetection } });
+
+      expect(ctx.strokeRect).toHaveBeenCalledTimes(1);
+      expect(ctx.arc).toHaveBeenCalledTimes(4);
+      expect(ctx.fillText.mock.calls.map(call => call[0])).toEqual([
+        'volto rilevato',
+        'eta stimata: 29',
+        'genere stimato: female'
+      ]);
     });
   });
 });
