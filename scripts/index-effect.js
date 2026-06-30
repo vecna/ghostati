@@ -201,6 +201,12 @@ function interactionTargetsTopbar(target) {
   return target instanceof Element && Boolean(target.closest('#ghostTopbar'));
 }
 
+/* [SYSTEM API: window.addEventListener('pointermove' / 'pointerdown')]
+ * Funzionamento: API universale che incapsula eventi del mouse, touch e pen/stylus.
+ * Parametri: evento (es: 'pointermove'), callback(e).
+ * Feature: Usata per intercettare il movimento dell'utente sull'home page per cancellare l'overlay nero (effetto gratta e vinci), 
+ * ignorando l'interazione se avviene sopra la topbar.
+ */
 window.addEventListener('pointermove', (event) => {
   if (interactionTargetsTopbar(event.target)) {
     return;

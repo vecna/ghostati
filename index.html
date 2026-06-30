@@ -47,6 +47,99 @@
 
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph":[
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://sindacato.nina.watch/ghostati/#app",
+      "name": "Ghòstati",
+      "description": "Laboratorio digitale per sperimentare trucco anti-riconoscimento biometrico.",
+      "applicationCategory": "BrowserApplication",
+      "operatingSystem": "Any",
+      "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+      },
+      "author": {
+        "@id": "https://www.nina.watch/#organization"
+      },
+      "codeRepository": "https://github.com/vecna/ghostati",
+      "softwareHelp": "https://sindacato.nina.watch/ghostati/ghostati-docs.html",
+      "featureList": [
+        "Riconoscimento facciale offline nel browser",
+        "Test di efficacia avversariale in tempo reale",
+        "Supporto mobile e desktop"
+      ]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.nina.watch/#organization",
+      "name": "N.I.N.A. - Nè Intelligente Nè Artificiale",
+      "url": "https://www.nina.watch",
+      "description": "Iniziativa critica ed esplorazione pratica delle tecnologie di riconoscimento facciale e forme di resistenza.",
+      "sameAs": [
+        "https://vecna.eu/",
+        "https://github.com/vecna"
+      ]
+    },
+    {
+      "@type": "Event",
+      "@id": "https://supporta.nina.watch/NINA/Festival/8/",
+      "name": "Ghostati. Fashion-tech e protezione dati biometrici",
+      "startDate": "2026-05-09T16:00:00+02:00",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": {
+        "@type": "Place",
+        "name": "Rob de Matt",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Via Enrico Annibale Butti, 18",
+          "addressLocality": "Milano",
+          "addressCountry": "IT"
+        }
+      },
+      "organizer": {
+        "@id": "https://www.nina.watch/#organization"
+      }
+    }, {
+      "@type": "Event",
+      "@id": "https://supporta.nina.watch/NINA/roma/26/",
+      "name": "Workshop Roma - NINA Festival",
+      "startDate": "2026-05-10T16:00:00+02:00",
+      "url": "https://supporta.nina.watch/NINA/roma/26/",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": {
+        "@type": "Place",
+        "name": "L863",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Via Giovanni Ansaldo 3A/3B",
+          "addressLocality": "Roma",
+          "addressCountry": "IT"
+        }
+      },
+      "organizer": {
+        "@id": "https://www.nina.watch/#organization"
+      }
+    }, {
+      "@type": "Service",
+      "@id": "https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c",
+      "url": "https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c",
+      "name": "Piattaforma di Whistleblowing",
+      "serviceType": "Whistleblowing Platform",
+      "provider": {
+        "@id": "https://www.nina.watch/#organization"
+      }
+    }]
+  }
+  </script>
+
 </head>
 
 <body>
