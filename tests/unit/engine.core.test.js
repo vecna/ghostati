@@ -132,7 +132,7 @@ describe('engine core exports', () => {
     window.Ghostati = {
       computeMatchState: vi.fn(() => 'matched')
     };
-    globalThis.Ghostati = window.Ghostati;
+    globalThis.Ghostmaxxing = window.Ghostati;
 
     const TinyFaceDetectorOptions = vi.fn(function TinyFaceDetectorOptions(opts) {
       Object.assign(this, opts);

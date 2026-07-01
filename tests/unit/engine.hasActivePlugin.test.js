@@ -54,7 +54,7 @@ describe('engine.hasActivePlugin', () => {
     expect(hasActivePlugin()).toBe(true);
   });
 
-  it('returns false when Ghostati effect accessors are missing', () => {
+  it('returns false when Ghostmaxxing effect accessors are missing', () => {
     window.Ghostati = {};
     expect(hasActivePlugin()).toBe(false);
   });

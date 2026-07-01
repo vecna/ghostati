@@ -8,7 +8,7 @@ const menuToggle = document.getElementById('ghostMenuToggle');
 const topbarMenu = document.getElementById('ghostTopbarMenu');
 
 if (!hero || !link || !veil) {
-  throw new Error('Ghostati hero elements not found.');
+  throw new Error('Ghostmaxxing hero elements not found.');
 }
 
 const context = veil.getContext('2d', { alpha: true });

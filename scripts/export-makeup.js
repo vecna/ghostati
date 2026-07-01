@@ -14,7 +14,7 @@ const EXPORT_LAYOUT = {
 const EXPORT_COPY = {
    filename: 'ghostati-makeup.png',
    mimeType: 'image/png',
-   shareTitle: 'Ghostati Makeup',
+   shareTitle: 'Ghostmaxxing Makeup',
    shareText: 'Il mio camouflage anti-riconoscimento!',
    headerPrefix: 'github.com/vecna/ghostati | Report diagnostico makeup',
    reportUrl: 'https://vecna.eu/ghostmaxxing//'

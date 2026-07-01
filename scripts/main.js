@@ -107,6 +107,8 @@ window.Ghostati = {
    detectorOptions: DETECTOR_OPTIONS
 };
 
+// International alias (see redesign/ghostati-ghostmaxxing-naming-brief.txt)
+window.Ghostmaxxing = window.Ghostati;
 
 /**
  * Sets the busy flag for the whole UI, disabling/enabling controls during asynchronous operations.

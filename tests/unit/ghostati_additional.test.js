@@ -1,5 +1,5 @@
 /**
- * Additional unit tests for Ghostati utility functions.
+ * Additional unit tests for Ghostmaxxing utility functions.
  *
  * These tests aim to increase coverage beyond the existing core tests.
  * They focus on:
@@ -20,7 +20,7 @@ function getDbSnapshot() {
   return structuredClone(state.db);
 }
 
-const Ghostati = window.Ghostati;
+const Ghostmaxxing = window.Ghostati;
 
 /** Helper to create a mock CanvasRenderingContext2D with spy functions. */
 function createMockContext() {
@@ -42,7 +42,7 @@ function createMockContext() {
   return /** @type {CanvasRenderingContext2D} */ (ctx);
 }
 
-describe('Ghostati mathematical utilities', () => {
+describe('Ghostmaxxing mathematical utilities', () => {
   beforeEach(() => {
     state.db = { nextId: 0, faces: [] };
     state.MATCH_THRESHOLD = 0.58;
@@ -51,39 +51,39 @@ describe('Ghostati mathematical utilities', () => {
   it('distance returns Euclidean distance for equal-length vectors', () => {
     const a = [0, 0, 0];
     const b = [3, 4, 0];
-    expect(Ghostati.distance(a, b)).toBeCloseTo(5);
+    expect(Ghostmaxxing.distance(a, b)).toBeCloseTo(5);
   });
 
   it('distance returns POSITIVE_INFINITY for mismatched lengths', () => {
     const a = [1, 2];
     const b = [1];
-    expect(Ghostati.distance(a, b)).toBe(Number.POSITIVE_INFINITY);
+    expect(Ghostmaxxing.distance(a, b)).toBe(Number.POSITIVE_INFINITY);
   });
 
   it('avgPoint computes the correct centroid of point array', () => {
     const pts = [{ x: 0, y: 0 }, { x: 10, y: 20 }];
-    expect(Ghostati.avgPoint(pts)).toEqual({ x: 5, y: 10 });
+    expect(Ghostmaxxing.avgPoint(pts)).toEqual({ x: 5, y: 10 });
   });
 
   it('lerp interpolates correctly between two points', () => {
     const a = { x: 0, y: 0 };
     const b = { x: 10, y: 20 };
-    expect(Ghostati.lerp(a, b, 0.5)).toEqual({ x: 5, y: 10 });
+    expect(Ghostmaxxing.lerp(a, b, 0.5)).toEqual({ x: 5, y: 10 });
   });
 
   it('scaleFrom scales a point relative to a centre', () => {
     const centre = { x: 5, y: 5 };
     const pt = { x: 7, y: 9 };
     // vector from centre is (2,4); scaling by 2 => (4,8); result (9,13)
-    expect(Ghostati.scaleFrom(centre, pt, 2)).toEqual({ x: 9, y: 13 });
+    expect(Ghostmaxxing.scaleFrom(centre, pt, 2)).toEqual({ x: 9, y: 13 });
   });
 
   it('point utility returns an object with given coordinates', () => {
-    expect(Ghostati.point(3, 4)).toEqual({ x: 3, y: 4 });
+    expect(Ghostmaxxing.point(3, 4)).toEqual({ x: 3, y: 4 });
   });
 });
 
-describe('Ghostati drawing utilities with mocked canvas', () => {
+describe('Ghostmaxxing drawing utilities with mocked canvas', () => {
   let ctx;
   beforeEach(() => {
     ctx = createMockContext();
@@ -91,7 +91,7 @@ describe('Ghostati drawing utilities with mocked canvas', () => {
 
   it('drawClosedPath draws a filled and stroked polygon when styles provided', () => {
     const pts = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }];
-    Ghostati.drawClosedPath(ctx, pts, 'red', 'blue', 3);
+    Ghostmaxxing.drawClosedPath(ctx, pts, 'red', 'blue', 3);
     // Verify path construction calls.
     expect(ctx.beginPath).toHaveBeenCalled();
     expect(ctx.moveTo).toHaveBeenCalledWith(0, 0);
@@ -108,7 +108,7 @@ describe('Ghostati drawing utilities with mocked canvas', () => {
 
   it('drawOpenPath draws a dashed line when requested', () => {
     const pts = [{ x: 0, y: 0 }, { x: 5, y: 5 }, { x: 10, y: 0 }];
-    Ghostati.drawOpenPath(ctx, pts, 'green', 2, true);
+    Ghostmaxxing.drawOpenPath(ctx, pts, 'green', 2, true);
     expect(ctx.save).toHaveBeenCalled();
     expect(ctx.beginPath).toHaveBeenCalled();
     expect(ctx.setLineDash).toHaveBeenCalledWith([10, 8]);
@@ -119,7 +119,7 @@ describe('Ghostati drawing utilities with mocked canvas', () => {
   });
 });
 
-describe('Ghostati higher‑level utilities', () => {
+describe('Ghostmaxxing higher‑level utilities', () => {
   it('expandEyePolygon returns a polygon combining eyebrow and scaled eye', () => {
     const eye = [
       { x: 0, y: 0 },
@@ -131,7 +131,7 @@ describe('Ghostati higher‑level utilities', () => {
     ];
     const eyebrow = eye.map(p => ({ x: p.x, y: p.y - 5 }));
     const tone = { scale: 1.2, brow: 0.7, fill: 'rgba(0,0,0,0.2)', stroke: 'black' };
-    const poly = Ghostati.expandEyePolygon(eye, eyebrow, tone.scale, tone.brow);
+    const poly = Ghostmaxxing.expandEyePolygon(eye, eyebrow, tone.scale, tone.brow);
     expect(poly.length).toBeGreaterThanOrEqual(6);
     // Verify that the first three points are the transformed eyebrow points.
     expect(poly[0]).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });

@@ -1,13 +1,13 @@
-# Ghostati Brand Voice
+# Ghostmaxxing Brand Voice
 
 ## Purpose
 
-Ghostati is a public research lab for testing, explaining, and questioning facial recognition systems through browser-based AR camouflage, adversarial makeup experiments, and curated technical references.
+Ghostmaxxing is a public research lab for testing, explaining, and questioning facial recognition systems through browser-based AR camouflage, adversarial makeup experiments, and curated technical references.
 
 The project should sound like a tool made by people who understand code, research, public space, and political risk — without overselling protection or turning critique into spectacle.
 
-Ghostati is not a magic invisibility product.
-Ghostati is a test bench, a visual lab, and a civic intelligence gateway.
+Ghostmaxxing is not a magic invisibility product.
+Ghostmaxxing is a test bench, a visual lab, and a civic intelligence gateway.
 
 ## Core voice
 
@@ -44,15 +44,15 @@ Avoid sounding like:
 
 ## One-line description
 
-Ghostati is a browser-based lab for testing face-recognition camouflage and documenting the technical, cultural, and political history of anti-biometric appearance design.
+Ghostmaxxing is a browser-based lab for testing face-recognition camouflage and documenting the technical, cultural, and political history of anti-biometric appearance design.
 
 ## Short description
 
-Ghostati lets people experiment with face-recognition camouflage directly in the browser. It combines webcam-based face detection, modular AR “Ghostyles”, local comparison tests, and a curated reference archive on adversarial makeup, CV Dazzle, face obfuscation, and physical-world attacks against computer vision systems.
+Ghostmaxxing lets people experiment with face-recognition camouflage directly in the browser. It combines webcam-based face detection, modular AR “Ghostyles”, local comparison tests, and a curated reference archive on adversarial makeup, CV Dazzle, face obfuscation, and physical-world attacks against computer vision systems.
 
 ## Longer description
 
-Ghostati is a Web AR laboratory for developing and testing anti-biometric camouflage. It lets developers, researchers, digital rights groups, artists, and curious people apply modular visual overlays to a face, compare recognition behavior before and after the intervention, and understand where this field comes from through a curated technical and cultural references archive.
+Ghostmaxxing is a Web AR laboratory for developing and testing anti-biometric camouflage. It lets developers, researchers, digital rights groups, artists, and curious people apply modular visual overlays to a face, compare recognition behavior before and after the intervention, and understand where this field comes from through a curated technical and cultural references archive.
 
 It does not guarantee anonymity. It does not defeat all facial recognition systems. It helps make biometric claims testable, visible, and discussable.
 
@@ -60,7 +60,7 @@ It does not guarantee anonymity. It does not defeat all facial recognition syste
 
 ### 1. Test, do not trust
 
-Facial recognition systems should not be accepted as neutral, inevitable, or universally reliable. Ghostati makes parts of the recognition pipeline visible enough to test and question.
+Facial recognition systems should not be accepted as neutral, inevitable, or universally reliable. Ghostmaxxing makes parts of the recognition pipeline visible enough to test and question.
 
 Suggested phrasing:
 
@@ -77,7 +77,7 @@ Avoid:
 
 ### 2. The face is a technical interface
 
-Ghostati treats the face as something computer vision systems parse through landmarks, descriptors, regions, contrast, light, occlusion, and learned representations.
+Ghostmaxxing treats the face as something computer vision systems parse through landmarks, descriptors, regions, contrast, light, occlusion, and learned representations.
 
 Suggested phrasing:
 
@@ -99,8 +99,8 @@ The project is part of a longer genealogy: CV Dazzle, HyperFace, adversarial gla
 Suggested phrasing:
 
 - This field is older, deeper, and more documented than most people think.
-- The references archive maps the technical and cultural lineage of Ghostati.
-- Each reference asks: what was demonstrated, under what conditions, and what can Ghostati retest?
+- The references archive maps the technical and cultural lineage of Ghostmaxxing.
+- Each reference asks: what was demonstrated, under what conditions, and what can Ghostmaxxing retest?
 
 Avoid:
 
@@ -110,7 +110,7 @@ Avoid:
 
 ### 4. The reporting node is central
 
-Ghostati is not only a demo. It should also direct attention toward real-world deployments of facial recognition in public space.
+Ghostmaxxing is not only a demo. It should also direct attention toward real-world deployments of facial recognition in public space.
 
 Suggested phrasing:
 
@@ -131,14 +131,14 @@ This is one of the most important principles.
 
 Suggested phrasing:
 
-- Ghostati is a research and education tool, not personal protection advice.
+- Ghostmaxxing is a research and education tool, not personal protection advice.
 - A failed match in the browser is not a guarantee in the street.
 - Results depend on model, camera, light, pose, distance, and context.
 - Treat every successful evasion as local, conditional, and temporary.
 
 Avoid:
 
-- Protect yourself with Ghostati.
+- Protect yourself with Ghostmaxxing.
 - Become unrecognizable.
 - Beat facial recognition.
 - Guaranteed anti-surveillance makeup.
@@ -212,7 +212,7 @@ Avoid:
 Preferred:
 
 - Ghòstati
-- Ghostati, when accents are difficult in filenames, URLs, code, or English-only contexts
+- Ghostmaxxing, when accents are difficult in filenames, URLs, code, or English-only contexts
 
 Do not over-explain the name every time. Use the accented form in editorial copy and the ASCII-safe form in code contexts.
 
@@ -280,7 +280,7 @@ Tone:
 curated evidence lab.
 
 Goal:
-explain the history, techniques, claims, limitations, and Ghostati relevance of each reference.
+explain the history, techniques, claims, limitations, and Ghostmaxxing relevance of each reference.
 
 Each reference should answer:
 
@@ -288,7 +288,7 @@ Each reference should answer:
 2. What did it demonstrate?
 3. What technique did it use?
 4. What are its limits?
-5. Can Ghostati retest or approximate it?
+5. Can Ghostmaxxing retest or approximate it?
 6. Where can people read more?
 
 Use concise but substantial cards. Avoid bibliography-only presentation.
@@ -348,7 +348,7 @@ Every public claim should fit one of these categories:
 
 ### Safe claim
 
-“Ghostati lets users test browser-based face detection and matching behavior with visual overlays.”
+“Ghostmaxxing lets users test browser-based face detection and matching behavior with visual overlays.”
 
 ### Conditional claim
 
@@ -360,7 +360,7 @@ Every public claim should fit one of these categories:
 
 ### Unsafe claim
 
-“Ghostati protects you from facial recognition.”
+“Ghostmaxxing protects you from facial recognition.”
 
 Do not publish unsafe claims.
 
@@ -498,15 +498,15 @@ Recommended card order:
 5. What it demonstrated
 6. Technique / intervention
 7. Target system
-8. Ghostati testability
+8. Ghostmaxxing testability
 9. Limitations
 10. Links
 
 Recommended labels:
 
 - Demonstrated
-- Why it matters for Ghostati
-- Ghostati testability
+- Why it matters for Ghostmaxxing
+- Ghostmaxxing testability
 - Limits
 - Technique
 - Target
@@ -516,7 +516,7 @@ Recommended labels:
 
 ### Good README sentence
 
-“Ghostati runs a local browser pipeline for webcam-based face detection, modular AR overlays, and baseline-vs-modified face matching tests.”
+“Ghostmaxxing runs a local browser pipeline for webcam-based face detection, modular AR overlays, and baseline-vs-modified face matching tests.”
 
 ### Good limitation sentence
 
@@ -524,7 +524,7 @@ Recommended labels:
 
 ### Good reference sentence
 
-“Adv-Makeup is relevant to Ghostati because it treats makeup as a physical-world adversarial surface around the face, but its reported effectiveness remains tied to the models and experimental setup used in the paper.”
+“Adv-Makeup is relevant to Ghostmaxxing because it treats makeup as a physical-world adversarial surface around the face, but its reported effectiveness remains tied to the models and experimental setup used in the paper.”
 
 ### Good report CTA
 
@@ -534,14 +534,14 @@ Recommended labels:
 
 Before publishing a new page or section, check:
 
-- Does it say what Ghostati does technically?
+- Does it say what Ghostmaxxing does technically?
 - Does it avoid protection guarantees?
 - Does it explain limits?
 - Does it link to the lab, repo, docs, references, and reporting node where relevant?
 - Does it help a developer take action?
 - Does it help a non-specialist understand the stakes?
 - Does it avoid collecting or encouraging unnecessary biometric data?
-- Does it use consistent names: Ghostati, Ghòstati, Ghostyle?
+- Does it use consistent names: Ghostmaxxing, Ghòstati, Ghostyle?
 - Does it preserve the cyberlab + festival tone?
 - Does it make the reporting node visible when discussing real-world deployments?
 
@@ -549,23 +549,22 @@ Before publishing a new page or section, check:
 
 Use this when space is limited:
 
-“Ghostati is a browser-based lab for testing face-recognition camouflage. It lets people build and compare AR Ghostyles, explore the research history of anti-biometric appearance design, and report real-world deployments of facial recognition.”
+“Ghostmaxxing is a browser-based lab for testing face-recognition camouflage. It lets people build and compare AR Ghostyles, explore the research history of anti-biometric appearance design, and report real-world deployments of facial recognition.”
 
 ## Safety boilerplate
 
 Use this near demos, workshops, and test results:
 
-“Ghostati is a research and education tool. Results are local to the tested browser, model, camera, lighting, and conditions. It does not guarantee anonymity or protection against deployed facial recognition systems.”
+“Ghostmaxxing is a research and education tool. Results are local to the tested browser, model, camera, lighting, and conditions. It does not guarantee anonymity or protection against deployed facial recognition systems.”
 
 ## References boilerplate
 
 Use this for the references page:
 
-“The Ghostati references archive maps artistic, academic, and activist work around face obfuscation, adversarial makeup, physical-world attacks, and anti-surveillance aesthetics. Each entry documents what was demonstrated, what its limits are, and whether Ghostati can directly or partially retest the idea.”
+“Ghostmaxxing references archive maps artistic, academic, and activist work around face obfuscation, adversarial makeup, physical-world attacks, and anti-surveillance aesthetics. Each entry documents what was demonstrated, what its limits are, and whether Ghostmaxxing can directly or partially retest the idea.”
 
 ## Reporting boilerplate
 
 Use this near the reporting node:
 
 “Technical tests are only one part of the work. If you know of facial recognition being used in public space, the reporting node helps collect evidence about where it is deployed, by whom, with which technology, and under what safeguards or abuses.”
-

@@ -1,12 +1,12 @@
 /**
  * @module state
  * @description
- * Single source of mutable runtime state for the Ghostati web app. A plain
+ * Single source of mutable runtime state for the Ghostmaxxing web app. A plain
  * object shared (by reference) across all ES modules via `import { state }`.
  * There is exactly one instance; mutating a field here is observed everywhere.
  *
  * The full shape — including the type, allowed range, and consuming modules of
- * every field — is documented on the {@link GhostatiState} typedef below, which
+ * every field — is documented on the {@link GhostmaxxingState} typedef below, which
  * renders as a properties table.
  *
  * Note on events: the in-app event bus is `state.ghostatiEvents`. The
@@ -42,7 +42,7 @@
  * Shape of the shared runtime state object. Each property documents its type,
  * its allowed/observed range, and the modules that read or write it.
  *
- * @typedef {Object} GhostatiState
+ * @typedef {Object} GhostmaxxingState
  *
  * @property {{ nextId: number, faces: FaceRecord[] } | null} db
  *   Local face database (recognition descriptors + id counter).
@@ -191,7 +191,7 @@
 
 /**
  * The shared runtime state singleton.
- * @type {GhostatiState}
+ * @type {GhostmaxxingState}
  */
 export const state = {
    db: null, // initialized after loading via db.loadDb()

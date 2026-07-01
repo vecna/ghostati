@@ -57,7 +57,7 @@ describe('analyze-panel report', () => {
     });
 
     const text = generateReportText();
-    expect(text).toContain('### Ghostati - Analisi del trucco');
+    expect(text).toContain('### Ghostmaxxing - Analisi del trucco');
     expect(text).toContain('Volto rilevato: si');
     expect(text).toContain('Riconoscimento (face-api 2D)');
     expect(text).toContain('Embedder 3D (MediaPipe)');

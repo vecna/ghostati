@@ -257,7 +257,7 @@ Use consenting test subjects. Do not represent experimental overlays as operatio
  observe ──► document ──► submit ──► update resistance research
 ```
 
-Ghòstati is also connected to a field-reporting workflow. The landing page now treats the NINA reporting node as a central project resource:
+Ghostmaxxing is also connected to a field-reporting workflow. The landing page now treats the NINA reporting node as a central project resource:
 
 [Raccontacelo: segnala un possibile uso di riconoscimento facciale nello spazio pubblico](https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c)
 
