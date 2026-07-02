@@ -396,7 +396,7 @@ export function generateReportText() {
    const data = latestReportData;
    if (!data) {
       return [
-         '### Ghostati - Analisi del trucco',
+         '### Ghostmaxxing - Analisi del trucco',
          '',
          'Volto rilevato: no',
          '',
@@ -407,7 +407,7 @@ export function generateReportText() {
    }
 
    const lines = [];
-   lines.push('### Ghostati - Analisi del trucco');
+   lines.push('### Ghostmaxxing - Analisi del trucco');
    lines.push('');
    lines.push(`Volto rilevato: ${data.faceResult ? 'si' : 'no'}`);
 

@@ -87,7 +87,7 @@ function tick() {
       const results = faceLandmarker.detectForVideo(video, now);
       const landmarks = (results.faceLandmarks && results.faceLandmarks[0]) || null;
 
-      // Cache latest landmarks on state (via the Ghostati setter) so engine-3d
+      // Cache latest landmarks on state (via the Ghostmaxxing setter) so engine-3d
       // and plugins can read them without re-running inference.
       if (window.Ghostati) window.Ghostati.lastLandmarks3d = landmarks;
 

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sindacato.nina.watch/ghostati/REFERENCES.schema.json",
+  "title": "Ghostati References",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_scope",
+    "ordering_definition",
+    "language",
+    "closeness_definition",
+    "tag_definitions",
+    "references"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^2\\.[0-9]+$" },
+    "project_scope": { "type": "string", "minLength": 1 },
+    "ordering_definition": { "type": "string", "minLength": 1 },
+    "language": { "type": "string", "const": "en" },
+    "closeness_definition": { "type": "object" },
+    "tag_definitions": {
+      "type": "object",
+      "required": ["type", "ghostati_testability_level", "intervention", "target", "domain"],
+      "properties": {
+        "type": { "type": "array", "items": { "enum": ["artistic", "research", "activism"] }, "uniqueItems": true },
+        "ghostati_testability_level": { "type": "array", "items": { "enum": ["direct", "partial", "indirect", "contextual", "no"] }, "uniqueItems": true },
+        "intervention": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "uniqueItems": true },
+        "target": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "uniqueItems": true },
+        "domain": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/reference" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nullableUrl": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^https?://" }
+      ]
+    },
+    "tag": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "reference": {
+      "type": "object",
+      "required": [
+        "slug",
+        "title",
+        "author",
+        "year",
+        "link",
+        "links",
+        "type",
+        "closeness",
+        "description",
+        "demonstrated",
+        "ghostati_relevance",
+        "ghostati_testability",
+        "intervention",
+        "target",
+        "domain",
+        "limitations",
+        "reproducibility",
+        "citation"
+      ],
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "author": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "period": { "type": "string" },
+        "link": { "type": "string", "pattern": "^https?://" },
+        "links": {
+          "type": "object",
+          "required": ["canonical", "paper", "project", "code", "video", "doi", "arxiv"],
+          "properties": {
+            "canonical": { "$ref": "#/$defs/nullableUrl" },
+            "paper": { "$ref": "#/$defs/nullableUrl" },
+            "project": { "$ref": "#/$defs/nullableUrl" },
+            "code": { "$ref": "#/$defs/nullableUrl" },
+            "video": { "$ref": "#/$defs/nullableUrl" },
+            "doi": { "$ref": "#/$defs/nullableUrl" },
+            "arxiv": { "$ref": "#/$defs/nullableUrl" }
+          },
+          "additionalProperties": true
+        },
+        "type": { "enum": ["artistic", "research", "activism"] },
+        "closeness": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "description": { "type": "string", "minLength": 1 },
+        "demonstrated": { "type": "string", "minLength": 1 },
+        "ghostati_relevance": { "type": "string", "minLength": 1 },
+        "ghostati_testability": {
+          "type": "object",
+          "required": ["level", "reason"],
+          "properties": {
+            "level": { "enum": ["direct", "partial", "indirect", "contextual", "no"] },
+            "reason": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "intervention": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tag" }, "uniqueItems": true },
+        "target": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tag" }, "uniqueItems": true },
+        "domain": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/tag" }, "uniqueItems": true },
+        "limitations": { "type": "string", "minLength": 1 },
+        "reproducibility": { "type": "string", "minLength": 1 },
+        "citation": { "type": "string", "minLength": 1 },
+        "visual_hint": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

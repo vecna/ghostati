@@ -1,7 +1,7 @@
 /**
  * @module config
  * @description
- * Centralised configuration constants for Ghostati. Lives in one place so that
+ * Centralised configuration constants for Ghostmaxxing. Lives in one place so that
  * URLs, detector thresholds, and recording defaults can be changed without
  * touching engine code. All values here are static and module-load-time
  * resolvable; runtime-mutable state belongs in `state.js`.

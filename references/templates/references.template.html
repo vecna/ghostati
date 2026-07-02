@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>References — Ghostmaxxing</title>
+  <meta name="description"
+    content="A curated technical and cultural genealogy of face-recognition camouflage, adversarial makeup, CV Dazzle, face obfuscation and physical-world attacks against computer vision systems." />
+  <link rel="stylesheet" href="/styles/pages.css" />
+  <link rel="stylesheet" href="/styles/content-pages.css" />
+  <link rel="stylesheet" href="/styles/references-list.css" />
+</head>
+
+<body>
+  <!--
+    Relevance-star icon, defined once and reused via <use href="#icon-star">.
+    This is a placeholder star (auto-generated) — replace the single <path>
+    below whenever you have a real icon and every star on the page updates.
+    Keep the id "icon-star" and the 0 0 24 24 viewBox on the <symbol>.
+  -->
+  <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="icon-star" viewBox="0 0 24 24">
+      <path
+        d="M12 2.5 L14.23 8.93 L21.04 9.06 L15.61 13.17 L17.58 19.69 L12 15.8 L6.42 19.69 L8.39 13.17 L2.96 9.06 L9.77 8.93 Z" />
+    </symbol>
+  </svg>
+
+  <main class="editorial-homepage content-page editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="index.html" aria-label="Ghostmaxxing homepage">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
+
+        <nav class="editorial-homepage__nav" aria-label="Project navigation">
+          <a class="navlink" href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Code</a>
+          <a class="navlink" href="about.html">Vision &amp; About</a>
+          <a class="navlink" href="/references" aria-current="page">References</a>
+          <a class="cta-inline" href="report.html">How to <i>leak</i> to us<span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <!--
+        Edit this intro freely — it is static and will not be touched by
+        scripts-dev/build-references-page.js. Only the {{...}} placeholders
+        below are replaced by the build script.
+      -->
+      <section class="content-page__header-area" aria-labelledby="page-title">
+        <span class="content-page__kicker">References</span>
+        <h1 id="page-title">A working genealogy of face-recognition camouflage.</h1>
+        <p class="content-page__lead">
+          {{REFERENCE_COUNT}} references, {{YEAR_MIN}}&ndash;{{YEAR_MAX}}, newest first.
+        </p>
+        <p class="content-page__deck">
+          The Ghostmaxxing references archive maps artistic, academic, and activist work around face obfuscation,
+          adversarial makeup, physical-world attacks, and anti-surveillance aesthetics. Each entry documents what was
+          demonstrated, what its limits are, and whether Ghostmaxxing can directly or partially retest the idea.
+        </p>
+      </section>
+
+      <div class="content-page__layout">
+        <article class="content-page__main">
+          <section class="content-section" id="references-list">
+            <p class="content-page__lead reference-stats">{{STATS_LINE}}</p>
+
+            {{REFERENCES_BODY}}
+          </section>
+
+          <!-- Static section — edit freely -->
+          <section class="content-section" id="method">
+            <h2>How to suggest a new entry.</h2>
+            <p>
+              Every possible reference should be read and transformed into the format of <code>REFERENCES.json</code>,
+              check out on github
+              (https://github.com/vecna/ghostati/blob/rebranding/ghostmaxxing/references/REFERENCES.json) how detailed
+              is.
+              Once you're sure it might suit us, and potentially we can even program a Ghostyle to retest it, please
+              open an issue or submit a pull request.
+            </p>
+          </section>
+        </article>
+
+        <aside class="content-page__aside" aria-label="Page sections">
+          <h2>Jump to</h2>
+          <nav>
+            {{GROUP_NAV}}
+            <a href="#method">Suggest a new entry</a>
+          </nav>
+        </aside>
+      </div>
+    </div>
+
+    <div class="camera-band" aria-hidden="true"></div>
+  </main>
+</body>
+
+</html>

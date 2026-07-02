@@ -1,5 +1,5 @@
 /**
- * Ghostati public API declarations for JS plugin authors.
+ * Ghostmaxxing (Ghostati) public API declarations for JS plugin authors.
  *
  * This file is intentionally declaration-only (no runtime side effects).
  * Editors like VS Code pick it up automatically to provide autocomplete
@@ -251,6 +251,8 @@ export interface GhostatiApi {
 declare global {
   interface Window {
     Ghostati: GhostatiApi;
+    /** International alias – identical to {@link GhostatiApi Ghostati}. */
+    Ghostmaxxing: GhostatiApi;
   }
 }
 

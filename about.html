@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vision & About — Ghostmaxxing</title>
+  <meta name="description"
+    content="Ghostmaxxing is a browser-based public research platform for testing face-recognition camouflage, running workshops, and investigating real-world biometric surveillance." />
+  <link rel="stylesheet" href="styles/pages.css" />
+  <link rel="stylesheet" href="styles/content-pages.css" />
+</head>
+
+<body>
+  <main class="editorial-homepage content-page editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="index.html" aria-label="Ghostmaxxing homepage">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
+
+        <nav class="editorial-homepage__nav" aria-label="Project navigation">
+          <a class="navlink" href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Code</a>
+          <a class="navlink" href="about.html" aria-current="page">Vision &amp; About</a>
+          <a class="cta-inline" href="report.html">How to <i>leak</i> to us<span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <section class="content-page__header-area" aria-labelledby="page-title">
+        <span class="content-page__kicker">Vision &amp; About</span>
+        <h1 id="page-title">Make the machine-readable face <i>contestable</i>.</h1>
+        <p class="content-page__lead">
+          Ghostmaxxing is a browser-based workshop assistant and public research platform for testing
+          face-recognition camouflage.
+        </p>
+        <p class="content-page__deck">
+          It grows out of privacy activism, adversarial makeup workshops, and the need to investigate which biometric
+          systems are actually used in public space.
+        </p>
+      </section>
+
+      <div class="content-page__layout">
+        <article class="content-page__main">
+          <section class="content-section" id="workshop-assistant">
+            <h2>Workshop assistant.</h2>
+            <p>
+              Designed to support group workshops, where participants play with makeup and learn how different faces
+              read to a recognition model: point a browser camera at your face, record a baseline, apply a Ghostyle,
+              and compare how the local recognition pipeline reacts.
+            </p>
+            <p>
+              The goal is to lower the barrier to entry. You don't need a makeup specialist to take part &mdash; only
+              water-based colors, safe enough for kids. The system runs locally: it uses the webcam or a phone
+              camera, keeps everything on-device, and sends nothing anywhere else, except what you choose to share
+              with us.
+            </p>
+            <p>
+              The project is built to run in a phone browser, because makeup is usually applied in front of a mirror,
+              not at a desktop workstation.
+            </p>
+            <div class="callout">
+              <p>
+                Two kinds of success exist: the face stops being detected as a face at all, or the face is still
+                detected but its extracted points differ enough from the clean-face baseline that matching fails.
+              </p>
+            </div>
+            <h3>What can be sent to us?</h3>
+            <p>Three things mostly:</p>
+            <ol>
+              <li>
+                Before/after images of a successful attempt, sent via the
+                <!-- TODO: link/insert the share icon from lab.html once it's finalized -->
+                share icon in the lab.
+              </li>
+              <li>A one-second video of a successful attempt.</li>
+              <li>
+                Ghostyles: modular camouflage plugins that others can study, adapt, or retest.
+                <!-- TODO: write the Ghostyle plugin docs and link them here (e.g. /docs) -->
+                Build your own by following the Ghostyle documentation.
+              </li>
+            </ol>
+          </section>
+
+          <section class="content-section" id="before-after">
+            <h2>From before/after experiments to Ghostyles.</h2>
+            <p>
+              This part matters: we want a system that can run a "diff" between an after image and a before image,
+              and turn the result into a Ghostyle plugin that others can upload and retest.
+            </p>
+            <div class="callout">
+              <p>
+                These approaches are experimental. We can't guarantee they will work &mdash; and a human reviewing
+                camera footage can often still recognize someone even when they're wearing makeup. A browser result
+                is a local, conditional finding, not a general protection claim.
+              </p>
+            </div>
+          </section>
+
+          <section class="content-section" id="origin">
+            <h2>Where it comes from.</h2>
+            <p>
+              Ghostmaxxing is the international evolution of an experiment run by NINA.watch. As part of the
+              Universal Digital Union, <a href="https://sindacato.nina.watch/it/iniziative/ghostati/">Ghòstati</a>
+              (<i>become a ghost</i>) is a workshop we keep repeating to explore adversarial makeup as a way to
+              resist facial recognition. The project began in May 2026 during the NINA festival, in
+              <a href="https://sindacato.nina.watch/it/blog/ghostati-workshop-maggio-2026/">Milan and Rome</a>. We
+              learned from <a href="https://www.michelletylicki.info/">Michelle Tylicki</a>, an artist who has run
+              this kind of workshop before us &mdash; we added the application development, and now this wider
+              vision.
+            </p>
+            <p class="callout">
+              Tylicki's <a href="https://www.michelletylicki.info/dazzle/">DAZZLE</a>, developed with Lauri Love, is
+              an art-and-tech installation and interactive tool for teaching Computer Vision Dazzle, also known as
+              anti-surveillance makeup. Ghostmaxxing inherits that workshop energy, but turns it into a browser-based
+              system people can run on their own devices.
+            </p>
+          </section>
+
+          <section class="content-section" id="vision">
+            <h2>Vision.</h2>
+            <ul>
+              <li>Make the workshop easier to run.</li>
+              <li>Make adversarial makeup a popular practice, not a niche one.</li>
+              <li>Collect evidence of what actually works.</li>
+              <li>Support new forms &mdash; clothing, 3D-printed objects, and beyond.</li>
+              <li>Support new research.</li>
+              <li>Use network effects to test everywhere, share results, and keep improving.</li>
+            </ul>
+          </section>
+
+          <section class="content-section" id="research-question">
+            <h2>The research question is minimal camouflage.</h2>
+            <p>
+              The core question is simple: how little makeup is needed to disrupt a face-recognition pipeline?
+            </p>
+            <p>
+              Less makeup matters because it lowers the barrier to practice. It makes the technique easier to learn,
+              easier to repeat, and easier to move from exceptional workshop performance toward everyday culture. The
+              hope is not to sell invisibility; it is to make adversarial makeup legible enough to become pop practice.
+            </p>
+            <h3>Success should be shareable.</h3>
+            <p>
+              Ghostmaxxing includes sharing-oriented functions because a successful look is also a teachable pattern.
+              People who want to share a one-second video, a before/after comparison, or a Ghostyle result can help
+              others understand what worked and what still needs to be tested.
+            </p>
+          </section>
+
+          <section class="content-section" id="leaks">
+            <h2>Why leaking matters.</h2>
+            <p>
+              The lab can test browser pipelines, but real-world facial recognition is a supply chain: camera
+              hardware, edge devices, model vendors, watchlists, matching systems, dashboards, alerts, metadata,
+              operators, procurement contracts, and retention rules.
+            </p>
+            <p>
+              <a href="report.html">Leak to us</a> exists to understand that hidden chain. Which technologies are
+              deployed? Who sells them? Who maintains them? What metadata is produced between capture and decision?
+              Where does it go? Who can access it? Tell us what you know, only if it is safe for you to do so &mdash;
+              and please don't include unnecessary personal data.
+            </p>
+            <p>
+              Some allies may be forced to work on or near these systems. If they can safely share information, they
+              may help us understand whether Ghostyles and adversarial makeup are actually affecting real
+              deployments, or whether the resistance needs to change.
+            </p>
+            <div class="callout">
+              <p>
+                In Europe, real-time remote biometric identification in publicly accessible spaces for law
+                enforcement is treated as a prohibited AI practice, subject to narrow exceptions and safeguards. That
+                legal frame still leaves a practical question: what is actually being deployed, and under whose
+                control?
+              </p>
+            </div>
+            <h3>A ban that keeps getting reopened.</h3>
+            <p>
+              The <a href="https://reclaimyourface.eu">Reclaim Your Face</a> campaign has spent years pushing for a
+              ban on biometric mass surveillance, and it helped get real-time remote biometric identification treated
+              as prohibited in EU law. But the fight didn't end with the text of the regulation: national security
+              agendas keep reopening the exceptions, arguing for carve-outs around major events, "special" cases, and
+              pilot deployments. <a
+                href="https://reclaimyourface.eu/biometric-surveillance-in-the-czech-republic-the-ministry-of-the-interior-is-trying-to-circumvent-the-artificial-intelligence-act/">Reporting
+                from the campaign</a>
+              has documented national authorities attempting to work around the AI Act's limits rather than comply
+              with them. A ban that keeps getting quietly worked around by fear-mongering, securitarian framing needs
+              the same kind of public pressure and evidence-gathering that got it written in the first place &mdash;
+              which is part of why the reporting node exists here too.
+            </p>
+          </section>
+
+          <section class="content-section" id="resources">
+            <h2>Read, test, report.</h2>
+            <p>
+              Ghostmaxxing is strongest when the lab, the archive, and the reporting channel work together. Test
+              techniques locally, read the lineage of anti-biometric appearance design, and help document the real
+              infrastructure when it appears in the world.
+            </p>
+            <div class="resource-grid">
+              <a class="resource-card" href="ghostati.html">
+                <h3>Open the lab</h3>
+                <p>Run local browser tests, try Ghostyles, and compare before/after behaviour.</p>
+              </a>
+              <a class="resource-card" href="/references/">
+                <h3>Research references</h3>
+                <p>Trace the artistic, technical, and activist lineage of face-obfuscation work.</p>
+              </a>
+              <a class="resource-card" href="/docs/">
+                <h3>Technical documentation</h3>
+                <p>Inspect modules, plugin logic, and implementation details.</p>
+              </a>
+              <a class="resource-card" href="report.html">
+                <h3>Leak to us</h3>
+                <p>Help investigate the real-world pipeline and supply chain of face recognition.</p>
+              </a>
+            </div>
+          </section>
+        </article>
+
+        <aside class="content-page__aside" aria-label="Page sections">
+          <h2>On this page</h2>
+          <nav>
+            <a href="#workshop-assistant">Workshop assistant</a>
+            <a href="#before-after">Before / after</a>
+            <a href="#origin">Origin</a>
+            <a href="#research-question">Research question</a>
+            <a href="#leaks">Why leaking matters</a>
+            <a href="#resources">Resources</a>
+          </nav>
+        </aside>
+      </div>
+    </div>
+
+    <div class="camera-band" aria-hidden="true"></div>
+  </main>
+</body>
+
+</html>

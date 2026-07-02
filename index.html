@@ -1,93 +1,61 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ghòstati</title>
-  <meta name="description" content="Gòstati, diventa fantasma, sfuggi al riconoscimento facciale" />
-
-  <!-- Se mi rompi il cazzo perchè ho messo dei google fonts: hai ragione e fai bene. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
-    rel="stylesheet">
-
-  <link rel="stylesheet" href="styles/index.css" />
-  <link rel="stylesheet" href="styles/ghostati.css" />
-
-  <link rel="canonical" href="https://sindacato.nina.watch/ghostati/" />
-  <meta name="robots" content="index, follow, max-image-preview:large">
-
-  <meta property="description"
-    content="Diventa un fantasma, sviluppa e testa camuffamenti anti-riconoscimento biometrico." />
-  <meta property="og:title" content="Ghòstati" />
-  <meta property="og:description"
-    content="Diventa un fantasma, sviluppa e testa camuffamenti anti-riconoscimento biometrico." />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://sindacato.nina.watch/ghostati/" />
-  <meta property="og:image" content="https://sindacato.nina.watch/ghostati/images/ghostati-hero.png" />
-  <meta property="og:site_name" content="NINA" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Ghòstati, col Trucco Avverso" />
-  <meta name="twitter:description"
-    content="Strumento che usa la webcam per insegnarti camuffamenti anti-riconoscimento biometrico - Sviluppa il trucco/plugin!" />
-  <meta name="twitter:image" content="https://sindacato.nina.watch/ghostati/images/ghostati-hero.png" />
-
-  <meta name="theme-color" content="#9f7aea" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml" />
+  <title>Ghostmaxxing</title>
+  <meta name="description" content="Static homepage concept for Ghostmaxxing, close to the orange editorial mockup." />
+  <link rel="stylesheet" href="styles/pages.css" />
 </head>
 
 <body>
+  <main class="editorial-homepage variant-a editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="#" aria-label="Ghostmaxxing homepage prototype">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
 
-  <header class="ghost-topbar" id="ghostTopbar">
-    <p class="ghost-topbar__progress" id="revealProgress" aria-live="polite">0%</p>
+        <nav class="editorial-homepage__nav" aria-label="Prototype navigation">
+          <a class="navlink" href="#">Code</a>
+          <a class="navlink" href="about.html">Vision & About</a>
+          <a class="cta-inline" href="report.html">How to <i>leak</i> to us<span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
 
-    <button class="ghost-topbar__toggle" id="ghostMenuToggle" type="button" aria-expanded="false"
-      aria-controls="ghostTopbarMenu" aria-label="Apri menu">
-      <span>☰</span>
-    </button>
+      <section class="editorial-homepage__hero" aria-labelledby="hero-title-a">
+        <div class="hero-copy">
+          <!-- <span class="hero-copy__eyebrow">Privacy activist and investigator meets public-research platform</span> -->
+          <h1 class="hero-copy__title" id="hero-title-a">Disrupt<br>the read.</h1>
+          <p class="hero-copy__lead">Ghostmaxxing it's a realtime webapp for testing face-recognition camouflage is used
+            to run <a href="workshops.html">workshops</a>. Runs locally, data stays with you.</p>
+          <p class="hero-copy__small">It can also Augment Reality with overlays over faces, so to drive your makeup with
+            techniques proven to be successful, and <b>Ghostyle</b> is the name of those plugins. <a href="#">Check the
+              Ghostyle archive</a>.</p>
+          <div class="hero-copy__actions">
+            <a class="btn-primary" href="/lab">Open the lab <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-copy__meta" aria-label="Prototype qualities">
+            <span><a href="/docs">Technical documentation</a></span>
+            <span><a href="/references/">Research References</a></span>
+          </div>
+        </div>
 
-    <nav class="ghost-topbar__nav" aria-label="Workshop e progetto">
-      <ul class="ghost-topbar__links" id="ghostTopbarMenu">
-        <li><a href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Codice</a></li>
-        <li><a href="https://sindacato.nina.watch/it/iniziative/ghostati/">Cornice politica</a></li>
-        <li><a href="https://ghostyles.vecna.eu">Ghostyles</a></li>
-        <li><a href="docs" target="_blank" rel="noopener noreferrer">Docs</a></li>
-        <li><a href="coverage" target="_blank" rel="noopener noreferrer">
-            Coverage</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main class="ghost-hero" id="ghostHero" data-target="ghostati.html">
-    <canvas class="ghost-hero__veil" id="ghostVeil" aria-hidden="true"></canvas>
-
-    <img class="ghost-hero__image" src="images/ghostati-hero.png"
-      alt="Immagine semi-temporanea di un volto generato con un lamerissimo servizio." />
-
-    <a class="ghost-hero__wordmark" id="ghostLink" href="ghostati.html" aria-disabled="true" tabindex="-1">
-      <h1 class="wordmark__layer">Ghòstati!
-        <br>Nessun dato
-        <br>biometrico
-        <br>sarà inviato
-        <br>all'esterno
-      </h1>
-    </a>
+        <figure class="hero-figure">
+          <div class="hero-figure__frame">
+            <img class="hero-figure__image" src="images/ghostmaxxing-homepage.webp"
+              alt="Portrait split between face-recognition overlay and adversarial camouflage." />
+          </div>
+          <!-- <figcaption class="hero-figure__origin">Ghostmaxxing helps you in understanding and mitigating facial recognition technologies.</figcaption> -->
+        </figure>
+      </section>
+    </div>
+    <div class="camera-band" aria-hidden="true"></div>
   </main>
-
-  <script src="scripts/index-effect.js"></script>
 </body>
 
 </html>

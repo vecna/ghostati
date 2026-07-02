@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * End-to-End smoke test for analyze-panel entry point.
  */
 
-test.describe('Ghostati Analyze E2E', () => {
+test.describe('Ghostmaxxing Analyze E2E', () => {
   test('should open and close analyze panel', async ({ page }) => {
     // Capture console output from the page for debugging.
     page.on('console', msg => console.log(`BROWSER: ${msg.text()}`));

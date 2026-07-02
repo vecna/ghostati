@@ -8,7 +8,7 @@ function makeLandmarks478() {
   }));
 }
 
-test.describe('Ghostati Overlay Mode E2E', () => {
+test.describe('Ghostmaxxing Overlay Mode E2E', () => {
   test('cycles overlay modes, persists selection, renders mesh/bbox, and suppresses after save', async ({ page }) => {
     test.setTimeout(90000);
 

@@ -4,7 +4,7 @@
  * @version      2.0.0
  * @author       NINA
  * @release_date 2026-06-29
- * @description  Template canonico per plugin Ghòstati: esempio minimo con callback 2D + UV.
+ * @description  Template canonico per plugin Ghostmaxxing: esempio minimo con callback 2D + UV.
  * ==/Ghostyle==
  */
 

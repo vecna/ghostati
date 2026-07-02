@@ -1,6 +1,6 @@
-# Ghostati - Technical Documentation
+# Ghostmaxxing - Technical Documentation
 
-Welcome to the internal technical documentation for Ghostati, a Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).
+Welcome to the internal technical documentation for Ghostmaxxing, a Web AR laboratory for the development and real-time testing of anti-biometric facial recognition camouflage (CV Dazzle).
 
 This documentation is generated from the source code using JSDoc. It provides a detailed breakdown of the functions, classes, and namespaces used throughout the project. 
 
