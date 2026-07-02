@@ -108,13 +108,14 @@ Avoid:
 - Old techniques still work everywhere.
 - A paper result equals real-world protection.
 
-### 4. The reporting node is central
+### 4. The whistleblowing/leaking service is central
 
-Ghostmaxxing is not only a demo. It should also direct attention toward real-world deployments of facial recognition in public space.
+Ghostmaxxing is a demo but also an attractor of attention
+for people working in that industry, in the search for allies within.
 
 Suggested phrasing:
 
-- Seen facial recognition in public space? Report it.
+- Seen facial recognition in public space? Document it and Report it.
 - The lab tests techniques; the reporting node gathers evidence.
 - Technical experiments and civic reporting belong together.
 - Help map where biometric systems are actually used.

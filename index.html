@@ -1,203 +1,54 @@
 <!doctype html>
-<html lang="it">
-
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ghostmaxxing</title>
-  <meta name="description"
-    content="Ghostmaxxing: Web AR lab per sviluppare e testare camuffamenti anti-riconoscimento facciale, con nodo di segnalazione per riconoscimento facciale negli spazi pubblici." />
-
-  <!-- Se mi rompi il cazzo perchè ho messo dei google fonts: hai ragione e fai bene. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=League+Script&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
-    rel="stylesheet">
-
-  <link rel="stylesheet" href="styles/index.css" />
-  <link rel="stylesheet" href="styles/ghostati.css" />
-
-  <link rel="canonical" href="https://sindacato.nina.watch/ghostati/" />
-  <link rel="help" href="https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c" />
-  <meta name="robots" content="index, follow, max-image-preview:large">
-
-  <meta property="description"
-    content="Sviluppa e testa camuffamenti anti-riconoscimento biometrico. Segnala luoghi, fornitori e tecnologie di riconoscimento facciale negli spazi pubblici." />
-  <meta property="og:title" content="Ghostmaxxing" />
-  <meta property="og:description"
-    content="Web AR lab per camuffamenti anti-riconoscimento facciale e raccolta di segnalazioni sul riconoscimento facciale negli spazi pubblici." />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://sindacato.nina.watch/ghostati/" />
-  <meta property="og:image" content="https://sindacato.nina.watch/ghostati/images/ghostati-hero.png" />
-  <meta property="og:site_name" content="NINA" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Ghostmaxxing, col Trucco Avverso" />
-  <meta name="twitter:description"
-    content="Strumento webcam per testare camuffamenti anti-riconoscimento biometrico e segnalare usi del riconoscimento facciale negli spazi pubblici." />
-  <meta name="twitter:image" content="https://sindacato.nina.watch/ghostati/images/ghostati-hero.png" />
-
-  <meta name="theme-color" content="#9f7aea" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml" />
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph":[
-    {
-      "@type": "SoftwareApplication",
-      "@id": "https://sindacato.nina.watch/ghostati/#app",
-      "name": "Ghostmaxxing",
-      "description": "Digital lab for experimenting with anti-biometric-recognition makeup.",
-      "applicationCategory": "BrowserApplication",
-      "operatingSystem": "Any",
-      "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "EUR"
-      },
-      "author": {
-        "@id": "https://www.nina.watch/#organization"
-      },
-      "codeRepository": "https://github.com/vecna/ghostati",
-      "softwareHelp": "https://sindacato.nina.watch/ghostati/ghostati-docs.html",
-      "featureList": [
-        "Offline facial recognition in the browser",
-        "Real-time adversarial effectiveness testing",
-        "Mobile and desktop support"
-      ]
-    },
-    {
-      "@type": "Organization",
-      "@id": "https://www.nina.watch/#organization",
-      "name": "N.I.N.A. - Neither Intelligent Nor Artificial",
-      "url": "https://www.nina.watch",
-      "description": "Critical initiative and practical exploration of facial recognition technologies and forms of resistance.",
-      "sameAs": [
-        "https://vecna.eu/",
-        "https://github.com/vecna"
-      ]
-    },
-    {
-      "@type": "Event",
-      "@id": "https://supporta.nina.watch/NINA/Festival/8/",
-      "name": "Ghostmaxxing. Fashion-tech and biometric data protection",
-      "startDate": "2026-05-09T16:00:00+02:00",
-      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-      "eventStatus": "https://schema.org/EventScheduled",
-      "location": {
-        "@type": "Place",
-        "name": "Rob de Matt",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Via Enrico Annibale Butti, 18",
-          "addressLocality": "Milano",
-          "addressCountry": "IT"
-        }
-      },
-      "organizer": {
-        "@id": "https://www.nina.watch/#organization"
-      }
-    }, {
-      "@type": "Event",
-      "@id": "https://supporta.nina.watch/NINA/rome/26/",
-      "name": "Workshop Rome - NINA Festival",
-      "startDate": "2026-05-10T16:00:00+02:00",
-      "url": "https://supporta.nina.watch/NINA/rome/26/",
-      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-      "eventStatus": "https://schema.org/EventScheduled",
-      "location": {
-        "@type": "Place",
-        "name": "L863",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Via Giovanni Ansaldo 3A/3B",
-          "addressLocality": "Rome",
-          "addressCountry": "IT"
-        }
-      },
-      "organizer": {
-        "@id": "https://www.nina.watch/#organization"
-      }
-    }, {
-      "@type": "Service",
-      "@id": "https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c",
-      "url": "https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c",
-      "name": "Whistleblowing Platform",
-      "serviceType": "Whistleblowing Platform",
-      "provider": {
-        "@id": "https://www.nina.watch/#organization"
-      }
-    }]
-  }
-  </script>
-
+  <meta name="description" content="Static homepage concept for Ghostmaxxing, close to the orange editorial mockup." />
+  <link rel="stylesheet" href="styles/pages.css" />
 </head>
-
 <body>
+  <main class="editorial-homepage variant-a editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="#" aria-label="Ghostmaxxing homepage prototype">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
 
-  <header class="ghost-topbar" id="ghostTopbar">
-    <p class="ghost-topbar__progress" id="revealProgress" aria-live="polite">0%</p>
+        <nav class="editorial-homepage__nav" aria-label="Prototype navigation">
+          <a class="navlink" href="#">Code</a>
+          <a class="navlink" href="about.html">Vision & About</a>
+          <a class="cta-inline" href="#">Help by<i>leaking</i>to us<span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
 
-    <button class="ghost-topbar__toggle" id="ghostMenuToggle" type="button" aria-expanded="false"
-      aria-controls="ghostTopbarMenu" aria-label="Apri menu">
-      <span>☰</span>
-    </button>
+      <section class="editorial-homepage__hero" aria-labelledby="hero-title-a">
+        <div class="hero-copy">
+          <!-- <span class="hero-copy__eyebrow">Privacy activist and investigator meets public-research platform</span> -->
+          <h1 class="hero-copy__title" id="hero-title-a">Disrupt<br>the read.</h1>
+          <p class="hero-copy__lead">Ghostmaxxing it's a realtime webapp for testing face-recognition camouflage is used to run <a href="workshops.html">workshops</a>. Runs locally, data stays with you.</p>
+          <p class="hero-copy__small">It can also Augment Reality with overlays over faces, so to drive your makeup with techniques proven to be successful, and <b>Ghostyle</b> is the name of those plugins. <a href="#">Check the Ghostyle archive</a>.</a>/p>
+          <div class="hero-copy__actions">
+            <a class="btn-primary" href="/lab">Open the lab <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-copy__meta" aria-label="Prototype qualities">
+            <span><a href="/docs">Technical documentation</a></span>
+            <span><a href="/references/">Research References</a></span>
+          </div>
+        </div>
 
-    <nav class="ghost-topbar__nav" aria-label="Workshop, codice e segnalazioni">
-      <ul class="ghost-topbar__links" id="ghostTopbarMenu">
-        <li><a href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Codice</a></li>
-        <li><a href="https://sindacato.nina.watch/it/iniziative/ghostati/">Cornice politica</a></li>
-        <li><a href="https://ghostyles.vecna.eu" target="_blank" rel="noopener noreferrer">Ghostyles</a></li>
-        <li><a href="docs" target="_blank" rel="noopener noreferrer">Docs</a></li>
-        <li><a href="coverage" target="_blank" rel="noopener noreferrer">Coverage</a></li>
-        <li><a href="https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c"
-            target="_blank" rel="noopener noreferrer">Raccontacelo</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main class="ghost-hero" id="ghostHero" data-target="ghostati.html">
-    <canvas class="ghost-hero__veil" id="ghostVeil" aria-hidden="true"></canvas>
-
-    <img class="ghost-hero__image" src="images/ghostati-hero.png"
-      alt="Volto stilizzato usato come immagine hero del progetto Ghostmaxxing." />
-
-    <a class="ghost-hero__wordmark" id="ghostLink" href="ghostati.html" aria-disabled="true" tabindex="-1">
-      <h1 class="wordmark__layer">Ghostmaxxing!
-        <br>Nessun dato
-        <br>biometrico
-        <br>sarà inviato
-        <br>all'esterno
-      </h1>
-    </a>
+        <figure class="hero-figure">
+          <div class="hero-figure__frame">
+            <img class="hero-figure__image" src="images/ghostmaxxing-homepage.webp" alt="Portrait split between face-recognition overlay and adversarial camouflage." />
+          </div>
+          <!-- <figcaption class="hero-figure__origin">Ghostmaxxing helps you in understanding and mitigating facial recognition technologies.</figcaption> -->
+        </figure>
+      </section>
+    </div>
+    <div class="camera-band" aria-hidden="true"></div>
   </main>
-
-  <section class="ghost-report" id="raccontaci" aria-labelledby="raccontaci-title">
-    <div class="label">Facciamo luce sulla segretezza</div>
-    <h2 id="raccontaci-title">Il riconoscimento facciale negli spazi pubblici è vietato</h2>
-    <p>
-      Sai di qualche luogo in cui questo avviene? Conosci il fornitore, la tecnologia utilizzata,
-      chi ha accesso ai dati, oppure i limiti e gli abusi che porta con sé?
-    </p>
-    <p>
-      <a href="https://raccontaci.nina.watch/#/submission?context=10c78596-3ea0-4867-b2fb-21fdb8e3f40c" target="_blank"
-        rel="noopener noreferrer">
-        Raccontacelo: è fondamentale per aggiornare le forme di resistenza
-      </a>
-    </p>
-  </section>
-
-  <script src="scripts/index-effect.js"></script>
 </body>
-
 </html>

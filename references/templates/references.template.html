@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>References — Ghostmaxxing</title>
+  <meta name="description"
+    content="A curated technical and cultural genealogy of face-recognition camouflage, adversarial makeup, CV Dazzle, face obfuscation and physical-world attacks against computer vision systems." />
+  <link rel="stylesheet" href="/styles/pages.css" />
+  <link rel="stylesheet" href="/styles/content-pages.css" />
+  <link rel="stylesheet" href="/styles/references-list.css" />
+</head>
+
+<body>
+  <main class="editorial-homepage content-page editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="index.html" aria-label="Ghostmaxxing homepage">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
+
+        <nav class="editorial-homepage__nav" aria-label="Project navigation">
+          <a class="navlink" href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Code</a>
+          <a class="navlink" href="about.html">Vision &amp; About</a>
+          <a class="navlink" href="/references" aria-current="page">References</a>
+          <a class="cta-inline" href="report.html">Help by<i>leaking</i>to us<span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <!--
+        Edit this intro freely — it is static and will not be touched by
+        scripts-dev/build-references-page.js. Only the {{...}} placeholders
+        below are replaced by the build script.
+      -->
+      <section class="content-page__header-area" aria-labelledby="page-title">
+        <span class="content-page__kicker">References</span>
+        <h1 id="page-title">A working genealogy of face-recognition camouflage.</h1>
+        <p class="content-page__lead">
+          {{REFERENCE_COUNT}} references, {{YEAR_MIN}}&ndash;{{YEAR_MAX}}, newest first.
+        </p>
+        <p class="content-page__deck">
+          The Ghostmaxxing references archive maps artistic, academic, and activist work around face obfuscation,
+          adversarial makeup, physical-world attacks, and anti-surveillance aesthetics. Each entry documents what was
+          demonstrated, what its limits are, and whether Ghostmaxxing can directly or partially retest the idea.
+        </p>
+      </section>
+
+      <div class="content-page__layout">
+        <article class="content-page__main">
+          <section class="content-section" id="references-list">
+            <p class="content-page__lead reference-stats">{{STATS_LINE}}</p>
+
+            {{REFERENCES_BODY}}
+          </section>
+
+          <!-- Static section — edit freely -->
+          <section class="content-section" id="method">
+            <h2>How this archive is maintained.</h2>
+            <p>
+              <code>REFERENCES.json</code> is the source of truth for this page. Add, edit, or remove an entry there,
+              then run:
+            </p>
+            <p><code>node scripts-dev/validate-references.js &amp;&amp; node scripts-dev/build-references-page.js</code></p>
+            <p>
+              The build script regenerates the reference list below from <code>templates/references.template.html</code>
+              — this header, the intro copy, and this section are hand-edited directly in that template file and are
+              never overwritten.
+            </p>
+            <div class="callout">
+              <p>
+                Technical tests are only one part of the work. If you know of facial recognition being used in
+                public space, use the <a href="report.html">reporting page</a> to share what you know, only if it is
+                safe for you to do so.
+              </p>
+            </div>
+          </section>
+        </article>
+
+        <aside class="content-page__aside" aria-label="Page sections">
+          <h2>Jump to</h2>
+          <nav>
+            {{DECADE_NAV}}
+            <a href="#method">How this is maintained</a>
+          </nav>
+        </aside>
+      </div>
+    </div>
+
+    <div class="camera-band" aria-hidden="true"></div>
+  </main>
+</body>
+
+</html>

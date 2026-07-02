@@ -1,0 +1,170 @@
+/* References list — additions on top of pages.css / content-pages.css.
+ * Uses the project's real custom properties (--gm-*) so it inherits the
+ * warm editorial palette automatically. No new colors are introduced;
+ * testability badges reuse --gm-yellow / --gm-green / --gm-muted / --gm-ink.
+ */
+
+.reference-stats {
+  opacity: 0.75;
+}
+
+.reference-decade {
+  margin: 2.5rem 0 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gm-border);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 780;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gm-text);
+  opacity: 0.7;
+}
+
+.reference-decade:first-of-type {
+  margin-top: 1.5rem;
+  border-top: none;
+  padding-top: 0;
+}
+
+.reference-decade__group {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.reference-entry {
+  padding: 1.25rem;
+  border: 1px solid rgba(7, 26, 51, 0.32);
+  background: rgba(255, 231, 168, 0.13);
+  box-shadow: 4px 4px 0 rgba(5, 5, 5, 0.13);
+}
+
+.reference-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.reference-entry__meta--topics {
+  margin-top: 0.85rem;
+  margin-bottom: 0;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(5, 5, 5, 0.24);
+  background: rgba(255, 231, 168, 0.4);
+  color: var(--gm-text);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.tag--topic {
+  text-transform: capitalize;
+  background: transparent;
+  color: var(--gm-muted);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgba(5, 5, 5, 0.4);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 780;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--gm-ink);
+}
+
+.badge--direct { background: var(--gm-yellow); }
+.badge--partial { background: transparent; border-color: var(--gm-green); color: var(--gm-green); }
+.badge--indirect,
+.badge--contextual { background: transparent; color: var(--gm-muted); }
+.badge--no { background: transparent; color: var(--gm-muted); text-decoration: line-through; }
+
+.reference-entry__layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.reference-entry__preview {
+  border: 1px solid rgba(7, 26, 51, 0.32);
+  max-width: 320px;
+  background: rgba(255, 231, 168, 0.13);
+}
+
+.reference-entry__preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.reference-entry__body h3 {
+  margin: 0 0 0.3rem;
+  font-size: clamp(1.35rem, 1.4vw + 1rem, 2rem);
+}
+
+.reference-entry__authors {
+  margin: 0 0 0.6rem;
+  color: var(--gm-muted);
+  font-size: 0.92rem;
+}
+
+.reference-entry__facts {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1.1rem 0;
+}
+
+.reference-entry__fact {
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgba(7, 26, 51, 0.2);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.reference-entry__label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--gm-ink);
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 780;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reference-entry__fact p {
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.reference-entry__citation {
+  margin: 0.6rem 0;
+  color: var(--gm-muted);
+  font-size: 0.85rem;
+}
+
+.reference-entry__links {
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+}
+
+@media (min-width: 760px) {
+  .reference-entry__layout {
+    grid-template-columns: 240px 1fr;
+    align-items: start;
+  }
+
+  .reference-entry__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
