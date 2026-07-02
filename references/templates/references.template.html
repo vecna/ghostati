@@ -13,6 +13,19 @@
 </head>
 
 <body>
+  <!--
+    Relevance-star icon, defined once and reused via <use href="#icon-star">.
+    This is a placeholder star (auto-generated) — replace the single <path>
+    below whenever you have a real icon and every star on the page updates.
+    Keep the id "icon-star" and the 0 0 24 24 viewBox on the <symbol>.
+  -->
+  <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="icon-star" viewBox="0 0 24 24">
+      <path
+        d="M12 2.5 L14.23 8.93 L21.04 9.06 L15.61 13.17 L17.58 19.69 L12 15.8 L6.42 19.69 L8.39 13.17 L2.96 9.06 L9.77 8.93 Z" />
+    </symbol>
+  </svg>
+
   <main class="editorial-homepage content-page editorial-homepage--svg-footer-band">
     <div class="editorial-homepage__shell">
       <header class="editorial-homepage__header">
@@ -27,7 +40,7 @@
           <a class="navlink" href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Code</a>
           <a class="navlink" href="about.html">Vision &amp; About</a>
           <a class="navlink" href="/references" aria-current="page">References</a>
-          <a class="cta-inline" href="report.html">Help by<i>leaking</i>to us<span aria-hidden="true">↗</span></a>
+          <a class="cta-inline" href="report.html">How to <i>leak</i> to us<span aria-hidden="true">↗</span></a>
         </nav>
       </header>
 
@@ -59,32 +72,23 @@
 
           <!-- Static section — edit freely -->
           <section class="content-section" id="method">
-            <h2>How this archive is maintained.</h2>
+            <h2>How to suggest a new entry.</h2>
             <p>
-              <code>REFERENCES.json</code> is the source of truth for this page. Add, edit, or remove an entry there,
-              then run:
+              Every possible reference should be read and transformed into the format of <code>REFERENCES.json</code>,
+              check out on github
+              (https://github.com/vecna/ghostati/blob/rebranding/ghostmaxxing/references/REFERENCES.json) how detailed
+              is.
+              Once you're sure it might suit us, and potentially we can even program a Ghostyle to retest it, please
+              open an issue or submit a pull request.
             </p>
-            <p><code>node scripts-dev/validate-references.js &amp;&amp; node scripts-dev/build-references-page.js</code></p>
-            <p>
-              The build script regenerates the reference list below from <code>templates/references.template.html</code>
-              — this header, the intro copy, and this section are hand-edited directly in that template file and are
-              never overwritten.
-            </p>
-            <div class="callout">
-              <p>
-                Technical tests are only one part of the work. If you know of facial recognition being used in
-                public space, use the <a href="report.html">reporting page</a> to share what you know, only if it is
-                safe for you to do so.
-              </p>
-            </div>
           </section>
         </article>
 
         <aside class="content-page__aside" aria-label="Page sections">
           <h2>Jump to</h2>
           <nav>
-            {{DECADE_NAV}}
-            <a href="#method">How this is maintained</a>
+            {{GROUP_NAV}}
+            <a href="#method">Suggest a new entry</a>
           </nav>
         </aside>
       </div>

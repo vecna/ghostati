@@ -1,14 +1,33 @@
 /* References list — additions on top of pages.css / content-pages.css.
  * Uses the project's real custom properties (--gm-*) so it inherits the
  * warm editorial palette automatically. No new colors are introduced;
- * testability badges reuse --gm-yellow / --gm-green / --gm-muted / --gm-ink.
+ * testability badges and tag flags reuse --gm-yellow / --gm-green /
+ * --gm-muted / --gm-ink.
  */
 
 .reference-stats {
   opacity: 0.75;
 }
 
-.reference-decade {
+/* Screen-reader-only text (used for the star rating's numeric equivalent) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Section grouping (peer-reviewed / art / advocacy / other) ---- */
+
+.reference-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   margin: 2.5rem 0 1rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--gm-border);
@@ -21,19 +40,29 @@
   opacity: 0.7;
 }
 
-.reference-decade:first-of-type {
+.reference-group:first-of-type {
   margin-top: 1.5rem;
   border-top: none;
   padding-top: 0;
 }
 
-.reference-decade__group {
+.reference-group__count {
+  margin-left: 0.15rem; /* fallback for engines without flexbox `gap` support */
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.8;
+}
+
+.reference-group__list {
   display: grid;
   gap: 1.5rem;
 }
 
+/* ---- Card shell ---- */
+
 .reference-entry {
-  padding: 1.25rem;
+  padding: 1.1rem;
   border: 1px solid rgba(7, 26, 51, 0.32);
   background: rgba(255, 231, 168, 0.13);
   box-shadow: 4px 4px 0 rgba(5, 5, 5, 0.13);
@@ -42,6 +71,7 @@
 .reference-entry__meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.4rem;
   margin-bottom: 0.75rem;
 }
@@ -50,6 +80,19 @@
   margin-top: 0.85rem;
   margin-bottom: 0;
 }
+
+.reference-entry h3 {
+  margin: 0 0 0.3rem;
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.7rem);
+}
+
+.reference-entry__authors {
+  margin: 0 0 0.6rem;
+  color: var(--gm-muted);
+  font-size: 0.92rem;
+}
+
+/* ---- Tags & badges ---- */
 
 .tag {
   display: inline-flex;
@@ -72,6 +115,43 @@
   font-weight: 600;
 }
 
+/* A tag no one else in the archive uses. */
+.tag--unique {
+  color: var(--gm-ink);
+  font-weight: 780;
+  border-color: rgba(5, 5, 5, 0.5);
+}
+
+/* The earliest entry using this tag — a small lineage marker, since we
+   deliberately don't offer click-to-filter on tags (see README). */
+.tag--new {
+  color: var(--gm-green);
+  font-weight: 780;
+  border-color: var(--gm-green);
+}
+
+.tag__flag {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.05em 0.4em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 780;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tag--unique .tag__flag {
+  background: var(--gm-yellow);
+  color: var(--gm-ink);
+}
+
+.tag--new .tag__flag {
+  background: transparent;
+  border: 1px solid var(--gm-green);
+  color: var(--gm-green);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -91,49 +171,91 @@
 .badge--contextual { background: transparent; color: var(--gm-muted); }
 .badge--no { background: transparent; color: var(--gm-muted); text-decoration: line-through; }
 
-.reference-entry__layout {
-  display: grid;
-  gap: 1rem;
+/* ---- Relevance stars (placeholder icon — see the <symbol> in the template) ---- */
+
+.reference-relevance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.3rem;
+  border: 1px solid rgba(5, 5, 5, 0.24);
+  background: rgba(255, 231, 168, 0.4);
 }
 
-.reference-entry__preview {
-  border: 1px solid rgba(7, 26, 51, 0.32);
-  max-width: 320px;
-  background: rgba(255, 231, 168, 0.13);
+.star-icon {
+  fill: var(--gm-ink);
+  flex: none;
 }
 
-.reference-entry__preview img {
-  display: block;
-  width: 100%;
-  height: auto;
+.star-icon--empty {
+  fill: none;
+  stroke: var(--gm-muted);
+  stroke-width: 1.5px;
+  opacity: 0.6;
 }
 
-.reference-entry__body h3 {
-  margin: 0 0 0.3rem;
-  font-size: clamp(1.35rem, 1.4vw + 1rem, 2rem);
+/* ---- Full assessment (Demonstrated / relevance / testability / limits) ----
+ * A native <details> disclosure instead of four bordered boxes: collapsed by
+ * default so a page of 20+ entries stays scannable, and a flowing label:value
+ * list instead of a grid of little cards once it's open — reads the same
+ * whether the card is 320px or 1100px wide, no extra breakpoints needed. */
+
+.reference-entry__assessment summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(5, 5, 5, 0.4);
+  background: rgba(255, 255, 255, 0.4);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 780;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gm-ink);
+  cursor: pointer;
+  list-style: none;
 }
 
-.reference-entry__authors {
-  margin: 0 0 0.6rem;
-  color: var(--gm-muted);
-  font-size: 0.92rem;
+.reference-entry__assessment summary::-webkit-details-marker {
+  display: none;
+}
+
+.reference-entry__assessment summary::after {
+  content: "\25BE"; /* ▾ */
+  transition: transform 0.15s ease;
+}
+
+.reference-entry__assessment[open] summary {
+  margin-bottom: 0.9rem;
+}
+
+.reference-entry__assessment[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.reference-entry__assessment summary:hover,
+.reference-entry__assessment summary:focus-visible {
+  background: var(--gm-cream);
+  border-color: rgba(5, 5, 5, 0.7);
 }
 
 .reference-entry__facts {
   display: grid;
-  gap: 0.85rem;
-  margin: 1.1rem 0;
+  gap: 1rem;
+  margin: 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(7, 26, 51, 0.18);
 }
 
 .reference-entry__fact {
-  padding: 0.8rem 0.95rem;
-  border: 1px solid rgba(7, 26, 51, 0.2);
-  background: rgba(255, 255, 255, 0.35);
+  display: grid;
+  gap: 0.2rem;
 }
 
-.reference-entry__label {
-  display: block;
-  margin-bottom: 0.3rem;
+.reference-entry__fact dt {
+  margin: 0;
   color: var(--gm-ink);
   font-family: var(--sans);
   font-size: 0.7rem;
@@ -142,13 +264,13 @@
   letter-spacing: 0.08em;
 }
 
-.reference-entry__fact p {
+.reference-entry__fact dd {
   margin: 0;
   font-size: 0.96rem;
 }
 
 .reference-entry__citation {
-  margin: 0.6rem 0;
+  margin: 0.9rem 0 0.4rem;
   color: var(--gm-muted);
   font-size: 0.85rem;
 }
@@ -158,13 +280,35 @@
   font-size: 0.92rem;
 }
 
-@media (min-width: 760px) {
-  .reference-entry__layout {
-    grid-template-columns: 240px 1fr;
-    align-items: start;
+/* ---- Responsive tweaks ----
+ * Everything above already flows at any width (the label:value facts list,
+ * wrapping tag rows, and the global .content-page p max-width from
+ * content-pages.css keep prose readable even inside a very wide card) — the
+ * only real breakpoint needed is turning each fact's label+value from a
+ * stacked pair into a side-by-side spec-sheet row once there's room. */
+
+@media (min-width: 640px) {
+  .reference-entry__fact {
+    grid-template-columns: 11rem 1fr;
+    gap: 0.75rem 1rem;
+    align-items: baseline;
+  }
+}
+
+@media (min-width: 900px) {
+  .reference-entry {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .reference-entry {
+    padding: 0.9rem;
   }
 
-  .reference-entry__facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .tag,
+  .badge {
+    font-size: 0.68rem;
+    padding: 0.26rem 0.5rem;
   }
 }

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leak to us — Ghostmaxxing</title>
+  <meta name="description"
+    content="A secure, anonymous reporting channel for anyone with direct or indirect knowledge of facial-recognition deployments — engineers, operators, procurement staff, bystanders, and people affected by it." />
+  <link rel="stylesheet" href="/styles/pages.css" />
+  <link rel="stylesheet" href="/styles/content-pages.css" />
+  <link rel="stylesheet" href="/styles/report-page.css" />
+</head>
+
+<body>
+  <main class="editorial-homepage content-page editorial-homepage--svg-footer-band">
+    <div class="editorial-homepage__shell">
+      <header class="editorial-homepage__header">
+        <a class="wordmark" href="index.html" aria-label="Ghostmaxxing homepage">
+          <span class="wordmark__title">Ghostmaxxing</span>
+          <span class="wordmark__subtitle">
+            Privacy activism meets public-research platform
+          </span>
+        </a>
+
+        <nav class="editorial-homepage__nav" aria-label="Project navigation">
+          <a class="navlink" href="https://github.com/vecna/ghostati" target="_blank" rel="noopener noreferrer">Code</a>
+          <a class="navlink" href="about.html">Vision &amp; About</a>
+          <a class="navlink" href="references.html">References</a>
+          <a class="cta-inline" href="report.html" aria-current="page">How to <i>leak</i> to us<span
+              aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <section class="content-page__header-area" aria-labelledby="page-title">
+        <span class="content-page__kicker">Leak to us</span>
+        <h1 id="page-title">To help us, tell us what you know.</h1>
+        <p class="content-page__lead">
+          Every deployment has people who understand it from the inside: engineers, operators, procurement staff,
+          bystanders, and the people it was pointed at. Whichever one you are, there's likely a specific set of
+          questions waiting for you below.
+        </p>
+        <p class="content-page__deck">
+          This page explains what to think about before you write anything, how the submission itself works, and
+          what happens after you send it. If you're wondering why we collect this at all, read
+          <a href="about.html#leaks">why leaking matters</a> first. Everything here runs on
+          <a href="https://www.globaleaks.org" target="_blank" rel="noopener noreferrer">GlobaLeaks</a>, the same
+          open-source system used by whistleblowing and journalism projects worldwide.
+        </p>
+      </section>
+
+      <div class="content-page__layout">
+        <article class="content-page__main">
+
+          <section class="content-section" id="questionnaires">
+            <h2>What we look for.</h2>
+            <p>
+              Each card below opens a separate, dedicated questionnaire we configured; Find if you fit in any of it, and
+              then keep reading the page for all the necessary security practices.
+            </p>
+            <div class="audience-grid">
+
+              <!-- TODO: replace each href below with
+                   https://raccontaci.nina.watch/#/submission?context=<uuid>
+                   once the matching context exists in the GlobaLeaks admin panel.
+                   Field-by-field specs for all eight questionnaires are in
+                   GLOBALEAKS-QUESTIONNAIRES.md. -->
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/system-overview.svg" alt="" /></span>
+                <h3>You work with facial-recognition technology.</h3>
+                <p>You know how a system is built, what it covers, and who touches the data. Not every question
+                  needs an answer.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+              <!--
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/test-countermeasures.svg" alt="" /></span>
+                <h3>You can run our test cases against a real system.</h3>
+                <p>You have access to a live or staging deployment. We've this bundle of experiment to test, we would like to know if 
+                  you'll be run your tool over our samples, to know how the makeup is performing.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+              COMMENTED BECAUSE WE DON'T HAVE THE BUNDLE YET
+-->
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/weak-spots.svg" alt="" /></span>
+                <h3>You know where a deployment falls apart.</h3>
+                <p>You've seen where a specific system is misconfigured, poorly maintained, or easy to spot from
+                  the outside. Tell us what to look for, and where.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/contracts-market.svg" alt="" /></span>
+                <h3>You've seen the paperwork.</h3>
+                <p>Contracts, tenders, vendor pitches, internal budgets. The commercial side of facial recognition
+                  is usually better hidden than the cameras themselves.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/control-panel.svg" alt="" /></span>
+                <h3>You run the system, day to day.</h3>
+                <p>You're the one watching the alerts, overriding false matches, or logging who gets flagged. You
+                  know things the spec sheet doesn't say.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/procurement-officials.svg" alt="" /></span>
+                <h3>You approved it, funded it, or signed off on it.</h3>
+                <p>Public tenders, impact assessments, oversight reports. Sitting on the buying side of the table
+                  means you saw a different version of the story.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/public-sightings.svg" alt="" /></span>
+                <h3>You spotted something in public space.</h3>
+                <p>A camera, a kiosk, a sign, a badge you didn't recognize. You don't need inside access, but just a
+                  location and what you saw.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+              <a class="audience-card" href="https://raccontaci.nina.watch" target="_blank" rel="noopener noreferrer">
+                <span class="audience-card__icon"><img src="/images/report/affected-individuals.svg" alt="" /></span>
+                <h3>You were stopped, flagged, or misidentified.</h3>
+                <p>Something went wrong on the other side of the lens, and it happened to you. Your experience is
+                  evidence too.</p>
+                <span class="audience-card__cta">Open this questionnaire</span>
+              </a>
+
+            </div>
+          </section>
+
+          <section class="content-section" id="before-you-write">
+            <h2>Before you write anything.</h2>
+            <p>
+              Most whistleblowers aren't exposed by a broken encryption algorithm. They're exposed by something
+              that happened before any tool was involved. A comment to a colleague, a search from a work laptop, a
+              detail that only one person could have known. None of what follows is about a specific piece of
+              software. It's about the decisions that come first.
+            </p>
+            <ul class="opsec-list">
+              <li>Don't mention your plan to colleagues, your manager, or friends who might repeat it without
+                realizing what it means.</li>
+              <li>Don't use your employer's device, account, or network to research this page, or to prepare
+                anything.</li>
+              <li>Photos and documents carry hidden information: timestamps, device IDs, GPS coordinates, printer
+                tracking dots.<b>We do not plan to release ANY of the material received</b>, but rather to use that as
+                investigation lead.
+                </br>
+                When in doubt, describe what you saw in your own words instead of uploading the
+                original file.</li>
+              <li>When you're ready, use the <a href="https://www.torproject.org/download/" target="_blank"
+                  rel="noopener noreferrer">Tor Browser</a> to open the submission page, ideally from a device and
+                network that isn't tied to your workplace.</li>
+            </ul>
+            <div class="callout">
+              <p>
+                These are practices we ask to our sources to protect themselves. Less secure channels might work too,
+                but we should assume to be surveilled even if our
+                research in the public interest is meant to strenghen the state of rights. so, please, follow the above
+                instructions, and if you need help, meet friendly digital rights organizations where you can get
+                additional support!
+              </p>
+            </div>
+
+            <h3>Know more, if you want to.</h3>
+            <p>
+              None of this reading is required before you submit anything. It's here for people who want to go
+              deeper on their own digital security, or who are doing this as part of an ongoing risk they're
+              managing, not a one-off report.
+            </p>
+            <div class="resource-grid">
+              <a class="resource-card" href="https://freedom.press/digisec/guides/source-protection/" target="_blank"
+                rel="noopener noreferrer">
+                <h3>Source protection guides</h3>
+                <p>Freedom of the Press Foundation on reaching a journalist safely, written for people on your side
+                  of the exchange.</p>
+              </a>
+              <a class="resource-card" href="https://ssd.eff.org/" target="_blank" rel="noopener noreferrer">
+                <h3>Surveillance Self-Defense</h3>
+                <p>EFF's general guide to digital security, from the basics to specific tools and scenarios.</p>
+              </a>
+              <a class="resource-card" href="https://holistic-security.tacticaltech.org/" target="_blank"
+                rel="noopener noreferrer">
+                <h3>Holistic Security</h3>
+                <p>Tactical Tech's guide for activists — treats digital, physical, and psychological safety as one
+                  problem.</p>
+              </a>
+              <a class="resource-card" href="https://securityinabox.org/" target="_blank" rel="noopener noreferrer">
+                <h3>Security in a Box</h3>
+                <p>Step-by-step digital security guides organized by device and by task.</p>
+              </a>
+            </div>
+          </section>
+
+          <section class="content-section" id="how-it-works">
+            <h2>How the submission works.</h2>
+            <p>
+              GlobaLeaks organizes each reporting channel into a <strong>questionnaire</strong> — a set of
+              questions tailored to a specific kind of knowledge. Below, you'll pick the one that matches what you
+              actually know, rather than filling in one generic form built for no one in particular.
+            </p>
+            <ul class="opsec-list">
+              <li>Most fields are optional. Answer what you can and skip the rest — a partial answer is still
+                useful to us.</li>
+              <li>You don't create an account, and nothing in the form asks for your name or contact details.</li>
+              <li>The submission itself happens inside GlobaLeaks, reachable over Tor, the same system used by
+                whistleblowing projects at newsrooms and NGOs worldwide.</li>
+            </ul>
+          </section>
+
+          <section class="content-section" id="after-you-submit">
+            <h2>Submitting is the beginning, not the end.</h2>
+            <p>
+              A real person on our editorial and research team reads every submission — not an automated filter.
+              Before you send anything, the submission screen shows you who's set to receive it, so you're not
+              dropping this into an anonymous inbox on our side, even while you stay anonymous on yours.
+            </p>
+            <p>
+              At the end of the form, you'll be given a private <strong>receipt code</strong>.
+            </p>
+            <div class="receipt-callout">
+              <span class="receipt-callout__code" aria-hidden="true">•••• •••• •••• ••••</span>
+              <p>
+                That code is the only way — for you or for us — to reopen your case. Save it somewhere safe,
+                offline if you can. If it's lost, the conversation can't be recovered. That's by design, not a bug.
+              </p>
+            </div>
+            <p>
+              Come back and use it. We may have follow-up questions, and a source who keeps that thread open tends
+              to help an investigation go much further than a single anonymous drop ever could. Secure reporting
+              works best as part of a wider network of technical, legal, and editorial support around it, not as a
+              black box that swallows a report and gives nothing back — that's the same thinking behind efforts like
+              GlobaLeaks' own <a
+                href="https://globaleaks.org/2026/06/23/supporting-the-house-of-whistleblowers-expanding-the-ecosystem-around-secure-reporting/"
+                target="_blank" rel="noopener noreferrer">House of Whistleblowers</a> initiative, and it's why we
+              treat the code above as the start of a conversation, not a drop box receipt.
+            </p>
+          </section>
+
+        </article>
+
+        <aside class="content-page__aside" aria-label="Page sections">
+          <h2>Jump to</h2>
+          <nav>
+            <a href="#questionnaires">What we look for</a>
+            <a href="#before-you-write">Before you write anything</a>
+            <a href="#how-it-works">How the submission works</a>
+            <a href="#after-you-submit">After you submit</a>
+          </nav>
+        </aside>
+      </div>
+    </div>
+
+    <div class="camera-band" aria-hidden="true"></div>
+  </main>
+</body>
+
+</html>
