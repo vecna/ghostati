@@ -12,31 +12,14 @@
 
 /* --- 1. The research loop ------------------------------------------------
 
-   A conveyor, not a ring. Rings fight the web: on a phone they always
-   degenerate into a stack whose last arrow points backwards up the page.
-
-     [ 01 ]  arc>  [ 02 ]  arc>  [ 03 ]
-     [ (icon) then the loop closes: ...  ]      <- the refrain strip
-
-   The recursion is carried by the closing strip: the full three-arrow icon
-   from lab.html, at the glyph size it was drawn for, next to one sentence
-   that says the cycle restarts. No arrow ever points back up. On a phone the
-   blocks stack, the two arcs rotate to point down the page, and the same
-   strip closes the sequence.
-
-   DOM order equals visual order on every viewport: no grid-area placement,
-   no reordering, nothing for a screen reader to untangle. (The previous
-   triangle placed cards via :nth-child while the ring image was child one,
-   which shifted every card by a slot. Structurally impossible here.)
-
-   Blocks, arcs and strip are all cream on the orange ground, no borders:
-   one material, fused, per the poster system. */
+   The three actions use a regular responsive card grid. DOM order stays
+   visual order on every viewport, while each card can grow without making
+   the others cramped. */
 
 .about-loop {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: clamp(0.9rem, 1.8vw, 1.6rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: clamp(1rem, 2vw, 1.75rem);
   align-items: stretch;
   width: 100%;
   margin-top: clamp(1.6rem, 3vw, 2.4rem);
@@ -44,7 +27,9 @@
 
 .about-loop__step {
   padding: clamp(1rem, 1.6vw, 1.5rem);
+  border: 1px solid rgba(7, 26, 51, 0.28);
   background: var(--gm-cream);
+  box-shadow: var(--gm-shadow-block);
 }
 
 /* Node identifier: mono, green, wide tracking. The styleguide's .sg-card__id
@@ -85,13 +70,7 @@
    light trim for the slightly larger render. If the line feels wrong, this
    is the only number to touch. */
 .about-loop__arc {
-  align-self: center;
-  width: clamp(1.9rem, 2.6vw, 2.6rem);
-  height: auto;
-  fill: none;
-  stroke: var(--gm-cream);
-  stroke-width: 1.4;
-  overflow: visible;
+  display: none;
 }
 
 /* The refrain strip. The full three-arrow icon at its natural size says
@@ -181,6 +160,14 @@
 
 .about-figure {
   margin: 0;
+  width: min(100%, 20rem);
+  justify-self: start;
+}
+
+.about-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .about-figure figcaption {
@@ -197,7 +184,7 @@
 
 .about-why {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(10rem, 20vw, 25rem);
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 20rem);
   gap: clamp(1.5rem, 4vw, 3rem);
   align-items: start;
   margin-top: 1.2rem;
@@ -268,21 +255,7 @@
   /* Copy first, plate after: the argument reads before the illustration. */
   .about-figure {
     order: 2;
-  }
-}
-
-@media (max-width: 860px) {
-  /* Stack. The arcs turn to point down the page (the base arrow runs 30
-     degrees below horizontal, so +60 is straight down) and the refrain strip
-     closes the sequence at the bottom. Nothing points up. */
-  .about-loop {
-    grid-template-columns: 1fr;
-  }
-
-  .about-loop__arc {
     justify-self: center;
-    width: 2rem;
-    transform: rotate(60deg);
   }
 }
 

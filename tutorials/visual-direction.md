@@ -7,17 +7,7 @@ Last updated: September 2026
 
 ## Authority and scope
 
-This document codifies the current Ghostmaxxing visual system.
-
-The following sources are authoritative:
-
-1. `https://ghostmaxxing.vecna.eu/visual-styleguide.html` for live components, visual grammar and implementation contracts;
-2. `https://ghostmaxxing.vecna.eu/genealogy.html` for the composed expression of the genealogy system;
-3. `styles/tokens.css` for exact colour, type and layout values.
-
-If prose in this document conflicts with a live component, inspect the authoritative page and its source. If a value conflicts with `styles/tokens.css`, the token wins. Page CSS may compose tokens but must not redefine `--gm-*` values.
-
-This version describes the present system only. It is not a decision log and does not document superseded visual directions.
+This document codifies the current Ghostmaxxing visual system - there is also the page [visual-styleguide](/visual-styleguide.html) that display (all? most of?) the live components.
 
 ## Working definition
 
@@ -204,7 +194,7 @@ The system uses three families, each with one job.
 - Do not simulate a technical interface by filling the page with monospaced text.
 - Do not use glitch fonts, fake terminal fonts or generic technology sans headlines.
 
-Headline language can be sharp, exuberant and anti-surveillance. Humour may name the social function of a technology, as in "perv glasses", but it must remain accurate, intentional and legible to an international audience.
+Headline language can be sharp, exuberant and anti-surveillance. Humour may name the social function of a technology, as in "pervert glasses", but it must remain accurate, intentional and legible to an international audience.
 
 ## Shape and surface
 
