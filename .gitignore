@@ -23,3 +23,6 @@ EXTRACTED-text-*.md
 # Generated technical reference
 /docs/jsdoc/
 
+# Fake-webcam fixtures and measurements built by scripts-dev/build-face-fixtures.cjs
+/tests/fixtures/synthetic-faces/y4m/
+/tests/fixtures/synthetic-faces/lab-measurements.json

@@ -25,8 +25,8 @@
   },
   "github-actions": {
     "title": "(internal) GitHub actions"
+  },
+  "lab-screenshots": {
+     "title": "(internal) Lab screenshots and distance measurements"
   }
 }
-
-
-

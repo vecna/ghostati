@@ -1,6 +1,6 @@
 # Development and maintenance scripts
 
-Version 0.9.9 · Last updated: September 2026
+Version 1.0 · 4 September 2026
 
 This guide describes the 10 executable scripts, together with the relevant commands in `package.json`. Commands and side effects were checked against those sources. They were not run against the complete application or a backend.
 
@@ -129,7 +129,7 @@ The English text becomes the gettext `msgid`. Context, notes, keys and Italian t
 
 The extractor locates the literal `export const messages = ` and the following newline plus `};`, then evaluates the extracted object in a VM context. A formatting or catalog-shape change can produce `messages export not found`, `messages object terminator not found` or an evaluation error.
 
-The command creates `translations/` if necessary and overwrites both outputs. It does not import completed translations, call Crowdin, translate new strings or extract documentation prose. The POT header and package both declare project version `0.9.9`.
+The command creates `translations/` if necessary and overwrites both outputs. It does not import completed translations, call Crowdin, translate new strings or extract documentation prose. The POT header currently contains a hardcoded project version of `0.1.0`, while the supplied package declares `1.0.0`.
 
 Review the resulting diff, string count and language columns before using the files in the translation workflow. Functional documentation needs a separate prose translation workflow.
 
@@ -263,7 +263,7 @@ Example for a local test endpoint; substitute the endpoint, fixture path and ver
 UPLOAD_ENDPOINT='http://localhost:3000/api/uploads' \
 CLIP_PATH='./tmp/test-clip.mp4' \
 CONSENT_VERSION='2026-07-v1' \
-APP_VERSION='0.9.9' \
+APP_VERSION='1.0.0' \
 node scripts-dev/test-upload-consent-post.cjs
 ```
 
@@ -325,3 +325,118 @@ Choose checks for the changed behaviour. `check` does not rebuild docs, verify t
 ## Keep this guide current
 
 When adding or changing a script, record its exact command, inputs, outputs, overwrite behaviour and failure conditions here. Update the task index and the short folder description. Keep executable behaviour separate from intended future behaviour, and document scripts without npm aliases as well as those exposed through `package.json`.
+
+## Capture lab screenshots and measure recognition distance
+
+Sources: `scripts-dev/build-face-fixtures.cjs`, `scripts-dev/lab-capture.cjs`.
+
+These two scripts run `lab.html` in a headless browser with a synthetic face in
+place of the webcam. They exist for two jobs: producing the workshop
+screenshots without pointing a camera at a real person, and measuring how far a
+painted face moves from its own saved identity.
+
+Both are development tools. They write nothing that ships, apart from the
+images you ask for.
+
+### Requirements
+
+- The repository's development dependencies (`npm install`). Playwright is
+  already declared for the end-to-end tests, so no extra install is needed.
+- A Chromium build. The scripts look for `/opt/pw-browsers/chromium`, then the
+  usual system paths, and otherwise fall back to Playwright's own browser. If
+  none is present, run `npm run prepare:e2e` once.
+- `ffmpeg` on `PATH`, for the fixture builder only.
+
+No server needs to be running. Both scripts start a static server on a free
+port and stop it at the end. Pass `--base-url http://localhost:8080` to use one
+you already have.
+
+### Step 1: build the fake-webcam fixtures
+
+Chromium can replace the camera with a raw Y4M file. The builder turns each
+`figureN-clean` / `figureN-painted` pair in `tests/fixtures/synthetic-faces/`
+into three clips in `tests/fixtures/synthetic-faces/y4m/`:
+
+| File | Contents | Used by |
+|---|---|---|
+| `figureN-clean.y4m` | the bare face, 6 seconds | `shots` |
+| `figureN-painted.y4m` | the same face with the makeup, 10 seconds | `shots` |
+| `figureN-pair.y4m` | clean then painted, concatenated | `measure` |
+
+```sh
+npm run capture:fixtures -- --figure 9,10
+npm run capture:fixtures -- --figure all --force
+```
+
+The pair file is the one that matters. The lab saves an identity while the
+clean segment is on screen, then reports the distance as the painted segment
+arrives, which is exactly what a participant does with their own face.
+
+Output is roughly 7 MB per second at 640x480, so a pair is about 105 MB. The
+folder is git-ignored. `--size 320x240` cuts it to a quarter if disk is tight,
+at the cost of comparability with earlier runs.
+
+Other options: `--fps`, `--clean-seconds`, `--painted-seconds`,
+`--face-height`, `--background`, `--source`, `--output`, `--pair-only`,
+`--force`. `--help` lists them.
+
+### Step 2: measure
+
+```sh
+npm run capture:measure -- --figure 9,10
+npm run capture:measure -- --figure all
+```
+
+For each figure the script waits for the first detection, clicks Save, then
+reads `#gm-num`, `#gm-thr` and `#gm-state` six times across the painted
+segment. It prints a table and writes
+`tests/fixtures/synthetic-faces/lab-measurements.json` with every individual
+reading.
+
+Read the result as follows. `min` is normally 0.00, the distance of the clean
+face against the identity it just saved. `peak` is the highest distance reached
+while the makeup is on screen. The verdict compares `peak` against the
+threshold the lab is using, `MATCH_THRESHOLD`, currently 0.58: below it the
+face is still recognised, at or above it the match breaks.
+
+Useful options: `--samples`, `--interval`, `--settle`, `--save-wait`,
+`--output`, `--base-url`, `--lab`, `--headed`.
+
+### Step 3: capture the screenshots
+
+```sh
+npm run capture:shots -- --figure 9
+```
+
+Writes three images into `images/workshops/`:
+
+| File | What it shows | How it is produced |
+|---|---|---|
+| `ws-lab-save-id.jpg` | a saved identity, readout at 0.00 | clean fixture, Save clicked |
+| `ws-lab-save-id-plain.jpg` | the landmark view | the same session, `[data-view="2d"]` |
+| `ws-lab-upload-consent.jpg` | the upload consent screen with a clip ready | painted fixture, Save, Record, Upload |
+
+Options: `--output`, `--prefix`, `--format jpg|png`, `--quality`, `--record`,
+`--headed`. Use `--prefix` when capturing more than one figure into the same
+folder, otherwise each figure overwrites the last.
+
+### When a capture comes back empty
+
+```sh
+npm run capture:probe -- --figure 9 --variant clean
+```
+
+`probe` prints the video track dimensions, whether `window.gstmxx` is present,
+the readout and the last twenty console lines. The usual causes are a fixture
+that was never built, a face the detector cannot find at that scale (raise
+`--face-height`), and a missing WebGL backend.
+
+### One implementation note
+
+The lab runs face-api and MediaPipe on the render loop. Under a headless
+browser that starves `requestAnimationFrame`, and Playwright's own in-page
+pollers stall with it: `waitForSelector` and `waitForFunction` time out on
+elements that are plainly in the DOM. Every wait in `lab-capture.cjs`
+therefore polls from Node with `page.evaluate`, and clicks fall back to a
+direct DOM click when the actionability check cannot run. If you extend these
+scripts, keep that pattern or the runs become intermittent.
