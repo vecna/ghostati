@@ -12,10 +12,10 @@ test.describe('Ghostmaxxing Overlay Mode E2E', () => {
   test('switches the lab view tabs, stores overlay mode, renders 2D/3D overlays, and suppresses after save', async ({ page }) => {
     test.setTimeout(90000);
 
-    // Stub face-api.js CDN so models load instantly without a real network request.
+    // Stub the vendored face-api.js URL so models load instantly without a real network request.
     // The script sets window.faceapi before any module scripts run (it is a blocking
     // <script>, so the modules that reference `faceapi` at eval time find it ready).
-    await page.route('https://cdn.jsdelivr.net/npm/@vladmandic/**', route => route.fulfill({
+    await page.route('**/lab-js/vendor/face-api.js', route => route.fulfill({
       status: 200,
       contentType: 'text/javascript',
       body: `
@@ -33,12 +33,10 @@ test.describe('Ghostmaxxing Overlay Mode E2E', () => {
       `,
     }));
 
-    // Stub the MediaPipe CDN.  mediapipe-loop.js has a static import from this URL,
-    // which would otherwise block ALL ES-module evaluation until the CDN responds
-    // (~40-80 s in CI), consuming nearly the entire 90 s test budget before the
-    // first tab click.  The stub exports the two symbols that are imported; both
-    // createFromOptions() calls throw, which the callers catch and handle gracefully.
-    await page.route('https://cdn.jsdelivr.net/npm/@mediapipe/**', route => route.fulfill({
+    // Intercept the actual static import so this UI test does not initialise
+    // real MediaPipe models. The stubs deliberately throw at creation; the
+    // application handles unavailable geometry and embedder runtimes.
+    await page.route('**/lab-js/vendor/tasks-vision@0.10.35.js', route => route.fulfill({
       status: 200,
       contentType: 'text/javascript',
       body: `

@@ -6,11 +6,17 @@ Most files here are intended to be included in code2prompt or used by maintainer
 
 ## Script roles
 
+- `build-face-fixtures.cjs` — uses ffmpeg to turn synthetic clean/painted JPEG pairs into large, git-ignored Y4M fake-camera clips under `tests/fixtures/synthetic-faces/y4m/`.
+
+- `lab-capture.cjs` — runs `measure`, `shots`, or `probe` against the Lab with synthetic Y4M input; records local recognition measurements or captures workshop screenshots. It consumes the output of `build-face-fixtures.cjs`; results do not establish protection against external systems.
+
+- `mark-ai-images.cjs` — visibly stamps synthetic JPEG/PNG fixtures with a configurable `AI Gen` corner badge using node-canvas, the committed Atkinson Bold font and `styles/tokens.css`. Defaults to `tests/fixtures/synthetic-faces/`; compares visible pixels before overwriting, skips an existing badge (including other sizes), supports `--dry-run`, and atomically replaces unmarked images. JPEG is re-encoded and source metadata is not preserved. See `README.md` for commands and detection limits.
+
 - `build-codemap.js` — builds a static architecture map of the app by scanning `lab-js/*.js`, parsing imports and event bus usage, and listing which HTML entry pages reach each module. It produces `codemap.json` and is used to understand module connectivity and event flow.
 
 - `build-codemap-html.js` — wraps the generated codemap JSON into the standalone HTML viewer under `codemap/`. It injects the JSON into the codemap template so the architecture map can be opened in a browser without extra setup.
 
-- `build-functional-docs.cjs` — builds the hand-authored, translatable functional documentation from `docs-src/en/`. It supplies shared public-site chrome and documentation navigation, writes the static pages under `docs/`, and maintains the `docs.html` compatibility redirect. It does not generate the separate JSDoc reference under `docs/jsdoc/`.
+- `build-functional-docs.cjs` — builds the hand-authored, translatable functional documentation from `docs-src/en/`. It supplies shared public-site chrome and documentation navigation, writes the static pages under `docs/`. It does not generate the separate JSDoc reference under `docs/jsdoc/`.
 
 - `build-logo.py` — regenerates the logo and favicon set from one geometry source in Python. It emits the SVG and PNG assets used in `images/logo/` and updates the Apple touch icon and favicon variants from the canonical SVG mark.
 

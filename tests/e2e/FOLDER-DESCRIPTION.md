@@ -2,6 +2,13 @@
 
 This folder contains Playwright end-to-end tests for browser-facing flows.
 
-The tests exercise reference page rendering, realtime behavior, loader behavior, overlay mode behavior, and face-matching workflows against the static app served locally.
+The tests exercise reference page rendering, loader behavior, overlay mode behavior, and face-matching workflows against the static app served locally.
 
 These files are excluded from code2prompt because they are browser test implementation detail, but the project keeps them as regression coverage for user-visible flows.
+
+Loader and overlay tests intercept the current `/lab-js/vendor/` runtime URLs
+so their model stubs actually run. The face-matching test uses the real vendored
+models and `tests/fixtures/mock-face.y4m`; because this fixture moves, it asserts
+a recognised identity below the current threshold rather than an exact zero
+distance. Its subsequent non-match UI assertion uses a synthetic event, not a
+claim that the video evades recognition.

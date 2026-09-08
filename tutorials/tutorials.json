@@ -28,5 +28,8 @@
   },
   "lab-screenshots": {
      "title": "(internal) Lab screenshots and distance measurements"
+  },
+  "aigen-image-labeler": {
+     "title": "(internal) AI Gen image labeler"
   }
 }

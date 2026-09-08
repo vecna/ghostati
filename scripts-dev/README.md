@@ -2,7 +2,7 @@
 
 Version 1.0 · 4 September 2026
 
-This guide describes the 10 executable scripts, together with the relevant commands in `package.json`. Commands and side effects were checked against those sources. They were not run against the complete application or a backend.
+This guide describes development and maintenance scripts, together with the relevant commands in `package.json`.
 
 Run the commands below from the `ghostmaxxing` repository root. Most scripts resolve project paths from their own location; the text extractor, prompt exporter and relative input arguments depend on the working directory.
 
@@ -10,6 +10,7 @@ Run the commands below from the `ghostmaxxing` repository root. Most scripts res
 
 | Task | Command | Output or effect |
 |---|---|---|
+| Visibly mark synthetic images | `node scripts-dev/mark-ai-images.cjs --size 15%` | Overwrites unmarked JPEG/PNG fixtures; skips existing badges |
 | Validate one Ghostyle | `npm run validate:ghostyle -- ghostyles/brush.js` | Errors and warnings on stdout |
 | Validate all Ghostyles | `npm run validate:ghostyles` | Stops when a file fails validation |
 | Generate API documentation | `npm run docs` | JSDoc output; configuration is `jsdoc.clean.json` |
@@ -27,7 +28,7 @@ Run the commands below from the `ghostmaxxing` repository root. Most scripts res
 
 ## Dependencies
 
-Install the repository's development dependencies using its normal locked dependency workflow. `npm ci` requires a compatible `package-lock.json`; none was included in this review.
+Install the repository's development dependencies using its normal locked dependency workflow. `npm ci` uses the committed `package-lock.json`. The image marker uses the existing `canvas` development dependency and the committed Atkinson Bold TTF; it downloads no fonts.
 
 - `package.json` declares Node `>=18`. This is the declared floor, not a verified compatibility statement for every listed dependency version.
 - The upload tester uses the Node globals `fetch`, `FormData` and `Blob`.
@@ -364,8 +365,8 @@ into three clips in `tests/fixtures/synthetic-faces/y4m/`:
 | `figureN-pair.y4m` | clean then painted, concatenated | `measure` |
 
 ```sh
-npm run capture:fixtures -- --figure 9,10
-npm run capture:fixtures -- --figure all --force
+node scripts-dev/build-face-fixtures.cjs --figure 9,10
+node scripts-dev/build-face-fixtures.cjs --figure all --force
 ```
 
 The pair file is the one that matters. The lab saves an identity while the
@@ -383,8 +384,8 @@ Other options: `--fps`, `--clean-seconds`, `--painted-seconds`,
 ### Step 2: measure
 
 ```sh
-npm run capture:measure -- --figure 9,10
-npm run capture:measure -- --figure all
+node scripts-dev/lab-capture.cjs measure --figure 9,10
+node scripts-dev/lab-capture.cjs measure --figure all
 ```
 
 For each figure the script waits for the first detection, clicks Save, then
@@ -405,7 +406,7 @@ Useful options: `--samples`, `--interval`, `--settle`, `--save-wait`,
 ### Step 3: capture the screenshots
 
 ```sh
-npm run capture:shots -- --figure 9
+node scripts-dev/lab-capture.cjs shots --figure 9
 ```
 
 Writes three images into `images/workshops/`:
@@ -423,7 +424,7 @@ folder, otherwise each figure overwrites the last.
 ### When a capture comes back empty
 
 ```sh
-npm run capture:probe -- --figure 9 --variant clean
+node scripts-dev/lab-capture.cjs probe --figure 9 --variant clean
 ```
 
 `probe` prints the video track dimensions, whether `window.gstmxx` is present,
@@ -440,3 +441,51 @@ elements that are plainly in the DOM. Every wait in `lab-capture.cjs`
 therefore polls from Node with `page.evaluate`, and clicks fall back to a
 direct DOM click when the actionability check cannot run. If you extend these
 scripts, keep that pattern or the runs become intermittent.
+
+
+## Visibly mark AI-generated fixture images
+
+Source: `scripts-dev/mark-ai-images.cjs`. Run from the repository root:
+
+```sh
+npm ci
+node scripts-dev/mark-ai-images.cjs --size 15% --dry-run
+node scripts-dev/mark-ai-images.cjs --size 15%
+```
+
+The default target is `tests/fixtures/synthetic-faces/`, recursively. The default
+badge width is 15% of each image's width. For a fixed width or selected images:
+
+```sh
+node scripts-dev/mark-ai-images.cjs --size 160 tests/fixtures/synthetic-faces/figure9-clean.jpeg
+node scripts-dev/mark-ai-images.cjs --size 20% path/to/images
+node scripts-dev/mark-ai-images.cjs --help
+```
+
+The visible bottom-right badge reads **AI Gen**, using the repository's Atkinson
+Hyperlegible Bold font, orange `--gm-bg` fill and `--gm-ink` lettering/border from
+`styles/tokens.css`. Its height is one third of its width; the outer margin is
+1% of the shorter image dimension, with a 4px minimum. Badge width must be at
+least 48px and fit the image. No EXIF, Content Credentials, hidden watermark or
+sidecar is added. The label asserts that the selected files are synthetic; it
+does not detect AI generation.
+
+Before writing, the tool compares the bottom-right pixels with its badge,
+allowing for JPEG compression. An existing badge is skipped even if the new
+`--size` differs, leaving the file byte-for-byte unchanged. To change a badge's
+size, restore the unmarked image from Git and run again. Detection recognises
+this tool's current font, colours, geometry and margin: it is not OCR and cannot
+guarantee recognition after cropping, rescaling, heavy compression, or a brand
+style change. `SKIP`, `WOULD MARK`, `MARKED`, and `ERROR` report each file's result.
+
+**Overwrite behaviour:** PNG remains PNG; JPEG is encoded once at quality 0.98
+with chroma subsampling disabled. Dimensions stay the same. A temporary file in
+the same directory is renamed over the original only after encoding succeeds.
+JPEG re-encoding can alter pixels outside the badge; canvas output does not
+preserve source metadata or existing provenance signatures. The badge itself
+also changes test input pixels. Review the Git diff before committing fixtures.
+Animated PNG and symlinks are rejected. A file error returns a nonzero exit code;
+other valid files in the batch may already have been marked.
+
+Regression checks are included in `npm run test:unit` (JPEG/PNG idempotence,
+changed size, dry-run, invalid size and corrupt input).

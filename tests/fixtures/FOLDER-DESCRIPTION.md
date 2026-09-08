@@ -18,3 +18,11 @@ The files are used in different tests and angles:
                ↓
             my-moving-face.mp4
             video copied, audio removed
+
+
+`synthetic-faces/` contains AI-generated clean/painted portraits and makeup
+variants. `node scripts-dev/mark-ai-images.cjs --size 15%` visibly labels these
+JPEG/PNG files in place; `--dry-run` previews the selection. The marker uses the
+project font and colour tokens and skips existing visible badges. Marking
+changes test inputs and re-encodes JPEGs; restore unmarked files from Git before
+changing badge sizes or comparing against an earlier unmarked baseline.

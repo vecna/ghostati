@@ -24,8 +24,15 @@ test.describe('Ghostmaxxing Face Matching E2E', () => {
     await expect(page.locator('#dbCount')).toHaveText('1', { timeout: 45000 });
     await expect(page.locator('#nextId')).toHaveText('1');
     await expect(page.locator('#logBox')).toContainText('Biometric faceprint saved with ID 0', { timeout: 45000 });
-    await expect(page.locator('#gm-num')).toHaveText('0.00');
-    await expect(page.locator('#gm-state')).toHaveText(/Recognised\s+·\s+#0/);
+    // The fake camera is a moving Y4M clip: later frames need not have the
+    // saved frame's exact descriptor. Check identity and threshold together.
+    await expect.poll(() => page.evaluate(() => {
+      const distance = Number(document.getElementById('gm-num').textContent);
+      const threshold = Number(document.getElementById('gm-thr-input').value);
+      const state = document.getElementById('gm-state').textContent;
+      return Number.isFinite(distance) && distance >= 0 && distance < threshold
+        && /Recognised\s+·\s+#0/.test(state);
+    }), { timeout: 45000 }).toBe(true);
 
     const nonMatchReadout = await page.evaluate(() => {
       window.gstmxx.events.dispatchEvent(new CustomEvent('matchStateChanged', {
