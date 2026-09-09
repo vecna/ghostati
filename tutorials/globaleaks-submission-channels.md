@@ -2,6 +2,8 @@
 
 Version 2, September 2026. Supersedes the eight-channel specification.
 
+GlobaLeaks Tor onion service `g3p4uwkfsbrnx2ydlriz7rq7kh6h4jowmkrfbq7xpvhltbarf5qumgyd.onion`
+
 Five questionnaires. GlobaLeaks calls the object you attach to a **Context** a
 **Questionnaire**, made of **Steps**, each holding **Fields**. This document
 gives, for each context: the name and description to type into the admin
@@ -102,6 +104,8 @@ everywhere, so receivers read the same four answers in the same place.
 
 ## 1. You were stopped, flagged or misidentified
 
+https://raccontaci.nina.watch/#/submission?context=7aa60cfe-9632-4d47-8c6a-884264e62751
+
 **Context name:** Stopped, flagged or misidentified
 **Context description:** For anyone who was personally stopped, questioned,
 denied entry or service, or wrongly identified by a system that reads faces.
@@ -126,6 +130,8 @@ Then the closing step.
 ---
 
 ## 2. You build, integrate or test the technology
+
+https://raccontaci.nina.watch/#/submission?context=e377d24d-86e4-4d66-8baf-03e619f5f492
 
 **Context name:** Build, integrate or test
 **Context description:** For anyone who knows how a specific face-recognition
@@ -184,6 +190,8 @@ Then the closing step.
 
 ## 3. You operate it, day to day
 
+https://raccontaci.nina.watch/#/submission?context=9bb68569-5ff9-49b9-a1f9-fe364c40ac51
+
 **Context name:** Operators and frontline staff
 **Context description:** For security staff, control-room operators, shop or
 venue managers, help-desk staff: anyone whose work involves watching, acting
@@ -207,6 +215,8 @@ Then the closing step.
 ---
 
 ## 4. You bought it, sold it or signed it off
+
+https://raccontaci.nina.watch/#/submission?context=d61471f5-34b3-4b9f-8c79-ed0fa591f330
 
 **Context name:** Contracts, tenders and sign-off
 **Context description:** For anyone who has seen the paperwork behind a
@@ -236,6 +246,8 @@ Then the closing step.
 
 ## 5. You noticed something, or none of the above fits
 
+https://raccontaci.nina.watch/#/submission?context=3e5b86b0-cc9d-4cdc-90f4-614a2f254173
+
 **Context name:** Sightings and everything else
 **Context description:** The lowest-barrier form. A camera, a kiosk, a sign,
 a badge, a pair of glasses you did not expect. Or something about face
@@ -252,24 +264,3 @@ access or technical knowledge needed.
 | Attach a photo, if it was safe to take one | Avoid your own face and bystanders' faces. | File upload | No |
 
 Then the closing step.
-
----
-
-## Migrating from the eight contexts
-
-1. Create the five contexts above and their questionnaires. Build the closing
-   step once as a separate questionnaire step template if your GlobaLeaks
-   version supports step reuse; otherwise copy it into each.
-2. Assign recipients per context (see `receiving-submissions.md`).
-3. Copy each context's submission URL
-   (`https://raccontaci.nina.watch/#/submission?context=<uuid>`) into the
-   matching `.audience-card` `href` in `report.html`. The cards are in the
-   same order as this document.
-4. Disable (do not delete) the eight old contexts so that any open report
-   under them keeps working until it expires; hide them from the public
-   submission page.
-5. Update `about.html`, which still lists seven positions in its "Informed
-   sources welcome" section, to the five titles above.
-6. Publish the Onion Service address and the HTTPS address side by side on
-   `report.html` (the placeholder is marked). The brand voice requires both
-   to be visible before a person starts a submission.
