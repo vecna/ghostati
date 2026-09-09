@@ -13,21 +13,21 @@
         <article class="docs-article gm-prose">
           <section id="purpose">
             <span class="docs-eyebrow">Purpose</span>
-            <h2>Replace webcam timing with a playhead.</h2>
-            <p>The fake webcam used for automated Lab screenshots loops continuously and cannot be seeked by the page. The Video Loader exposes a timeline, so you can pause on a recognisable moment and repeat the same action at the same displayed timestamp.</p>
+            <h2>Replay makeup artists video to get inspired.</h2>
+            <p>One option is to run a fake webcam in <a href="/lab.html">Lab</a>, this tool instead allow you to upload MP4. The Video Loader exposes a timeline, so you can pause on a recognisable moment and repeat the same action at the same displayed timestamp.</p>
             <div class="docs-note"><p>The file stays local to the browser. Selecting a video does not upload it.</p></div>
           </section>
 
           <section id="procedure">
             <span class="docs-eyebrow">Minimum procedure</span>
-            <h2>Record once, seek later.</h2>
+            <h2>After you downloaded a few videos.</h2>
             <div class="docs-step-list">
               <div class="docs-step"><span class="docs-step__number">01</span><div><h3>Wait for Ready</h3><p>The status indicates when the local face-api models and the experimental image embedder have loaded.</p></div></div>
               <div class="docs-step"><span class="docs-step__number">02</span><div><h3>Select Load MP4</h3><p>Choose a video from your device. The duration and millisecond timeline become available when the browser decodes its metadata.</p></div></div>
               <div class="docs-step"><span class="docs-step__number">03</span><div><h3>Choose a baseline frame</h3><p>Pause the video and move the timeline to a clear face. Note the displayed time, then select <strong>Record face</strong>.</p></div></div>
               <div class="docs-step"><span class="docs-step__number">04</span><div><h3>Choose a comparison frame</h3><p>Move to another time. Keep the variable you want to study clear, such as pose, expression, occlusion, or visible makeup.</p></div></div>
               <div class="docs-step"><span class="docs-step__number">05</span><div><h3>Select Seek face</h3><p>The Loader detects the current face and compares it with the saved 2D and 3D records. A new activity entry is added at the time where you pressed the button.</p></div></div>
-              <div class="docs-step"><span class="docs-step__number">06</span><div><h3>Read the log, not only the label</h3><p>Record the timestamp, nearest ID, 2D distance, 3D similarity, thresholds, and whether each pipeline returned a face.</p></div></div>
+              <div class="docs-step"><span class="docs-step__number">06</span><div><h3>Read the log</h3><p>Record the timestamp, nearest ID, 2D distance, 3D similarity, thresholds, and whether each pipeline returned a face.</p></div></div>
             </div>
 
             <figure class="docs-figure">
@@ -73,9 +73,10 @@
 
           <section id="limits">
             <span class="docs-eyebrow">Limits</span>
-            <h2>A debugger is not a benchmark.</h2>
-            <p>The Loader makes a sequence repeatable, but it does not provide a representative dataset, ground-truth identity labels, attack success rates, or statistical uncertainty. The experimental 3D path uses a general image embedder. It is not equivalent to a dedicated, validated face-recognition model.</p>
-            <div class="docs-warning"><p>A close result in one frame does not prove stable identification. A distant result does not prove anonymity. Compare a series of controlled frames and describe the exact pipeline.</p></div>
+            <h2>This is a work in progress.</h2>
+            <div class="docs-warning"><p>
+            A few ideas are still laying there: produce a ghostyle out of registered videos? extract before-after difference? register in realtime the distance? Let's chat in the <a href="https://github.com/vecna/ghostmaxxing/issues">github issues</a>.
+            </p></div>
           </section>
 
           <nav class="docs-next" aria-label="Continue reading">

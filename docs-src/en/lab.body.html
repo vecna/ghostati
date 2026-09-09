@@ -13,12 +13,13 @@
         <article class="docs-article gm-prose">
           <section id="before">
             <span class="docs-eyebrow">Before you start</span>
-            <h2>Prepare one readable test.</h2>
+            <h2>Setup lighting (better camera you can move)</h2>
             <ul>
-              <li>Use an evenly lit face, a stable camera position, and a simple background for the first run.</li>
+              <li>The theory wants "an evenly lit face, a stable camera position, and a simple background", but that's is true if you want to sistematically study the effect of every dot.</li>
               <li>Allow camera access. The models are served from this site and may take time to initialise.</li>
-              <li>Keep pose, distance, light, and camera as similar as possible when comparing states.</li>
-              <li>Use one face in frame. The current Lab is not a controlled evaluation of a crowd or multiple identities.</li>
+              <li>Only one face in frame.</li>
+              <li>Keep pose, distance, light, and camera as similar as possible if you're comparing states.</li>
+              <li>Once a while move the camera, your angle, and see how it affects the detection.</li>
             </ul>
             <div class="docs-note">
               <p><strong>Baseline</strong> means the saved face descriptor used as the comparison reference. It stays in the browser on this device. See <a href="/docs/glossary/#baseline">baseline</a>.</p>
@@ -83,7 +84,7 @@
 
             <figure class="docs-figure">
               <div class="docs-figure__frame"><img src="/docs/assets/screenshots/en/desktop/lab-05-3d-mesh.png" width="1440" height="1000" alt="Lab 3D mesh view showing a dense MediaPipe face mesh over the test face" /></div>
-              <figcaption>The 3D mesh is denser, but more points do not turn the view into a stronger identity claim.<span class="docs-figure__provenance">Observed fixture state</span></figcaption>
+              <figcaption>The 3D mesh is denser, but it isn't designed to do face recognition.<span class="docs-figure__provenance">Observed fixture state</span></figcaption>
             </figure>
           </section>
 
@@ -123,7 +124,7 @@
 
           <section id="problems">
             <span class="docs-eyebrow">Common problems</span>
-            <h2>Separate absence from failure.</h2>
+            <h2>Common problems and what to check.</h2>
             <table>
               <thead><tr><th>What you see</th><th>Likely meaning</th><th>What to check</th></tr></thead>
               <tbody>

@@ -13,7 +13,7 @@
         <article class="docs-article gm-prose">
           <section id="pipeline">
             <span class="docs-eyebrow">Primary 2D path</span>
-            <h2>Pixels, geometry, descriptor, decision.</h2>
+            <h2>Steps in the face-api comparison pipeline.</h2>
             <div class="docs-pipeline">
               <div class="docs-pipeline__stage"><strong>Image</strong><span>A frame from the camera, video, or composite canvas.</span></div>
               <div class="docs-pipeline__stage"><strong>Detection</strong><span>TinyFaceDetector proposes one face box above its score threshold.</span></div>
@@ -45,7 +45,7 @@
 
           <section id="identity">
             <span class="docs-eyebrow">Stages 03 and 04</span>
-            <h2>The descriptor is compared, not read as a name.</h2>
+            <h2>Comparing face descriptors.</h2>
             <p>A <a href="/docs/glossary/#face-descriptor">face descriptor</a> is a 128-value representation produced from the detected face. The Lab stores a descriptor as a local baseline, then measures the <a href="/docs/glossary/#euclidean-distance">Euclidean distance</a> from a new descriptor to the saved records.</p>
             <table>
               <thead><tr><th>Rule</th><th>Current value</th><th>Interpretation</th></tr></thead>

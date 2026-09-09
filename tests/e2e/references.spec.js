@@ -16,7 +16,7 @@ test.describe('Ghostmaxxing References page', () => {
 
     await page.goto('/references/index.html');
 
-    await expect(page.getByRole('heading', { name: 'A working genealogy of face-recognition camouflage.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Face-camouflage research and projects.' })).toBeVisible();
     await expect(page.locator('#references-list .reference-entry')).toHaveCount(expectedReferenceCount);
   });
 });

@@ -1028,7 +1028,7 @@
       "description": "Adam Harvey’s foundational computer-vision camouflage project, created in 2010, using makeup, hairstyling, and asymmetry to disrupt face detection while remaining visible to humans.",
       "visual_hint": "dazzle_face",
       "demonstrated": "CV Dazzle demonstrated that hair and makeup alone could lower detection probability below threshold for several OpenCV Haarcascade face-detection profiles in the original proof-of-concept setting.",
-      "ghostati_relevance": "It is the central historical anchor for Ghostmaxxing: a technique-first, system-specific approach to anti-biometric appearance design.",
+      "ghostati_relevance": "It is the historical reference for Ghostmaxxing, the first approach to anti-biometric by changing the appearance.",
       "ghostati_testability": {
         "level": "direct",
         "reason": "Ghostmaxxing can retest the general strategy of visible face-region interventions against its own browser detection and matching pipeline, while clearly separating old Haarcascade claims from modern models."

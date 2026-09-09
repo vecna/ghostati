@@ -13,7 +13,7 @@
         <article class="docs-article gm-prose">
           <section id="routine">
             <span class="docs-eyebrow">Routine commands</span>
-            <h2>Choose the smallest operation that proves the change.</h2>
+            <h2>Implemented in <code>packages.json</code></h2>
             <table>
               <thead><tr><th>Task</th><th>Command</th><th>Output or effect</th></tr></thead>
               <tbody>
@@ -63,25 +63,9 @@
             </div>
           </section>
 
-          <section id="risks">
-            <span class="docs-eyebrow">Known operational risks</span>
-            <h2>A green command is not the whole review.</h2>
-            <table>
-              <thead><tr><th>Area</th><th>Known constraint</th><th>Maintainer action</th></tr></thead>
-              <tbody>
-                <tr><td>Client installer</td><td>Recursively clears a fixed sibling destination.</td><td>Resolve and inspect the exact path before execution.</td></tr>
-                <tr><td>Web client setup</td><td>The npm sequence stops if references or either documentation layer fails to build.</td><td>Keep required stages chained with <code>&amp;&amp;</code>.</td></tr>
-                <tr><td>Code map</td><td>HTML entry IDs and module IDs can use different path forms, leaving reachability incomplete.</td><td>Do not treat an empty page association as proof that a module is unused.</td></tr>
-                <tr><td>Logo generator</td><td>Generated geometry and packaging paths may not match current site assets.</td><td>Review the generator and rendered asset diff before overwriting.</td></tr>
-                <tr><td>Coverage badge</td><td>Missing or empty coverage data can still produce a completed rewrite.</td><td>Check the report timestamp and percentage, not only exit status.</td></tr>
-                <tr><td>Screenshots</td><td>Stable filenames are overwritten; fixture timing can select an unhelpful frame.</td><td>Use controlled frame inputs and review every manifest entry and image.</td></tr>
-              </tbody>
-            </table>
-          </section>
-
           <section id="release-check">
             <span class="docs-eyebrow">Before hand-off</span>
-            <h2>Check the surfaces people will actually receive.</h2>
+            <h2>Reminder before issuing a new release.</h2>
             <ul>
               <li>Run the relevant unit and end-to-end tests, not only <code>npm run check</code>.</li>
               <li>Validate every Ghostyle and inspect warnings.</li>
@@ -104,7 +88,6 @@
             <a href="#routine">Routine commands</a>
             <a href="#documentation">Documentation workflow</a>
             <a href="#scripts">Script inventory</a>
-            <a href="#risks">Operational risks</a>
             <a href="#release-check">Before hand-off</a>
           </nav>
         </aside>
