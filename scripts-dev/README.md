@@ -562,3 +562,48 @@ than appending competing entries. Deploy the JPEGs along with the metadata chang
 Adding these files alone does not switch existing Open Graph tags to the new cards.
 No current public-page HTML is overwritten by this package.
 
+## `build-genealogy.py`
+
+## Regenerating
+
+```
+python3 scripts-dev/build-genealogy.py
+```
+
+Run it from the repo root after editing `references/REFERENCES.json`, or after
+editing the `ROWS` table at the top of the script (that table holds the row
+titles, the subtitles, the era ranges and the card copy — all the editorial
+text lives there, not in the HTML). It rewrites `genealogy.html` and
+`styles/genealogy.css` and prints what it placed:
+
+```
+20 archive entries -> detection:3, landmark:0, embeddings:6, depth:3,
+                      network:0, wearable:0, other:8
+empty rows: Landmark geometry; Networked readers; Wearable readers
+```
+
+The HTML carries a "GENERATED FILE — do not hand-edit" banner for the same
+reason.
+
+### Two details to remember worth your review
+
+**1. A lit lens now means two different things, so it is drawn two ways.**
+A camera on a row header is `spent` where the archive holds a graded result
+against that family, and `live` where it does not. But "live" on a
+present-day row is a claim (still reading, nothing shown against it), while
+"live" on the Landmark geometry row only means the archive is thin there. The
+second case is faded (`cam-fig--nodata`, 45% opacity) so the finding and the
+gap do not look the same. The legend names the lit lens explicitly.
+
+**2. Landmark geometry is empty, and the page now says so.** The old page
+cited URME (Selvaggio, 2014) against that era, but URME is not an entry in
+`REFERENCES.json` — nor is the "NIR-LED illumination attacks 2021" line. The
+diagram only draws what the archive holds, so that row reads *"Nothing
+graded in the archive yet."* Either grade URME into the archive and it will
+appear on the next build, or the row stays honest as it is. Same for the
+Camera-Shy Hoodie: it is graded, but its `target` is a camera sensor rather
+than a face matcher and its own `limitations` field says it does not test
+face-recognition matching, so it sits in the muted "Not faces" row rather
+than under Wearable readers. That routing is in `row_for()` if should go 
+differently.
+
