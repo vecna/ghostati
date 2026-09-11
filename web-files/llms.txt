@@ -18,7 +18,8 @@ Licence: AGPL-3.0-or-later. Main Author: Claudio Agosti (https://me.vecna.eu). S
 - [The lab](https://ghostmaxxing.vecna.eu/lab.html): The application itself. Webcam AR environment where a face is enrolled, altered, and re-tested against the local recognition pipeline. Requires camera permission; runs entirely client-side.
 - [Vision & about](https://ghostmaxxing.vecna.eu/about.html): Why the project exists, its position on minimal camouflage as a research question, its workshop practice, and its provenance.
 - [How to leak to us](https://ghostmaxxing.vecna.eu/report.html): Guidance for reporting a face-recognition deployment, including how to assess your own risk before writing anything and how the submission channel works.
-- [Research references](https://ghostmaxxing.vecna.eu/references/): Curated set of academic, artistic, and activist work on face recognition and adversarial camouflage.
+- [Related projects](https://ghostmaxxing.vecna.eu/projects/): Products, prototypes, artworks, and collective practices that intervene in biometric and computer-vision surveillance.
+- [Cultural references](https://ghostmaxxing.vecna.eu/references/): Papers, documentation, articles, and cultural work on face recognition and adversarial camouflage.
 
 ## For developers
 

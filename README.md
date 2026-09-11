@@ -63,7 +63,8 @@ Entry points once served:
 - `/about.html` — project vision and context.
 - `/report.html` — how to report a face-recognition deployment.
 - `/loader.html` — internal MP4 loader for repeatable 2D/3D video tests.
-- `/references/` — curated research/artistic/activism reference set.
+- `/projects/` — products, prototypes, and practices pursuing complementary anti-surveillance approaches.
+- `/references/` — cultural and technical source archive reached through the related-projects section.
 - `/docs/` — technical documentation (after `npm run docs`).
 
 ## Common tasks
@@ -77,6 +78,7 @@ npm run docs               # generate the JSDoc site into docs/jsdoc/
 npm run validate:ghostyles # validate every ghostyle in ghostyles/
 npm run validate:ghostyle -- ghostyles/your-slug.js   # validate one
 npm run update:references  # rebuild references/index.html from REFERENCES.json
+npm run update:projects    # rebuild projects/index.html from PROJECTS.json
 npm run i18n:extract       # regenerate the .pot / summary CSV for translation
 npm run docs:screenshots -- --locale en,it --loader-time 3 # regenerate screenshots for functionality docs, also with --include-brush
 ```
@@ -130,6 +132,12 @@ technology, data access, deployment context, limits, and abuses are project
 inputs, not side notes.
 
 ## References dataset
+
+[`projects/PROJECTS.json`](projects/PROJECTS.json) is the deliberately compact
+catalogue of related products, prototypes, and public practices. Run
+`npm run update:projects` to regenerate [`projects/`](projects/). Its maintainer
+and LLM-agent ingestion contract lives in
+[`projects/CONTRIBUTING-PROJECTS.md`](projects/CONTRIBUTING-PROJECTS.md).
 
 [`references/REFERENCES.json`](references/REFERENCES.json) is a curated,
 schema-validated dataset of artistic, research, and activism references around

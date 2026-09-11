@@ -1,6 +1,6 @@
 # references
 
-This folder contains the curated reference dataset and the small toolkit that turns it into a static reference page.
+This folder contains the curated cultural and technical reference dataset and the small toolkit that turns it into a static reference page. Named products, prototypes, objects, and public practices belong in `projects/`; papers, documentation, articles, and cultural lineage remain here.
 
 Code2prompt includes only the source materials that are useful for chatbot review: JSON files, Markdown notes, and `templates/references.template.html`. The generated `index.html`, command-line JavaScript scripts, and prompt text are excluded.
 

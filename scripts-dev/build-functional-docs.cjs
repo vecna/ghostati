@@ -58,7 +58,7 @@ function siteHeader() {
             <p class="gm-site-menu__kicker">Technology</p>
             <ul>
               <li><a href="/lab.html">Open the lab &#8599;</a></li>
-              <li><a href="/references/">References archive</a></li>
+              <li><a href="/projects/">Related projects</a></li>
               <li><a href="/docs/" aria-current="page">Docs</a></li>
               <li><a href="https://github.com/vecna/ghostmaxxing">Code</a></li>
             </ul>

@@ -1,0 +1,297 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-09-10",
+  "language": "en",
+  "categories": [
+    {
+      "id": "face-dazzling",
+      "label": "Face dazzling",
+      "description": "Break or obscure the visible geometry a detector expects to find in a face."
+    },
+    {
+      "id": "face-mismatching",
+      "label": "Face mismatching",
+      "description": "Let a face be found, but alter, substitute, or confuse the identity associated with it."
+    },
+    {
+      "id": "decoy-flooding",
+      "label": "Decoy flooding",
+      "description": "Place machine-readable false faces or competing signals around the wearer."
+    },
+    {
+      "id": "full-body-scrambling",
+      "label": "Full-body scrambling",
+      "description": "Disrupt person or object detection before a system isolates the face."
+    },
+    {
+      "id": "sensor-dazzling",
+      "label": "Sensor dazzling",
+      "description": "Interfere with visible-light, infrared, or depth capture before recognition begins."
+    }
+  ],
+  "projects": [
+    {
+      "slug": "cap-able",
+      "name": "Cap_able",
+      "url": "https://www.capable.design/",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "A Milan-based fashion company producing knitted garments whose adversarial patterns are intended to confuse automated person and object detectors. The clothing acts upstream of face matching: it tries to stop a camera system from classifying the wearer as a person in the first place.",
+      "image": {
+        "src": "/images/projects/cap-able.webp",
+        "alt": "A Cap_able knitted garment carrying an adversarial pattern.",
+        "source_url": "https://www.capable.design/",
+        "credit": "Cap_able",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "urban-privacy",
+      "name": "Urban Privacy",
+      "url": "https://urban-privacy.com/",
+      "category": "decoy-flooding",
+      "status": "active",
+      "access": "commercial",
+      "description": "A Leipzig privacy-fashion label selling Faception garments covered with face-like signals, alongside reflective anti-photography clothing and Faraday accessories. Its face-pattern collection aims to make automated systems detect faces where no face exists, increasing ambiguity around the wearer.",
+      "image": {
+        "src": "/images/projects/urban-privacy.webp",
+        "alt": "Models wearing Urban Privacy counter-surveillance clothing.",
+        "source_url": "https://urban-privacy.com/",
+        "credit": "Urban Privacy",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Video report",
+          "url": "https://www.euronews.com/video/2026/07/13/anti-tracking-fashion-startup-designs-clothing-to-foil-ai-surveillance"
+        }
+      ]
+    },
+    {
+      "slug": "reflectacles",
+      "name": "Reflectacles",
+      "url": "https://www.reflectacles.com/",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "commercial",
+      "description": "Commercial privacy eyewear combining infrared-blocking lenses with reflective frames. Different models target infrared illumination, eye tracking, or depth-based face mapping; the effect therefore depends on the camera spectrum and acquisition system rather than providing universal invisibility.",
+      "image": {
+        "src": "/images/projects/reflectacles.webp",
+        "alt": "Reflectacles privacy eyewear photographed on a wearer.",
+        "source_url": "https://www.reflectacles.com/",
+        "credit": "Reflectacles",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "norecognition",
+      "name": "noRecognition",
+      "url": "https://www.youtube.com/watch?v=WyPmt8CE5L4",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "Bill Swearingen's project uses an evolutionary process to search for adversarial patterns that can be printed on ordinary fabric. Presented at DEF CON as an experiment about whether clothing can defeat a complete recognition pipeline, it is now moving from conference prototype toward a crowdfunded garment.",
+      "image": {
+        "src": "/images/projects/norecognition.webp",
+        "alt": "Bill Swearingen presenting noRecognition at DEF CON.",
+        "source_url": "https://www.youtube.com/watch?v=WyPmt8CE5L4",
+        "credit": "DEF CON / Bill Swearingen",
+        "rights_status": "Frame used for project identification; review quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Watch the DEF CON presentation",
+          "url": "https://www.youtube.com/watch?v=WyPmt8CE5L4"
+        }
+      ]
+    },
+    {
+      "slug": "digital-camouflage",
+      "name": "Digital Camouflage",
+      "url": "https://www.simonweckert.com/digitalcamouflage.html",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "Simon Weckert's wearable installation turns an adversarial pattern developed against YOLO person detection into a shirt and public artwork. It exposes the fragility of automated seeing; the artist explicitly does not promise anonymity or effectiveness against a particular government system.",
+      "image": {
+        "src": "/images/projects/digital-camouflage.webp",
+        "alt": "A Digital Camouflage shirt being observed by a computer-vision interface.",
+        "source_url": "https://www.simonweckert.com/digitalcamouflage.html",
+        "credit": "Simon Weckert",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "camera-shy-hoodie",
+      "name": "The Camera-Shy Hoodie",
+      "url": "https://www.macpierce.com/the-camera-shy-hoodie",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "free-diy",
+      "description": "Mac Pierce's open DIY garment places high-power infrared emitters around the hood and uses a tuned strobe to disturb night-vision exposure around the head. It targets IR-sensitive cameras rather than directly changing a face descriptor, and its effect varies with the camera, distance, light, and exposure controls.",
+      "image": {
+        "src": "/images/projects/camera-shy-hoodie.webp",
+        "alt": "The Camera-Shy Hoodie producing infrared glare in security-camera footage.",
+        "source_url": "https://www.macpierce.com/the-camera-shy-hoodie",
+        "credit": "Mac Pierce",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Project and build files",
+          "url": "https://www.macpierce.com/the-camera-shy-hoodie"
+        }
+      ]
+    },
+    {
+      "slug": "cv-dazzle",
+      "name": "CV Dazzle",
+      "url": "https://adam.harvey.studio/cvdazzle",
+      "category": "face-dazzling",
+      "status": "archived",
+      "access": "free-method",
+      "description": "Adam Harvey's foundational computer-vision camouflage project uses makeup, hairstyling, occlusion, and asymmetry to break the facial structure expected by a detector. The original looks targeted Viola-Jones Haar cascades and are historical examples, not current protection recipes for modern neural networks.",
+      "image": {
+        "src": "/images/projects/cv-dazzle.webp",
+        "alt": "A face styled with an asymmetric CV Dazzle look.",
+        "source_url": "https://adam.harvey.studio/cvdazzle",
+        "credit": "Adam Harvey",
+        "rights_status": "Copyright Adam Harvey; obtain permission or confirm quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "dazzle",
+      "name": "DAZZLE",
+      "url": "https://re-imagine-europe.eu/artworks/dazzle/",
+      "category": "face-dazzling",
+      "status": "active",
+      "access": "exhibition",
+      "description": "Michelle Tylicki and Lauri Love turn anti-surveillance makeup into an interactive salon for teaching, designing, and testing a look. The touring work connects collective experimentation with model feedback, although its public documentation does not provide a complete reproducible benchmark.",
+      "image": {
+        "src": "/images/projects/dazzle.webp",
+        "alt": "A participant testing anti-surveillance makeup in the DAZZLE installation.",
+        "source_url": "https://re-imagine-europe.eu/artworks/dazzle/",
+        "credit": "Michelle Tylicki, Lauri Love / Re-Imagine Europe",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "dazzle-club",
+      "name": "The Dazzle Club",
+      "url": "https://engage.org/happenings/walk-this-way-with-the-dazzle-club/",
+      "category": "face-dazzling",
+      "status": "archived",
+      "access": "collective-practice",
+      "description": "A London collective that used CV Dazzle walks, workshops, films, and public interventions to make surveillance infrastructure visible and discussable. Its contribution is a repeatable social and workshop practice rather than a controlled claim of recognition evasion.",
+      "image": {
+        "src": "/images/projects/dazzle-club.webp",
+        "alt": "The Dazzle Club walking in public with face paint.",
+        "source_url": "https://engage.org/happenings/walk-this-way-with-the-dazzle-club/",
+        "credit": "The Dazzle Club / Engage",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "hyperface",
+      "name": "HyperFace",
+      "url": "https://adam.harvey.studio/hyperface/",
+      "category": "decoy-flooding",
+      "status": "archived",
+      "access": "prototype",
+      "description": "Adam Harvey and Hyphen-Labs developed a textile covered with machine-readable false faces, redirecting a detector toward decoys around the wearer. Its first version was specific to OpenCV Haar cascades, was never sold, and was not tested against modern deep face detectors.",
+      "image": {
+        "src": "/images/projects/hyperface.webp",
+        "alt": "HyperFace textile printed with abstract false-face patterns.",
+        "source_url": "https://adam.harvey.studio/hyperface/",
+        "credit": "Adam Harvey / Hyphen-Labs",
+        "rights_status": "Copyright Adam Harvey; obtain permission or confirm quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "privacy-visor",
+      "name": "Privacy Visor",
+      "url": "https://research.nii.ac.jp/~iechizen/official/research/research2-e.html",
+      "category": "sensor-dazzling",
+      "status": "archived",
+      "access": "research-prototype",
+      "description": "A National Institute of Informatics research programme that explored active infrared emitters and later passive reflective or absorbing eyewear. The visor aims to suppress the eye-region contrast used by some face-analysis pipelines; NII now lists it as a past project.",
+      "image": {
+        "src": "/images/projects/privacy-visor.webp",
+        "alt": "A Privacy Visor prototype worn over the eyes.",
+        "source_url": "https://research.nii.ac.jp/~iechizen/official/research/research2-e.html",
+        "credit": "Isao Echizen / National Institute of Informatics",
+        "rights_status": "Review institutional reuse terms before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "realface-glamouflage",
+      "name": "REALFACE Glamouflage",
+      "url": "https://dismagazine.com/blog/49002/facevalue-simone-niquille/",
+      "category": "face-mismatching",
+      "status": "archived",
+      "access": "artwork",
+      "description": "Simone C. Niquille printed T-shirts with celebrity impersonators and highly circulated stock faces to introduce false identities into social-media recognition and tagging. The shirts do not hide the wearer's face; they explore privacy through misidentification, duplication, and database noise.",
+      "image": {
+        "src": "/images/projects/realface-glamouflage.webp",
+        "alt": "A REALFACE Glamouflage T-shirt printed with repeated faces.",
+        "source_url": "https://dismagazine.com/blog/49002/facevalue-simone-niquille/",
+        "credit": "Simone C. Niquille / DIS Magazine",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Watch the project video",
+          "url": "https://vimeo.com/70402464"
+        }
+      ]
+    },
+    {
+      "slug": "urme-surveillance",
+      "name": "URME Surveillance",
+      "url": "https://leoselvaggio.com/urme-surveillance",
+      "category": "face-mismatching",
+      "status": "archived",
+      "access": "prototype",
+      "description": "Leonardo Selvaggio distributed photorealistic prosthetic and paper masks of his own face so that many wearers would present the same identity to cameras. URME replaces one identity with another rather than attempting invisibility, turning biometric substitution into a collective artwork.",
+      "image": {
+        "src": "/images/projects/urme-surveillance.webp",
+        "alt": "A person holding and wearing a URME Surveillance face mask.",
+        "source_url": "https://www.makery.info/en/2014/06/07/urme-un-masque-en-3d-contre-la-video-surveillance/",
+        "credit": "Leonardo Selvaggio / Makery",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Archived crowdfunding presentation",
+          "url": "https://www.indiegogo.com/projects/urme-surveillance-developing-devices-to-protect-the-public"
+        }
+      ]
+    },
+    {
+      "slug": "facial-weaponization-suite",
+      "name": "Facial Weaponization Suite",
+      "url": "https://zachblas.info/works/facial-weaponization-communique-fag-face/",
+      "category": "face-dazzling",
+      "status": "archived",
+      "access": "collective-practice",
+      "description": "Zach Blas's workshops aggregate participants' facial data into amorphous collective masks that cannot be reduced to one individual portrait. The project opposes biometric classification and its social biases through collective masking, performance, and public discussion.",
+      "image": {
+        "src": "/images/projects/facial-weaponization-suite.webp",
+        "alt": "Participants wearing a collective mask from the Facial Weaponization Suite.",
+        "source_url": "https://zachblas.info/works/facial-weaponization-communique-fag-face/",
+        "credit": "Zach Blas",
+        "rights_status": "Review permission or quotation basis before publication."
+      },
+      "links": []
+    }
+  ]
+}

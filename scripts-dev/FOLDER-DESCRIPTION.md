@@ -4,6 +4,8 @@ This folder contains the repository's maintenance, validation, and project-gener
 
 Most files here are intended to be included in code2prompt or used by maintainers when preparing repo updates, validating Ghostyle plugins, refreshing generated assets, or exporting text for review. One script is intentionally excluded from the main code2prompt output because it manipulates the localization catalog rather than application logic.
 
+Related-project generation lives beside its data in `projects/`, mirroring the existing `references/` convention. `projects/validate-projects.js` checks the minimal catalogue and local media; `projects/build-projects-page.js` overwrites `projects/index.html` from the JSON and template. They are documented in `projects/CONTRIBUTING-PROJECTS.md` rather than duplicated here.
+
 ## Script roles
 
 - `build-face-fixtures.cjs` — uses ffmpeg to turn synthetic clean/painted JPEG pairs into large, git-ignored Y4M fake-camera clips under `tests/fixtures/synthetic-faces/y4m/`.

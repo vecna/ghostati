@@ -60,6 +60,12 @@ These files are linked directly by HTML pages and provide page layout or unique 
 - `references-list.css` — styling specific to the references list and generated reference pages.
   - Included by: `references/index.html`, `references/templates/references.template.html`
 
+- `related.css` — shared cream second-level navigation joining complementary projects and cultural references.
+  - Included by: `projects/index.html`, `references/index.html`, and both source templates
+
+- `projects-list.css` — filter controls and responsive tabular layout for the generated complementary-projects page.
+  - Included by: `projects/index.html`, `projects/templates/projects.template.html`
+
 - `report-page.css` — report page-specific presentation.
   - Included by: `report.html`
 

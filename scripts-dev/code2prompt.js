@@ -106,6 +106,10 @@ const NAMESPACES = {
       "images/**/*.svg",
       "images/FOLDER-DESCRIPTION.md",
       "images/**/FOLDER-DESCRIPTION.md",
+      "projects/PROJECTS.json",
+      "projects/templates/*.html",
+      "projects/projects-filter.js",
+      "projects/FOLDER-DESCRIPTION.md",
       "manifest.webmanifest",
       "package.json"
     ],
@@ -120,7 +124,10 @@ const NAMESPACES = {
       "translations/**",
       "data/**",
       "references/index.html",
-      "references/*.js"
+      "references/*.js",
+      "projects/index.html",
+      "projects/build-*.js",
+      "projects/validate-*.js"
     ],
     required: [
       "index.html",
@@ -149,6 +156,9 @@ const NAMESPACES = {
       "ghostyles.json",
       "data/FOLDER-DESCRIPTION.md",
       "data/camera-facts.json",
+      "projects/index.html",
+      "projects/projects-filter.js",
+      "projects/PROJECTS.json",
       "images/**/*.svg",
       "images/FOLDER-DESCRIPTION.md",
       "images/**/FOLDER-DESCRIPTION.md",
@@ -167,6 +177,11 @@ const NAMESPACES = {
       "tutorials/**",
       "translations/**",
       "references/**",
+      "projects/templates/**",
+      "projects/build-*.js",
+      "projects/validate-*.js",
+      "projects/PROJECTS.schema.json",
+      "projects/CONTRIBUTING-PROJECTS.md",
       "data/face_canonical_uv.json"
     ],
     required: [
@@ -274,7 +289,11 @@ const NAMESPACES = {
       "web-files/FOLDER-DESCRIPTION.md",
       "data/camera-facts.json",
       "docs/assets/screenshots/manifest.json",
-      "docs/assets/screenshots/README.md"
+      "docs/assets/screenshots/README.md",
+      "projects/PROJECTS.json",
+      "projects/PROJECTS.schema.json",
+      "projects/CONTRIBUTING-PROJECTS.md",
+      "projects/templates/*.html"
     ],
     exclude: [
       ...COMMON_SAFETY_EXCLUDES,
@@ -347,6 +366,7 @@ const NAMESPACES = {
       "scripts-dev/README.md",
       "docs-src/README.md",
       "translations/README.md",
+      "projects/CONTRIBUTING-PROJECTS.md",
       "docs/assets/screenshots/README.md",
       "docs/assets/screenshots/manifest.json",
       "scripts-dev/code2prompt.js",
@@ -403,7 +423,10 @@ const NAMESPACES = {
       "translations/*.pot",
       "references/index.html",
       "references/*.js",
-      "references/*.txt"
+      "references/*.txt",
+      "projects/index.html",
+      "projects/build-*.js",
+      "projects/validate-*.js"
     ],
     required: ["package.json", "scripts-dev/code2prompt.js", "docs-src/README.md"]
   }

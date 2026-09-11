@@ -1,0 +1,42 @@
+/* Shared second-level navigation for the related-project and cultural-reference
+   archives. Deliberately mirrors the cream documentation navigation. */
+
+.related-nav {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  display: flex;
+  overflow-x: auto;
+  border-block: 2px solid var(--gm-ink);
+  background: var(--gm-cream);
+  scrollbar-width: thin;
+}
+
+.related-nav__inner {
+  display: flex;
+  width: min(100%, var(--page-max));
+  margin: 0 auto;
+}
+
+.related-nav a {
+  flex: 0 0 auto;
+  padding: 0.78rem 1rem;
+  border-right: 1px solid var(--gm-border-strong);
+  color: var(--gm-ink);
+  font-family: var(--mono);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.related-nav a:hover,
+.related-nav a:focus-visible,
+.related-nav a[aria-current="page"] {
+  background: var(--gm-ink);
+  color: var(--gm-cream);
+}
+
+@media print {
+  .related-nav { display: none; }
+}

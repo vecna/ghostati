@@ -15,6 +15,7 @@ const COPY_DIRS = [
   'styles',
   'lab-js',
   'pages-js',
+  'projects',
   'references',
   'ghostyles',
   'docs',
