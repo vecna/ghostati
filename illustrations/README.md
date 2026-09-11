@@ -14,7 +14,7 @@ RIP. These work anywhere an SVG works.
 | file | size | for | what it says |
 |---|---|---|---|
 | `01-born-of-the-pyre` | 900×1600 portrait | poster · slide cover · phone wallpaper | The documents burn, the smoke rises, the villain condenses out of it. |
-| `02-villain-glasses` | 1080×1080 | sticker · avatar · slide corner | The villain wears the smart glasses. Tinted lenses so the eyes glow through; two yellow LEDs at the hinges and a REC. Yellow because in this identity yellow is the "still reading" colour — a lit iris — not because it stands in for red. |
+| `02-villain-glasses` | 1080×1080 | sticker · avatar · slide corner | The villain wears the pervert glasses. Tinted lenses so the eyes glow through; two yellow LEDs at the hinges and a REC. Yellow because in this identity yellow is the "still reading" colour — a lit iris — not because it stands in for red. |
 | `03-wasteland` | 1920×1080 | slide background | A field of documents and faces on fire, and nothing standing in it but pole readers. The sky is empty on purpose: a title goes there. |
 | `04-spent-sticker` | 800×800 round | sticker | One dome, one gust, the lens out. Cream edge, ink rim — cut on the outer circle. |
 | `05-dazzled` | 1080×1080 | sticker · avatar | The gust crosses the villain's own eyes and they go out — dark pupils, pink ring, the same spent state the cameras take. |

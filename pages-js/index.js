@@ -24,7 +24,7 @@
     var TYPES = [
         { label: 'Dome camera', key: 'dome' },
         { label: 'Box camera', key: 'cube' },
-        { label: 'Smart glasses', key: 'glasses' },
+        { label: 'Pervert glasses', key: 'glasses' },
         { label: 'Pill sensor', key: 'pill' },
         { label: 'Street pole unit', key: 'street' },
         { label: 'Bullet camera', key: 'bullet' }
