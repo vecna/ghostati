@@ -1,107 +1,227 @@
 <!doctype html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Related projects — Ghostmaxxing</title>
-  <meta name="description" content="Products, prototypes, artworks, and collective practices that experiment with resistance to biometric and computer-vision surveillance." />
-  <meta property="og:title" content="Related projects — Ghostmaxxing" />
-  <meta property="og:description" content="A practical map of complementary anti-surveillance projects." />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="/images/social-card.svg" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" type="image/svg+xml" href="/images/logo/mark-onlight.svg" />
-  <link rel="stylesheet" href="/styles/styles.css" />
-  <link rel="stylesheet" href="/styles/pages.css" />
-  <link rel="stylesheet" href="/styles/content-pages.css" />
-  <link rel="stylesheet" href="/styles/related.css" />
-  <link rel="stylesheet" href="/styles/projects-list.css" />
-  <script defer src="/pages-js/nav.js"></script>
-  <script defer src="/projects/projects-filter.js"></script>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Related projects — Ghostmaxxing</title>
+    <meta name="description"
+      content="Products, prototypes, artworks, and collective practices that experiment with resistance to biometric and computer-vision surveillance." />
+    <meta property="og:title" content="Related projects — Ghostmaxxing" />
+    <meta property="og:description"
+      content="A practical map of complementary anti-surveillance projects." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/images/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml"
+      href="/images/logo/mark-onlight.svg" />
+    <link rel="stylesheet" href="/styles/styles.css" />
+    <link rel="stylesheet" href="/styles/pages.css" />
+    <link rel="stylesheet" href="/styles/content-pages.css" />
+    <link rel="stylesheet" href="/styles/related.css" />
+    <link rel="stylesheet" href="/styles/projects-list.css" />
+    <script defer src="/pages-js/nav.js"></script>
+    <script defer src="/projects/projects-filter.js"></script>
+  </head>
 
-<body>
-  <header class="gm-site-header">
-    <a class="gm-site-wordmark" href="/" aria-label="Ghostmaxxing homepage">
-      <img class="gm-site-wordmark__mark" src="/images/logo/mark-color.svg" width="40" height="40" alt="" aria-hidden="true" />
-      <span class="gm-site-wordmark__text">
-        <span class="gm-site-wordmark__title">Ghostmaxxing</span>
-        <span class="gm-site-wordmark__sub">A public lab for testing camouflage</span>
-      </span>
-    </a>
-    <nav class="gm-site-nav" aria-label="Primary">
-      <a class="gm-site-chip" href="/fediverse.html">in the Fediverse</a>
-      <div class="gm-site-nav__group">
-        <button class="gm-site-nav__trigger" aria-expanded="false" aria-controls="gmSiteMenu">Know more <span aria-hidden="true">&#9662;</span></button>
-        <div class="gm-site-menu" id="gmSiteMenu">
-          <div>
-            <p class="gm-site-menu__kicker">Informative</p>
-            <ul>
-              <li><a href="/about.html">Vision &amp; about</a></li>
-              <li><a href="/genealogy.html">The genealogy of the read</a></li>
-              <li><a href="/report.html">Report a deployment</a></li>
-              <li><a href="/workshops.html">Workshops</a></li>
-            </ul>
-          </div>
-          <div>
-            <p class="gm-site-menu__kicker">Technology</p>
-            <ul>
-              <li><a href="/lab.html">Open the lab &#8599;</a></li>
-              <li><a href="/projects/" aria-current="page">Related projects</a></li>
-              <li><a href="/docs/">Docs</a></li>
-              <li><a href="https://github.com/vecna/ghostmaxxing">Code</a></li>
-            </ul>
+  <body>
+    <header class="gm-site-header">
+      <a class="gm-site-wordmark" href="/" aria-label="Ghostmaxxing homepage">
+        <img class="gm-site-wordmark__mark" src="/images/logo/mark-color.svg"
+          width="40" height="40" alt aria-hidden="true" />
+        <span class="gm-site-wordmark__text">
+          <span class="gm-site-wordmark__title">Ghostmaxxing</span>
+          <span class="gm-site-wordmark__sub">A public lab for testing
+            camouflage</span>
+        </span>
+      </a>
+      <nav class="gm-site-nav" aria-label="Primary">
+        <a class="gm-site-chip" href="/fediverse.html">in the Fediverse</a>
+        <div class="gm-site-nav__group">
+          <button class="gm-site-nav__trigger" aria-expanded="false"
+            aria-controls="gmSiteMenu">Know more <span
+              aria-hidden="true">&#9662;</span></button>
+          <div class="gm-site-menu" id="gmSiteMenu">
+            <div>
+              <p class="gm-site-menu__kicker">Informative</p>
+              <ul>
+                <li><a href="/about.html">Vision &amp; about</a></li>
+                <li><a href="/genealogy.html">The genealogy of the read</a></li>
+                <li><a href="/report.html">Report a deployment</a></li>
+                <li><a href="/workshops.html">Workshops</a></li>
+              </ul>
+            </div>
+            <div>
+              <p class="gm-site-menu__kicker">Technology</p>
+              <ul>
+                <li><a href="/lab.html">Open the lab &#8599;</a></li>
+                <li><a href="/projects/" aria-current="page">Related
+                    projects</a></li>
+                <li><a href="/docs/">Docs</a></li>
+                <li><a
+                    href="https://github.com/vecna/ghostmaxxing">Code</a></li>
+              </ul>
+            </div>
           </div>
         </div>
+        <a class="gm-site-cta" href="/report.html">Leak to us &#8599;</a>
+      </nav>
+    </header>
+
+    <nav class="related-nav" aria-label="Related research">
+      <div class="related-nav__inner">
+        <a href="/projects/" aria-current="page">Complementary projects</a>
+        <a href="/references/">Cultural references</a>
       </div>
-      <a class="gm-site-cta" href="/report.html">Leak to us &#8599;</a>
     </nav>
-  </header>
 
-  <nav class="related-nav" aria-label="Related research">
-    <div class="related-nav__inner">
-      <a href="/projects/" aria-current="page">Complementary projects</a>
-      <a href="/references/">Cultural references</a>
-    </div>
-  </nav>
+    <main class="editorial-homepage content-page projects-main">
+      <div class="editorial-homepage__shell">
+        <section class="content-page__header-area" aria-labelledby="page-title">
+          <span class="content-page__kicker">Related projects</span>
+          <h1 id="page-title">Different ways to trouble the machine.</h1>
+          <p class="content-page__meta">33 projects &middot; Last
+            reviewed 2026-09-11</p>
+          <p class="content-page__deck">Clothing, makeup, masks, decoys, and
+            light-based interventions approach biometric surveillance at
+            different points in the pipeline. This page maps their primary
+            strategy; it does not certify that any project provides protection
+            against every camera or recognition system.</p>
+        </section>
 
-  <main class="editorial-homepage content-page projects-main">
-    <div class="editorial-homepage__shell">
-      <section class="content-page__header-area" aria-labelledby="page-title">
-        <span class="content-page__kicker">Related projects</span>
-        <h1 id="page-title">Different ways to trouble the machine.</h1>
-        <p class="content-page__meta">14 projects &middot; Last reviewed 2026-09-10</p>
-        <p class="content-page__deck">Clothing, makeup, masks, decoys, and light-based interventions approach biometric surveillance at different points in the pipeline. This page maps their primary strategy; it does not certify that any project provides protection against every camera or recognition system.</p>
-      </section>
-
-      <section class="content-section" aria-labelledby="projects-title">
-        <div class="projects-toolbar">
-          <div>
-            <p class="projects-toolbar__label" id="projects-title">Filter by primary strategy</p>
-            <p class="projects-toolbar__count"><span id="projects-visible-count">14</span> projects shown</p>
-          </div>
-          <div class="projects-filters" aria-label="Filter projects">
-            <button type="button" class="projects-filter is-active" data-project-filter="all" aria-pressed="true">All approaches</button>
+        <section class="content-section" aria-labelledby="projects-title">
+          <div class="projects-toolbar">
+            <div>
+              <p class="projects-toolbar__label" id="projects-title">Filter by
+                primary strategy</p>
+              <p class="projects-toolbar__count"><span
+                  id="projects-visible-count">33</span> projects
+                shown</p>
+            </div>
+            <div class="projects-filters" aria-label="Filter projects">
+              <button type="button" class="projects-filter is-active" data-project-filter="all" aria-pressed="true">All approaches</button>
           <button type="button" class="projects-filter" data-project-filter="face-dazzling" aria-pressed="false">Face dazzling</button>
           <button type="button" class="projects-filter" data-project-filter="face-mismatching" aria-pressed="false">Face mismatching</button>
           <button type="button" class="projects-filter" data-project-filter="decoy-flooding" aria-pressed="false">Decoy flooding</button>
           <button type="button" class="projects-filter" data-project-filter="full-body-scrambling" aria-pressed="false">Full-body scrambling</button>
           <button type="button" class="projects-filter" data-project-filter="sensor-dazzling" aria-pressed="false">Sensor dazzling</button>
+            </div>
           </div>
-        </div>
 
-        <div class="projects-table-wrap">
-          <table class="projects-table">
-            <thead>
-              <tr>
-                <th scope="col">Image</th>
-                <th scope="col">Project</th>
-                <th scope="col">What it does</th>
-              </tr>
-            </thead>
-            <tbody>
-              
+          <div class="projects-table-wrap">
+            <table class="projects-table">
+              <thead>
+                <tr>
+                  <th scope="col">Image</th>
+                  <th scope="col">Project</th>
+                  <th scope="col">What it does</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+          <tr class="project-row" data-project-category="full-body-scrambling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/adversarial-apparel.webp" alt="An Adversarial Apparel hoodie printed with a high-contrast pattern." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://adversarialapparel.com/" target="_blank" rel="noopener noreferrer">Adversarial Apparel</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Full-body scrambling</p>
+              <h2><a href="https://adversarialapparel.com/" target="_blank" rel="noopener noreferrer">Adversarial Apparel</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>An anonymously operated shop selling hoodies, shirts and masks it describes as carrying engineered adversarial patterns, citing published techniques including Expectation over Transformation and the ImageNet-Patch dataset. It claims effects on face recognition, object detection and multi-object tracking, which is the widest claim set among comparable sellers. No test results, target models or imagery of a detector failing are published, and the shop discloses no company name, location or team.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://adversarialapparel.com/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="face-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/qfin-adversarial-drag.webp" alt="The glitch-styled banner of the Queer and Feminist Informatics Network." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.qfinformatics.com/" target="_blank" rel="noopener noreferrer">Queer and Feminist Informatics Network</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Face dazzling</p>
+              <h2><a href="https://www.qfinformatics.com/" target="_blank" rel="noopener noreferrer">Adversarial Drag (QFIN)</a></h2>
+              <p class="project-row__state">Collective practice &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>A hands-on workshop titled “Face/Off: Adversarial Drag in the Age of Capture”, run within the Queer and Feminist Informatics Network at the University of Amsterdam. It uses drag technique and adversarial makeup against both facial and automated gender classification, treating the binaries encoded in classifiers as part of what is being contested. The network presents it as pedagogy and creative research and makes no claim of effectiveness against a named system.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.qfinformatics.com/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://delfisolpandiani.com/about/" target="_blank" rel="noopener noreferrer">Co-founder Delfi Sol Martinez Pandiani &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="decoy-flooding">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/adversarial-fashion.webp" alt="A shirt printed with rows of vehicle number plates." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.katebertash.com/adversarial-fashion" target="_blank" rel="noopener noreferrer">Kate Bertash</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Decoy flooding</p>
+              <h2><a href="https://www.katebertash.com/adversarial-fashion" target="_blank" rel="noopener noreferrer">Adversarial Fashion</a></h2>
+              <p class="project-row__state">Commercial &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Kate Bertash printed garments covered with plausible vehicle number plates so that automated licence plate readers would capture, timestamp and record them alongside real vehicles. The mechanism is data injection rather than evasion: the plates only need to be accepted by a reader, not to defeat a classifier, and the target is the integrity of plate-reader databases rather than any face system. Demonstrated at DEF CON 27 against OpenALPR and commercial mobile readers; the garments have not been sold since around 2023.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.katebertash.com/adversarial-fashion" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="full-body-scrambling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/adversarial-yolo.webp" alt="A person holding a printed adversarial patch, shown undetected in a detector's output." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://arxiv.org/abs/1904.08653" target="_blank" rel="noopener noreferrer">Thys, Van Ranst &amp; Goedemé, EAVISE / KU Leuven</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Full-body scrambling</p>
+              <h2><a href="https://gitlab.com/EAVISE/adversarial-yolo" target="_blank" rel="noopener noreferrer">adversarial-yolo</a></h2>
+              <p class="project-row__state">Open DIY &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>Open-source code from the EAVISE group at KU Leuven that generates a printable patch optimised against a person detector's own objectness loss, so that a person holding it produces no detection proposal. Published results against YOLOv2 on the INRIA test set report recall falling from 100 per cent to 26.5 per cent with the best patch, at a patch of roughly 40 centimetres held facing the camera. The authors note that patches transfer poorly to different detector architectures; because it is a generator rather than a fixed pattern, it can be retrained against a current model.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://gitlab.com/EAVISE/adversarial-yolo" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://arxiv.org/abs/1904.08653" target="_blank" rel="noopener noreferrer">Paper: Fooling automated surveillance cameras &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="full-body-scrambling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/antiai-clothing.webp" alt="A person wearing a high-contrast AntiAi Clothing face covering." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://antiai.biz/" target="_blank" rel="noopener noreferrer">AntiAi Clothing</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Full-body scrambling</p>
+              <h2><a href="https://antiai.biz/" target="_blank" rel="noopener noreferrer">AntiAi Clothing</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>An online shop selling garments, gaiters and masks printed with patterns the seller describes as chosen to disrupt computer-vision systems. The shop's own wording is that the images are “thoughtfully crafted, designed, and selected”, and its founder told the Mozilla Foundation that the designs are tested informally against a TensorFlow model and that he is “not saying it will always work”. In Mozilla's hands-on review the garments avoided a consumer camera's human-detection alert but did not defeat a pose-estimation model.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://antiai.biz/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://www.mozillafoundation.org/en/nothing-personal/anti-surveillance-fashion-privacy-review/" target="_blank" rel="noopener noreferrer">Mozilla Foundation review &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
           <tr class="project-row" data-project-category="full-body-scrambling">
             <td class="project-row__media">
               <figure>
@@ -138,6 +258,26 @@
               <p>Adam Harvey's foundational computer-vision camouflage project uses makeup, hairstyling, occlusion, and asymmetry to break the facial structure expected by a detector. The original looks targeted Viola-Jones Haar cascades and are historical examples, not current protection recipes for modern neural networks.</p>
               <div class="project-row__links">
                 <a class="project-link project-link--main" href="https://adam.harvey.studio/cvdazzle" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="face-mismatching">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/data-masks.webp" alt="A 3D-printed mask whose features approximate an algorithm's idea of a face." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.sterlingcrispin.com/data-masks.html" target="_blank" rel="noopener noreferrer">Sterling Crispin</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Face mismatching</p>
+              <h2><a href="https://www.sterlingcrispin.com/data-masks.html" target="_blank" rel="noopener noreferrer">Data-masks</a></h2>
+              <p class="project-row__state">Artwork &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Sterling Crispin used genetic algorithms driven by face detection and recognition systems to evolve forms those systems read as maximally face-like, then 3D-printed them as wearable masks. The series is presented as a way to show the machine what it is looking for rather than as a countermeasure; Crispin states directly that defeating face recognition is not the goal, since covering a face with a hand already achieves non-detection. Produced between 2013 and 2015 and exhibited internationally.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.sterlingcrispin.com/data-masks.html" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
               </div>
             </td>
           </tr>
@@ -202,6 +342,47 @@
             </td>
           </tr>
 
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/betabrand-flashback.webp" alt="A person wearing Betabrand Flashback clothing while surrounding phones photograph its reflective surface." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.designboom.com/technology/reflective-betabrand-flashback-clothing-paparazzi-photos-02-10-2015/" target="_blank" rel="noopener noreferrer">Betabrand / designboom</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://www.designboom.com/technology/reflective-betabrand-flashback-clothing-paparazzi-photos-02-10-2015/" target="_blank" rel="noopener noreferrer">Flashback Collection</a></h2>
+              <p class="project-row__state">Commercial &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>A 2015 collection of five retroreflective garments by the clothing brand Betabrand with the musician Chris Holmes, using fabric coated with glass nanospheres that return a camera flash to the lens. It was conceived to disrupt press photography rather than recognition systems, and made no claim about face detection or matching. The collection was crowdfunded, shipped, and is no longer sold.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.designboom.com/technology/reflective-betabrand-flashback-clothing-paparazzi-photos-02-10-2015/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/freedom-shield.webp" alt="A hat with infrared LEDs along the brim, shown as glare in night-vision footage." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://github.com/nickbild/freedom_shield" target="_blank" rel="noopener noreferrer">Nick Bild</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://github.com/nickbild/freedom_shield" target="_blank" rel="noopener noreferrer">Freedom Shield</a></h2>
+              <p class="project-row__state">Open DIY &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>Nick Bild's open-source build sews 940-nanometre infrared LEDs into a hat to overwhelm the photodiodes of infrared-sensitive cameras. The 940-nanometre choice produces almost no visible glow, so the wearer does not appear conspicuous to onlookers, which the project states as a design goal for protest use. Code, schematic and parts list are published; like all infrared flooding it depends on the camera passing near-infrared, so a daytime infrared-cut filter removes the effect.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://github.com/nickbild/freedom_shield" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://hackaday.com/2020/02/28/using-ir-leds-to-hide-in-plain-sight/" target="_blank" rel="noopener noreferrer">Hackaday write-up &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
           <tr class="project-row" data-project-category="decoy-flooding">
             <td class="project-row__media">
               <figure>
@@ -218,6 +399,46 @@
               <p>Adam Harvey and Hyphen-Labs developed a textile covered with machine-readable false faces, redirecting a detector toward decoys around the wearer. Its first version was specific to OpenCV Haar cascades, was never sold, and was not tested against modern deep face detectors.</p>
               <div class="project-row__links">
                 <a class="project-link project-link--main" href="https://adam.harvey.studio/hyperface/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="face-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/incognito-nowak.webp" alt="Brass jewellery worn across the face, with discs below the eyes and a bar between them." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.dezeen.com/2019/07/30/ewa-nowak-anti-ai-mask-protects-wearers-from-mass-surveillance/" target="_blank" rel="noopener noreferrer">Ewa Nowak / Dezeen</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Face dazzling</p>
+              <h2><a href="https://www.dezeen.com/2019/07/30/ewa-nowak-anti-ai-mask-protects-wearers-from-mass-surveillance/" target="_blank" rel="noopener noreferrer">Incognito</a></h2>
+              <p class="project-row__state">Prototype &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Ewa Nowak's brass face jewellery hooks behind the ears and places two discs below the eyes and a rectangle between them, positioned to disturb the facial landmarks a detector locates. The designer's only reported test was uploading photographs to Facebook and observing that its tag suggestion did not appear, which is a single consumer-platform check on frontal stills rather than a measurement. It was made as a prototype and has not been produced commercially.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.dezeen.com/2019/07/30/ewa-nowak-anti-ai-mask-protects-wearers-from-mass-surveillance/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/justice-caps.webp" alt="A baseball cap with infrared LEDs concealed in the brim." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://noveltystreet.com/justice-caps" target="_blank" rel="noopener noreferrer">Justice Caps / NoveltyStreet</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://noveltystreet.com/justice-caps" target="_blank" rel="noopener noreferrer">Justice Caps</a></h2>
+              <p class="project-row__state">Commercial &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Hand-built caps sold from the Czech Republic with a nine-LED infrared strip in the brim, powered by two AAA cells for twelve to fourteen hours. They were intended to wash out the wearer's face for cameras sensitive to near-infrared in low light, and no wavelength, radiant power or test data was ever published. The maker's domain ceased to be associated with the product in November 2019; the listing survives as a product record and unbranded copies circulate on marketplaces.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://noveltystreet.com/justice-caps" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
               </div>
             </td>
           </tr>
@@ -307,6 +528,67 @@
           <tr class="project-row" data-project-category="sensor-dazzling">
             <td class="project-row__media">
               <figure>
+                <img src="/images/projects/solir-optics.webp" alt="A person wearing Solir Optics privacy-protection glasses while holding a phone outdoors." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.soliroptics.com/pages/privacy-protection" target="_blank" rel="noopener noreferrer">Solir Optics</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://www.soliroptics.com/pages/privacy-protection" target="_blank" rel="noopener noreferrer">Solir Optics</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>An American eyewear brand selling frames with what it describes as passive optical filtering of specific infrared wavelengths. The stated aim is to reduce the accuracy and consistency of camera-based face recognition rather than to prevent it; the company's published evidence is that iPhone Face ID “did not consistently unlock” in its own internal testing. Several of the uses it names, such as retail and event scanning, are visible-light systems that an infrared filter would not be expected to affect.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.soliroptics.com/pages/privacy-protection" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/stealth-wear.webp" alt="A hooded garment in reflective metallic fabric, shown beside its thermal-camera image." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://adam.harvey.studio/stealth-wear/" target="_blank" rel="noopener noreferrer">Adam Harvey</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://adam.harvey.studio/stealth-wear/" target="_blank" rel="noopener noreferrer">Stealth Wear</a></h2>
+              <p class="project-row__state">Artwork &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Adam Harvey's 2013 garment series used silver-plated, thermally reflective fabric to reduce the wearer's thermal signature in long-wave infrared imaging. It addresses aerial and thermal observation rather than face detection or matching, and is frequently miscited as anti-face-recognition clothing. The pieces were sold briefly through Harvey's Privacy Gift Shop and are now sold out.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://adam.harvey.studio/stealth-wear/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="face-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/surveillance-exclusion.webp" alt="A transparent moulded mask worn over a face, distorting its features while remaining see-through." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.jipvanleeuwenstein.nl/" target="_blank" rel="noopener noreferrer">Jip van Leeuwenstein</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Face dazzling</p>
+              <h2><a href="https://www.jipvanleeuwenstein.nl/" target="_blank" rel="noopener noreferrer">Surveillance Exclusion</a></h2>
+              <p class="project-row__state">Prototype &middot; Unknown</p>
+            </td>
+            <td class="project-row__description">
+              <p>Dutch designer Jip van Leeuwenstein made a transparent moulded mask at the Utrecht School of the Arts in 2017 that bends and refracts light across the face, with the stated aim of preventing a camera from recovering accurate facial geometry while people can still read the wearer's expressions. The designer hedges the claim to “some forms of facial recognition” and publishes no test, target system or material specification. Snopes rated the widely shared claim that it blocks recognition from all angles as “Mixture”, finding it unclear whether the mask was ever produced or remained a thought experiment.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.jipvanleeuwenstein.nl/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://www.snopes.com/fact-check/ai-mask-facial-recognition/" target="_blank" rel="noopener noreferrer">Snopes fact-check &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
                 <img src="/images/projects/camera-shy-hoodie.webp" alt="The Camera-Shy Hoodie producing infrared glare in security-camera footage." width="720" height="480" loading="lazy" decoding="async" />
                 <figcaption>Image: <a href="https://www.macpierce.com/the-camera-shy-hoodie" target="_blank" rel="noopener noreferrer">Mac Pierce</a></figcaption>
               </figure>
@@ -341,6 +623,46 @@
               <p>A London collective that used CV Dazzle walks, workshops, films, and public interventions to make surveillance infrastructure visible and discussable. Its contribution is a repeatable social and workshop practice rather than a controlled claim of recognition evasion.</p>
               <div class="project-row__links">
                 <a class="project-link project-link--main" href="https://engage.org/happenings/walk-this-way-with-the-dazzle-club/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/the-ishu.webp" alt="A person photographed with flash wearing the ISHU scarf, which returns the light as a bright block." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://theishu.com/products/the-ishu" target="_blank" rel="noopener noreferrer">The ISHU</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://theishu.com/products/the-ishu" target="_blank" rel="noopener noreferrer">The ISHU</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>A retroreflective scarf by Saif Siddiqui whose woven reflective elements return a camera flash toward its source, overexposing the wearer in the resulting photograph. The product targets flash photography on consumer devices and the brand makes no face-recognition claim; it has no effect on ambient-light photography, on closed-circuit cameras or on any recognition pipeline. A retroreflective surface also increases the wearer's visibility to infrared-illuminated cameras at night.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://theishu.com/products/the-ishu" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/unidentified-halo.webp" alt="A baseball cap fitted with a ring of infrared LEDs along the bill." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://beccaricks.space/Unidentified-Halo" target="_blank" rel="noopener noreferrer">Becca Ricks and Shir David</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://beccaricks.space/Unidentified-Halo" target="_blank" rel="noopener noreferrer">Unidentified Halo</a></h2>
+              <p class="project-row__state">Prototype &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>A 2016 prototype by Becca Ricks and Shir David placing 22 infrared LEDs around the bill of a baseball cap, with a potentiometer to vary brightness, to saturate a camera sensor over the wearer's face. The makers ran surveillance footage through the Google Cloud Vision API and reported that the wearer went undetected while an unprotected face in the same frame was detected. It was a single informal trial with no stated distances or light levels, and no build files were released.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://beccaricks.space/Unidentified-Halo" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
               </div>
             </td>
           </tr>
@@ -386,32 +708,126 @@
               </div>
             </td>
           </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="projects-empty" id="projects-empty" hidden>No project uses this strategy yet.</p>
-      </section>
 
-      <aside class="projects-boundary gm-prose">
-        <h2>Related does not mean equivalent.</h2>
-        <p>Face detection, face matching, person detection, and camera capture are different technical layers. A garment that confuses a person detector does not necessarily alter a face descriptor, while infrared eyewear may have no effect on an ordinary visible-light camera.</p>
-        <p>Looking for papers, articles, documentation, and cultural context? Continue to the <a href="/references/">cultural references archive</a>.</p>
-      </aside>
-    </div>
-  </main>
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/vaydr-recon.webp" alt="A pair of VAYDR Recon sunglasses shown from the front." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.vaydr.com/" target="_blank" rel="noopener noreferrer">VAYDR</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://www.vaydr.com/" target="_blank" rel="noopener noreferrer">VAYDR Recon</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>Privacy sunglasses sold by an undisclosed operator, built around a lens the company calls GLX or Green Light Lens technology. The marketing claims disruption of infrared recognition, visible-light recognition and thermal imaging; only the infrared claim has a conventional physical basis, since a tinted lens leaves the jaw, nose and head geometry fully imaged by a daylight camera and does not change the thermal emission of skin. No wavelength data, rejection curve or test results are published.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.vaydr.com/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
 
-  <footer class="gm-site-footer">
-    <div class="gm-site-footer__pyre" data-mode="cropped"><img src="/images/motifs/pyre.svg" alt="" aria-hidden="true" /></div>
-    <img class="gm-site-footer__edge" src="/images/motifs/soil-edge.svg" alt="" aria-hidden="true" />
-    <div class="gm-site-footer__row">
-      <a class="projects-footer-mark" href="/"><img src="/images/logo/mark-ondark.svg" alt="" aria-hidden="true" /><span>Ghostmaxxing</span></a>
-      <div class="gm-site-footer__links">
-        <a href="/projects/">Related projects</a>
-        <a href="/references/">Cultural references</a>
-        <a href="/docs/">Documentation</a>
-        <a href="https://github.com/vecna/ghostmaxxing">Code</a>
+          <tr class="project-row" data-project-category="face-mismatching">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/wearable-face-projector.webp" alt="A head-mounted projector casting another face over the wearer's own." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://jingcailiu.com/wearable-face-projector/" target="_blank" rel="noopener noreferrer">Jing-cai Liu</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Face mismatching</p>
+              <h2><a href="https://jingcailiu.com/wearable-face-projector/" target="_blank" rel="noopener noreferrer">Wearable Face Projector</a></h2>
+              <p class="project-row__state">Prototype &middot; Archived</p>
+            </td>
+            <td class="project-row__description">
+              <p>Jing-cai Liu's 2017 bachelor project at the Utrecht School of the Arts mounts a small projector on the head to cast a different appearance over the wearer's face. It is a speculative design rather than a tested countermeasure: the project page states that most of the designs in the series are not working products, and no optical specification or test result is published. It is frequently misattributed to Jip van Leeuwenstein, who was one of five collaborators on the wider series.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://jingcailiu.com/wearable-face-projector/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="full-body-scrambling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/yelo-pomelo.webp" alt="A printed shirt from the Yelo Pomelo anti-surveillance range." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://yelopomelo.com/" target="_blank" rel="noopener noreferrer">Yelo Pomelo</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Full-body scrambling</p>
+              <h2><a href="https://yelopomelo.com/" target="_blank" rel="noopener noreferrer">Yelo Pomelo</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>A Montreal print-on-demand shop run by Jennifer Wu, selling apparel and accessories marketed to privacy and anti-surveillance audiences. Unlike comparable sellers it makes no technical claim about how its prints affect any system, presenting the range as protest and gift merchandise. Mozilla's review found the garments avoided a consumer camera's human-detection alert but not a pose-estimation model.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://yelopomelo.com/" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://www.etsy.com/shop/YeloPomeloHipsters" target="_blank" rel="noopener noreferrer">Etsy shop &#8599;</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="project-row" data-project-category="sensor-dazzling">
+            <td class="project-row__media">
+              <figure>
+                <img src="/images/projects/zenni-id-guard.webp" alt="Pink-tinted ID Guard lenses fitted in a pair of spectacle frames." width="720" height="480" loading="lazy" decoding="async" />
+                <figcaption>Image: <a href="https://www.zennioptical.com/id-guard" target="_blank" rel="noopener noreferrer">Zenni Optical</a></figcaption>
+              </figure>
+            </td>
+            <td class="project-row__project">
+              <p class="project-row__category">Sensor dazzling</p>
+              <h2><a href="https://www.zennioptical.com/id-guard" target="_blank" rel="noopener noreferrer">Zenni ID Guard</a></h2>
+              <p class="project-row__state">Commercial &middot; Active</p>
+            </td>
+            <td class="project-row__description">
+              <p>A lens coating sold by the mass-market optician Zenni, which the company says reflects up to 80 per cent of near-infrared light between 700 and 1050 nanometres. It targets the acquisition stage of infrared-based systems such as phone face unlock and infrared-illuminated cameras, not visible-light face matching. Zenni states that it does not guarantee anonymity or total protection, and independent testing by 404 Media found the lenses block infrared while leaving an ordinary daylight photograph fully usable for matching.</p>
+              <div class="project-row__links">
+                <a class="project-link project-link--main" href="https://www.zennioptical.com/id-guard" target="_blank" rel="noopener noreferrer">Visit project &#8599;</a>
+                <a class="project-link" href="https://www.404media.co/zennis-anti-facial-recognition-glasses-are-eyewear-for-our-paranoid-age/" target="_blank" rel="noopener noreferrer">Independent test by 404 Media &#8599;</a>
+              </div>
+            </td>
+          </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="projects-empty" id="projects-empty" hidden>No project uses
+            this strategy yet.</p>
+        </section>
+
+        <aside class="projects-boundary gm-prose">
+          <h2>If you own one of those, send us the results!</h2>
+          <p>Business and researcher explored face (un)detection, face
+            (mis)matching, person (non-)detection, targeting different technical
+            layers.
+          </p>
+          <p>It's great it exist, any of this might work in different angles better than others,
+            but since there is a security/privacy promise here,
+            we should have a third-party measure against the different techniques. Ghostmaxxing
+            wants to be an hub to collect effectiveness and share input for new
+            version of garment, hats, any anything else can be made new!</p>
+        </aside>
       </div>
-    </div>
-  </footer>
-</body>
+    </main>
+
+    <footer class="gm-site-footer">
+      <div class="gm-site-footer__pyre" data-mode="cropped"><img
+          src="/images/motifs/pyre.svg" alt aria-hidden="true" /></div>
+      <img class="gm-site-footer__edge" src="/images/motifs/soil-edge.svg" alt
+        aria-hidden="true" />
+      <div class="gm-site-footer__row">
+        <a class="projects-footer-mark" href="/"><img
+            src="/images/logo/mark-ondark.svg" alt
+            aria-hidden="true" /><span>Ghostmaxxing</span></a>
+        <div class="gm-site-footer__links">
+          <a href="/projects/">Related projects</a>
+          <a href="/references/">Cultural references</a>
+          <a href="/docs/">Documentation</a>
+          <a href="https://github.com/vecna/ghostmaxxing">Code</a>
+        </div>
+      </div>
+    </footer>
+  </body>
 </html>

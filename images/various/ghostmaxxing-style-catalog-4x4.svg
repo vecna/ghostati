@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1600" viewBox="0 0 1600 1600">
+  <rect width="1600" height="1600" fill="#f26a1b"/>
+  <g font-family="DejaVu Sans, sans-serif" font-size="25" font-weight="700" text-anchor="middle" fill="#0a0a08">
+    <!-- 1: Variable Dots -->
+    <g transform="translate(32 32)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f0c24a"><circle cx="74" cy="76" r="9"/><circle cx="112" cy="114" r="18"/><circle cx="170" cy="70" r="12"/><circle cx="226" cy="128" r="25"/><circle cx="286" cy="72" r="7"/><circle cx="76" cy="210" r="22"/><circle cx="154" cy="220" r="8"/><circle cx="264" cy="228" r="16"/></g>
+      <g fill="#f26a1b"><circle cx="92" cy="158" r="7"/><circle cx="146" cy="150" r="22"/><circle cx="205" cy="207" r="13"/><circle cx="286" cy="172" r="24"/><circle cx="302" cy="244" r="8"/></g>
+      <text x="180" y="332">Variable Dots</text>
+    </g>
+    <!-- 2: Broken Lines -->
+    <g transform="translate(424 32)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#2f7a5c"/>
+      <g fill="none" stroke-linecap="square"><path d="M48 78l62 18m28 8l78 23m30 9l62 18" stroke="#fff1cf" stroke-width="18"/><path d="M75 246l36-54m18-28l44-66m35 148l35-52m22-32l50-74" stroke="#f0c24a" stroke-width="14"/><path d="M50 145h68m31 0h82m25 0h53" stroke="#0a0a08" stroke-width="10"/></g>
+      <text x="180" y="332">Broken Lines</text>
+    </g>
+    <!-- 3: Rectangles -->
+    <g transform="translate(816 32)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f26a1b"><rect x="48" y="52" width="92" height="48"/><rect x="190" y="50" width="122" height="82"/><rect x="62" y="186" width="66" height="76"/><rect x="214" y="204" width="94" height="54"/></g>
+      <g fill="#f0c24a"><rect x="118" y="112" width="104" height="62"/><rect x="44" y="126" width="48" height="34"/><rect x="154" y="202" width="34" height="70"/></g>
+      <text x="180" y="332">Rectangles</text>
+    </g>
+    <!-- 4: Leopard Rosettes -->
+    <g transform="translate(1208 32)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#f0c24a"/>
+      <g fill="none" stroke="#072e26" stroke-width="15"><ellipse cx="92" cy="82" rx="35" ry="26"/><ellipse cx="210" cy="78" rx="45" ry="32"/><ellipse cx="286" cy="152" rx="27" ry="39"/><ellipse cx="128" cy="198" rx="48" ry="31"/><ellipse cx="230" cy="236" rx="34" ry="24"/></g>
+      <g fill="#f26a1b"><circle cx="92" cy="82" r="9"/><circle cx="210" cy="78" r="12"/><circle cx="286" cy="152" r="9"/><circle cx="128" cy="198" r="13"/><circle cx="230" cy="236" r="8"/></g>
+      <text x="180" y="332">Leopard Rosettes</text>
+    </g>
+    <!-- 5: Angular Bars -->
+    <g transform="translate(32 424)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f26a1b"><polygon points="42,78 146,42 162,78 58,116"/><polygon points="162,154 314,86 324,124 176,194"/><polygon points="52,238 174,180 190,218 70,276"/></g>
+      <g fill="#f0c24a"><polygon points="206,38 244,54 174,142 138,124"/><polygon points="280,160 318,178 250,266 212,246"/></g>
+      <text x="180" y="332">Angular Bars</text>
+    </g>
+    <!-- 6: Branching Cracks -->
+    <g transform="translate(424 424)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#f0c24a"/>
+      <g fill="none" stroke="#072e26" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M176 36l-18 58 30 38-42 40 18 76-34 34M158 94l-54-22-45 28M188 132l72-30 50 22M146 172l-68 34-36 54M164 248l62-30 72 34"/></g>
+      <g fill="#f26a1b"><polygon points="158,94 188,132 146,172 112,128"/><polygon points="164,248 226,218 204,272 146,282"/></g>
+      <text x="180" y="332">Branching Cracks</text>
+    </g>
+    <!-- 7: Circular Fragments -->
+    <g transform="translate(816 424)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#2f7a5c"/>
+      <g fill="none" stroke-linecap="square"><path d="M86 174a88 88 0 0 1 92-86" stroke="#f0c24a" stroke-width="20"/><path d="M194 88a88 88 0 0 1 74 72" stroke="#fff1cf" stroke-width="20"/><path d="M268 184a88 88 0 0 1-76 76" stroke="#f26a1b" stroke-width="20"/><path d="M160 260a88 88 0 0 1-76-62" stroke="#0a0a08" stroke-width="20"/><path d="M132 176a44 44 0 0 1 76-30" stroke="#fff1cf" stroke-width="14"/><path d="M214 168a44 44 0 0 1-54 48" stroke="#f0c24a" stroke-width="14"/></g>
+      <text x="180" y="332">Circular Fragments</text>
+    </g>
+    <!-- 8: Broken Checker -->
+    <g transform="translate(1208 424)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f0c24a"><rect x="42" y="42" width="62" height="58"/><rect x="180" y="40" width="82" height="54"/><rect x="110" y="116" width="50" height="70"/><rect x="244" y="132" width="70" height="48"/><rect x="54" y="212" width="92" height="54"/><rect x="184" y="206" width="52" height="66"/></g>
+      <g fill="#f26a1b"><rect x="116" y="48" width="46" height="48"/><rect x="274" y="58" width="40" height="66"/><rect x="44" y="124" width="54" height="70"/><rect x="172" y="106" width="58" height="86"/><rect x="250" y="198" width="62" height="66"/></g>
+      <text x="180" y="332">Broken Checker</text>
+    </g>
+    <!-- 9: Asymmetric Bands -->
+    <g transform="translate(32 816)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#2f7a5c"/>
+      <g fill="none" stroke-linecap="square"><path d="M52 62l242 174" stroke="#f26a1b" stroke-width="58"/><path d="M58 246l112-142" stroke="#f0c24a" stroke-width="38"/><path d="M206 56l92 66" stroke="#fff1cf" stroke-width="24"/></g>
+      <text x="180" y="332">Asymmetric Bands</text>
+    </g>
+    <!-- 10: Blocks + Dots -->
+    <g transform="translate(424 816)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f26a1b"><rect x="44" y="48" width="104" height="70"/><rect x="194" y="164" width="116" height="92"/></g>
+      <g fill="#f0c24a"><circle cx="214" cy="62" r="9"/><circle cx="248" cy="70" r="13"/><circle cx="288" cy="64" r="7"/><circle cx="194" cy="106" r="16"/><circle cx="236" cy="116" r="8"/><circle cx="280" cy="116" r="14"/><circle cx="70" cy="174" r="12"/><circle cx="108" cy="190" r="8"/><circle cx="148" cy="220" r="18"/></g>
+      <text x="180" y="332">Blocks + Dots</text>
+    </g>
+    <!-- 11: Leopard + Cracks -->
+    <g transform="translate(816 816)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#f0c24a"/>
+      <g fill="none" stroke="#f26a1b" stroke-width="14"><ellipse cx="86" cy="78" rx="32" ry="23"/><ellipse cx="116" cy="166" rx="46" ry="32"/><ellipse cx="78" cy="238" rx="25" ry="34"/></g>
+      <g fill="none" stroke="#072e26" stroke-width="9" stroke-linejoin="round"><path d="M182 34l-16 68 42 34-34 52 20 82M166 102l68-34 74 28M208 136l72 42 34 72"/></g>
+      <text x="180" y="332">Leopard + Cracks</text>
+    </g>
+    <!-- 12: Fractured Grid -->
+    <g transform="translate(1208 816)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="none" stroke="#fff1cf" stroke-width="14"><path d="M76 30l14 252M162 28l-20 254M246 28l26 254M30 86l284 18M32 166l284-26M36 244l278 12"/></g>
+      <g fill="#f26a1b"><polygon points="34,42 84,34 88,98 40,92"/><polygon points="170,116 242,106 250,172 162,180"/><polygon points="92,190 142,184 138,252 82,244"/></g>
+      <g fill="#f0c24a"><polygon points="256,44 316,54 308,118 270,108"/><polygon points="206,198 274,188 280,256 218,264"/></g>
+      <text x="180" y="332">Fractured Grid</text>
+    </g>
+    <!-- 13: Dense Hybrid -->
+    <g transform="translate(32 1208)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f26a1b"><rect x="42" y="46" width="74" height="44"/><circle cx="276" cy="72" r="24"/><polygon points="164,112 222,88 238,142 178,160"/><circle cx="86" cy="236" r="31"/></g>
+      <g fill="none" stroke="#f0c24a" stroke-width="13"><path d="M52 142l92 28 30 84"/><path d="M232 176a58 58 0 0 1 74 68"/><ellipse cx="274" cy="220" rx="34" ry="26"/></g>
+      <g fill="#fff1cf"><circle cx="144" cy="66" r="8"/><circle cx="170" cy="74" r="12"/><circle cx="196" cy="54" r="7"/></g>
+      <text x="180" y="332">Dense Hybrid</text>
+    </g>
+    <!-- 14: Split Triangles -->
+    <g transform="translate(424 1208)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="#f26a1b"><polygon points="30,30 164,30 94,134"/><polygon points="172,42 326,28 246,144"/><polygon points="40,148 156,118 116,266"/><polygon points="184,166 324,104 304,276"/></g>
+      <g fill="#f0c24a"><polygon points="94,134 164,30 172,166"/><polygon points="156,118 246,144 184,166"/><polygon points="116,266 184,166 222,276"/></g>
+      <text x="180" y="332">Split Triangles</text>
+    </g>
+    <!-- 15: Offset Stripes -->
+    <g transform="translate(816 1208)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#2f7a5c"/>
+      <g fill="none" stroke-linecap="square"><path d="M48 64h114m38 0h106M48 116h66m42 0h150M48 172h138m34 0h86M48 230h82m38 0h138" stroke="#f0c24a" stroke-width="24"/><path d="M94 42v54m0 44v122M246 36v94m0 48v84" stroke="#f26a1b" stroke-width="20"/></g>
+      <text x="180" y="332">Offset Stripes</text>
+    </g>
+    <!-- 16: Stencil Arcs -->
+    <g transform="translate(1208 1208)">
+      <rect width="360" height="360" rx="18" fill="#fff1cf" stroke="#0a0a08" stroke-width="4"/>
+      <rect x="20" y="20" width="320" height="270" rx="10" fill="#072e26"/>
+      <g fill="none" stroke-linecap="square"><path d="M54 210a116 116 0 0 1 206-126" stroke="#f26a1b" stroke-width="42"/><path d="M292 112a116 116 0 0 1-174 148" stroke="#f0c24a" stroke-width="42"/><path d="M112 188a58 58 0 0 1 78-68" stroke="#fff1cf" stroke-width="25"/><path d="M220 144a58 58 0 0 1-52 82" stroke="#f26a1b" stroke-width="25"/></g>
+      <text x="180" y="332">Stencil Arcs</text>
+    </g>
+  </g>
+</svg>

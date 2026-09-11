@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-09-10",
+  "last_updated": "2026-09-11",
   "language": "en",
   "categories": [
     {
@@ -292,6 +292,364 @@
         "rights_status": "Review permission or quotation basis before publication."
       },
       "links": []
+    },
+    {
+      "slug": "zenni-id-guard",
+      "name": "Zenni ID Guard",
+      "url": "https://www.zennioptical.com/id-guard",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "commercial",
+      "description": "A lens coating sold by the mass-market optician Zenni, which the company says reflects up to 80 per cent of near-infrared light between 700 and 1050 nanometres. It targets the acquisition stage of infrared-based systems such as phone face unlock and infrared-illuminated cameras, not visible-light face matching. Zenni states that it does not guarantee anonymity or total protection, and independent testing by 404 Media found the lenses block infrared while leaving an ordinary daylight photograph fully usable for matching.",
+      "image": {
+        "src": "/images/projects/zenni-id-guard.webp",
+        "alt": "Pink-tinted ID Guard lenses fitted in a pair of spectacle frames.",
+        "source_url": "https://www.zennioptical.com/id-guard",
+        "credit": "Zenni Optical",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Independent test by 404 Media",
+          "url": "https://www.404media.co/zennis-anti-facial-recognition-glasses-are-eyewear-for-our-paranoid-age/"
+        }
+      ]
+    },
+    {
+      "slug": "solir-optics",
+      "name": "Solir Optics",
+      "url": "https://www.soliroptics.com/pages/privacy-protection",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "commercial",
+      "description": "An American eyewear brand selling frames with what it describes as passive optical filtering of specific infrared wavelengths. The stated aim is to reduce the accuracy and consistency of camera-based face recognition rather than to prevent it; the company's published evidence is that iPhone Face ID “did not consistently unlock” in its own internal testing. Several of the uses it names, such as retail and event scanning, are visible-light systems that an infrared filter would not be expected to affect.",
+      "image": {
+        "src": "/images/projects/solir-optics.webp",
+        "alt": "A person wearing Solir Optics privacy-protection glasses while holding a phone outdoors.",
+        "source_url": "https://www.soliroptics.com/pages/privacy-protection",
+        "credit": "Solir Optics",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "vaydr-recon",
+      "name": "VAYDR Recon",
+      "url": "https://www.vaydr.com/",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "commercial",
+      "description": "Privacy sunglasses sold by an undisclosed operator, built around a lens the company calls GLX or Green Light Lens technology. The marketing claims disruption of infrared recognition, visible-light recognition and thermal imaging; only the infrared claim has a conventional physical basis, since a tinted lens leaves the jaw, nose and head geometry fully imaged by a daylight camera and does not change the thermal emission of skin. No wavelength data, rejection curve or test results are published.",
+      "image": {
+        "src": "/images/projects/vaydr-recon.webp",
+        "alt": "A pair of VAYDR Recon sunglasses shown from the front.",
+        "source_url": "https://www.vaydr.com/",
+        "credit": "VAYDR",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "antiai-clothing",
+      "name": "AntiAi Clothing",
+      "url": "https://antiai.biz/",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "An online shop selling garments, gaiters and masks printed with patterns the seller describes as chosen to disrupt computer-vision systems. The shop's own wording is that the images are “thoughtfully crafted, designed, and selected”, and its founder told the Mozilla Foundation that the designs are tested informally against a TensorFlow model and that he is “not saying it will always work”. In Mozilla's hands-on review the garments avoided a consumer camera's human-detection alert but did not defeat a pose-estimation model.",
+      "image": {
+        "src": "/images/projects/antiai-clothing.webp",
+        "alt": "A person wearing a high-contrast AntiAi Clothing face covering.",
+        "source_url": "https://antiai.biz/",
+        "credit": "AntiAi Clothing",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Mozilla Foundation review",
+          "url": "https://www.mozillafoundation.org/en/nothing-personal/anti-surveillance-fashion-privacy-review/"
+        }
+      ]
+    },
+    {
+      "slug": "adversarial-apparel",
+      "name": "Adversarial Apparel",
+      "url": "https://adversarialapparel.com/",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "An anonymously operated shop selling hoodies, shirts and masks it describes as carrying engineered adversarial patterns, citing published techniques including Expectation over Transformation and the ImageNet-Patch dataset. It claims effects on face recognition, object detection and multi-object tracking, which is the widest claim set among comparable sellers. No test results, target models or imagery of a detector failing are published, and the shop discloses no company name, location or team.",
+      "image": {
+        "src": "/images/projects/adversarial-apparel.webp",
+        "alt": "An Adversarial Apparel hoodie printed with a high-contrast pattern.",
+        "source_url": "https://adversarialapparel.com/",
+        "credit": "Adversarial Apparel",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "yelo-pomelo",
+      "name": "Yelo Pomelo",
+      "url": "https://yelopomelo.com/",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "commercial",
+      "description": "A Montreal print-on-demand shop run by Jennifer Wu, selling apparel and accessories marketed to privacy and anti-surveillance audiences. Unlike comparable sellers it makes no technical claim about how its prints affect any system, presenting the range as protest and gift merchandise. Mozilla's review found the garments avoided a consumer camera's human-detection alert but not a pose-estimation model.",
+      "image": {
+        "src": "/images/projects/yelo-pomelo.webp",
+        "alt": "A printed shirt from the Yelo Pomelo anti-surveillance range.",
+        "source_url": "https://yelopomelo.com/",
+        "credit": "Yelo Pomelo",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Etsy shop",
+          "url": "https://www.etsy.com/shop/YeloPomeloHipsters"
+        }
+      ]
+    },
+    {
+      "slug": "the-ishu",
+      "name": "The ISHU",
+      "url": "https://theishu.com/products/the-ishu",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "commercial",
+      "description": "A retroreflective scarf by Saif Siddiqui whose woven reflective elements return a camera flash toward its source, overexposing the wearer in the resulting photograph. The product targets flash photography on consumer devices and the brand makes no face-recognition claim; it has no effect on ambient-light photography, on closed-circuit cameras or on any recognition pipeline. A retroreflective surface also increases the wearer's visibility to infrared-illuminated cameras at night.",
+      "image": {
+        "src": "/images/projects/the-ishu.webp",
+        "alt": "A person photographed with flash wearing the ISHU scarf, which returns the light as a bright block.",
+        "source_url": "https://theishu.com/products/the-ishu",
+        "credit": "The ISHU",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "betabrand-flashback",
+      "name": "Flashback Collection",
+      "url": "https://www.designboom.com/technology/reflective-betabrand-flashback-clothing-paparazzi-photos-02-10-2015/",
+      "category": "sensor-dazzling",
+      "status": "archived",
+      "access": "commercial",
+      "description": "A 2015 collection of five retroreflective garments by the clothing brand Betabrand with the musician Chris Holmes, using fabric coated with glass nanospheres that return a camera flash to the lens. It was conceived to disrupt press photography rather than recognition systems, and made no claim about face detection or matching. The collection was crowdfunded, shipped, and is no longer sold.",
+      "image": {
+        "src": "/images/projects/betabrand-flashback.webp",
+        "alt": "A person wearing Betabrand Flashback clothing while surrounding phones photograph its reflective surface.",
+        "source_url": "https://www.designboom.com/technology/reflective-betabrand-flashback-clothing-paparazzi-photos-02-10-2015/",
+        "credit": "Betabrand / designboom",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "adversarial-fashion",
+      "name": "Adversarial Fashion",
+      "url": "https://www.katebertash.com/adversarial-fashion",
+      "category": "decoy-flooding",
+      "status": "archived",
+      "access": "commercial",
+      "description": "Kate Bertash printed garments covered with plausible vehicle number plates so that automated licence plate readers would capture, timestamp and record them alongside real vehicles. The mechanism is data injection rather than evasion: the plates only need to be accepted by a reader, not to defeat a classifier, and the target is the integrity of plate-reader databases rather than any face system. Demonstrated at DEF CON 27 against OpenALPR and commercial mobile readers; the garments have not been sold since around 2023.",
+      "image": {
+        "src": "/images/projects/adversarial-fashion.webp",
+        "alt": "A shirt printed with rows of vehicle number plates.",
+        "source_url": "https://www.katebertash.com/adversarial-fashion",
+        "credit": "Kate Bertash",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "stealth-wear",
+      "name": "Stealth Wear",
+      "url": "https://adam.harvey.studio/stealth-wear/",
+      "category": "sensor-dazzling",
+      "status": "archived",
+      "access": "artwork",
+      "description": "Adam Harvey's 2013 garment series used silver-plated, thermally reflective fabric to reduce the wearer's thermal signature in long-wave infrared imaging. It addresses aerial and thermal observation rather than face detection or matching, and is frequently miscited as anti-face-recognition clothing. The pieces were sold briefly through Harvey's Privacy Gift Shop and are now sold out.",
+      "image": {
+        "src": "/images/projects/stealth-wear.webp",
+        "alt": "A hooded garment in reflective metallic fabric, shown beside its thermal-camera image.",
+        "source_url": "https://adam.harvey.studio/stealth-wear/",
+        "credit": "Adam Harvey",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "adversarial-yolo",
+      "name": "adversarial-yolo",
+      "url": "https://gitlab.com/EAVISE/adversarial-yolo",
+      "category": "full-body-scrambling",
+      "status": "active",
+      "access": "free-diy",
+      "description": "Open-source code from the EAVISE group at KU Leuven that generates a printable patch optimised against a person detector's own objectness loss, so that a person holding it produces no detection proposal. Published results against YOLOv2 on the INRIA test set report recall falling from 100 per cent to 26.5 per cent with the best patch, at a patch of roughly 40 centimetres held facing the camera. The authors note that patches transfer poorly to different detector architectures; because it is a generator rather than a fixed pattern, it can be retrained against a current model.",
+      "image": {
+        "src": "/images/projects/adversarial-yolo.webp",
+        "alt": "A person holding a printed adversarial patch, shown undetected in a detector's output.",
+        "source_url": "https://arxiv.org/abs/1904.08653",
+        "credit": "Thys, Van Ranst & Goedemé, EAVISE / KU Leuven",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Paper: Fooling automated surveillance cameras",
+          "url": "https://arxiv.org/abs/1904.08653"
+        }
+      ]
+    },
+    {
+      "slug": "freedom-shield",
+      "name": "Freedom Shield",
+      "url": "https://github.com/nickbild/freedom_shield",
+      "category": "sensor-dazzling",
+      "status": "active",
+      "access": "free-diy",
+      "description": "Nick Bild's open-source build sews 940-nanometre infrared LEDs into a hat to overwhelm the photodiodes of infrared-sensitive cameras. The 940-nanometre choice produces almost no visible glow, so the wearer does not appear conspicuous to onlookers, which the project states as a design goal for protest use. Code, schematic and parts list are published; like all infrared flooding it depends on the camera passing near-infrared, so a daytime infrared-cut filter removes the effect.",
+      "image": {
+        "src": "/images/projects/freedom-shield.webp",
+        "alt": "A hat with infrared LEDs along the brim, shown as glare in night-vision footage.",
+        "source_url": "https://github.com/nickbild/freedom_shield",
+        "credit": "Nick Bild",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Hackaday write-up",
+          "url": "https://hackaday.com/2020/02/28/using-ir-leds-to-hide-in-plain-sight/"
+        }
+      ]
+    },
+    {
+      "slug": "unidentified-halo",
+      "name": "Unidentified Halo",
+      "url": "https://beccaricks.space/Unidentified-Halo",
+      "category": "sensor-dazzling",
+      "status": "archived",
+      "access": "prototype",
+      "description": "A 2016 prototype by Becca Ricks and Shir David placing 22 infrared LEDs around the bill of a baseball cap, with a potentiometer to vary brightness, to saturate a camera sensor over the wearer's face. The makers ran surveillance footage through the Google Cloud Vision API and reported that the wearer went undetected while an unprotected face in the same frame was detected. It was a single informal trial with no stated distances or light levels, and no build files were released.",
+      "image": {
+        "src": "/images/projects/unidentified-halo.webp",
+        "alt": "A baseball cap fitted with a ring of infrared LEDs along the bill.",
+        "source_url": "https://beccaricks.space/Unidentified-Halo",
+        "credit": "Becca Ricks and Shir David",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "justice-caps",
+      "name": "Justice Caps",
+      "url": "https://noveltystreet.com/justice-caps",
+      "category": "sensor-dazzling",
+      "status": "archived",
+      "access": "commercial",
+      "description": "Hand-built caps sold from the Czech Republic with a nine-LED infrared strip in the brim, powered by two AAA cells for twelve to fourteen hours. They were intended to wash out the wearer's face for cameras sensitive to near-infrared in low light, and no wavelength, radiant power or test data was ever published. The maker's domain ceased to be associated with the product in November 2019; the listing survives as a product record and unbranded copies circulate on marketplaces.",
+      "image": {
+        "src": "/images/projects/justice-caps.webp",
+        "alt": "A baseball cap with infrared LEDs concealed in the brim.",
+        "source_url": "https://noveltystreet.com/justice-caps",
+        "credit": "Justice Caps / NoveltyStreet",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "data-masks",
+      "name": "Data-masks",
+      "url": "https://www.sterlingcrispin.com/data-masks.html",
+      "category": "face-mismatching",
+      "status": "archived",
+      "access": "artwork",
+      "description": "Sterling Crispin used genetic algorithms driven by face detection and recognition systems to evolve forms those systems read as maximally face-like, then 3D-printed them as wearable masks. The series is presented as a way to show the machine what it is looking for rather than as a countermeasure; Crispin states directly that defeating face recognition is not the goal, since covering a face with a hand already achieves non-detection. Produced between 2013 and 2015 and exhibited internationally.",
+      "image": {
+        "src": "/images/projects/data-masks.webp",
+        "alt": "A 3D-printed mask whose features approximate an algorithm's idea of a face.",
+        "source_url": "https://www.sterlingcrispin.com/data-masks.html",
+        "credit": "Sterling Crispin",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "incognito-nowak",
+      "name": "Incognito",
+      "url": "https://www.dezeen.com/2019/07/30/ewa-nowak-anti-ai-mask-protects-wearers-from-mass-surveillance/",
+      "category": "face-dazzling",
+      "status": "archived",
+      "access": "prototype",
+      "description": "Ewa Nowak's brass face jewellery hooks behind the ears and places two discs below the eyes and a rectangle between them, positioned to disturb the facial landmarks a detector locates. The designer's only reported test was uploading photographs to Facebook and observing that its tag suggestion did not appear, which is a single consumer-platform check on frontal stills rather than a measurement. It was made as a prototype and has not been produced commercially.",
+      "image": {
+        "src": "/images/projects/incognito-nowak.webp",
+        "alt": "Brass jewellery worn across the face, with discs below the eyes and a bar between them.",
+        "source_url": "https://www.dezeen.com/2019/07/30/ewa-nowak-anti-ai-mask-protects-wearers-from-mass-surveillance/",
+        "credit": "Ewa Nowak / Dezeen",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "surveillance-exclusion",
+      "name": "Surveillance Exclusion",
+      "url": "https://www.jipvanleeuwenstein.nl/",
+      "category": "face-dazzling",
+      "status": "unknown",
+      "access": "prototype",
+      "description": "Dutch designer Jip van Leeuwenstein made a transparent moulded mask at the Utrecht School of the Arts in 2017 that bends and refracts light across the face, with the stated aim of preventing a camera from recovering accurate facial geometry while people can still read the wearer's expressions. The designer hedges the claim to “some forms of facial recognition” and publishes no test, target system or material specification. Snopes rated the widely shared claim that it blocks recognition from all angles as “Mixture”, finding it unclear whether the mask was ever produced or remained a thought experiment.",
+      "image": {
+        "src": "/images/projects/surveillance-exclusion.webp",
+        "alt": "A transparent moulded mask worn over a face, distorting its features while remaining see-through.",
+        "source_url": "https://www.jipvanleeuwenstein.nl/",
+        "credit": "Jip van Leeuwenstein",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Snopes fact-check",
+          "url": "https://www.snopes.com/fact-check/ai-mask-facial-recognition/"
+        }
+      ]
+    },
+    {
+      "slug": "wearable-face-projector",
+      "name": "Wearable Face Projector",
+      "url": "https://jingcailiu.com/wearable-face-projector/",
+      "category": "face-mismatching",
+      "status": "archived",
+      "access": "prototype",
+      "description": "Jing-cai Liu's 2017 bachelor project at the Utrecht School of the Arts mounts a small projector on the head to cast a different appearance over the wearer's face. It is a speculative design rather than a tested countermeasure: the project page states that most of the designs in the series are not working products, and no optical specification or test result is published. It is frequently misattributed to Jip van Leeuwenstein, who was one of five collaborators on the wider series.",
+      "image": {
+        "src": "/images/projects/wearable-face-projector.webp",
+        "alt": "A head-mounted projector casting another face over the wearer's own.",
+        "source_url": "https://jingcailiu.com/wearable-face-projector/",
+        "credit": "Jing-cai Liu",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": []
+    },
+    {
+      "slug": "qfin-adversarial-drag",
+      "name": "Adversarial Drag (QFIN)",
+      "url": "https://www.qfinformatics.com/",
+      "category": "face-dazzling",
+      "status": "active",
+      "access": "collective-practice",
+      "description": "A hands-on workshop titled “Face/Off: Adversarial Drag in the Age of Capture”, run within the Queer and Feminist Informatics Network at the University of Amsterdam. It uses drag technique and adversarial makeup against both facial and automated gender classification, treating the binaries encoded in classifiers as part of what is being contested. The network presents it as pedagogy and creative research and makes no claim of effectiveness against a named system.",
+      "image": {
+        "src": "/images/projects/qfin-adversarial-drag.webp",
+        "alt": "The glitch-styled banner of the Queer and Feminist Informatics Network.",
+        "source_url": "https://www.qfinformatics.com/",
+        "credit": "Queer and Feminist Informatics Network",
+        "rights_status": "Representative image selected from the credited project or publication; review permission or quotation basis before publication."
+      },
+      "links": [
+        {
+          "label": "Co-founder Delfi Sol Martinez Pandiani",
+          "url": "https://delfisolpandiani.com/about/"
+        }
+      ]
     }
   ]
 }
