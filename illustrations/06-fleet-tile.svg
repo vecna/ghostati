@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480"><title>Fleet tile</title><rect width="480" height="480" fill="#f26a1b"/><g opacity="0.17"><g transform="translate(40.00,28.00) scale(1.0400)"><path d="M6,29 H94" stroke-width="7" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <path d="M20,29 A30,30 0 0 0 80,29 Z" fill="#fff1cf" stroke="#0b4a3c" stroke-width="5" stroke-linejoin="round"></path>
+  <circle cx="50" cy="44" r="15" fill="#072e26" stroke="#0b4a3c" stroke-width="3.4"></circle>
+  <circle id="f000-iris-dome" cx="50" cy="44" r="6.6" fill="#f0c24a"></circle>
+  <circle cx="45.5" cy="39.5" r="2.55" fill="#fff1cf" opacity="0.9"></circle></g><g transform="translate(280.00,30.00) scale(1.0400)"><path d="M45,30 V12 M32,12 H58" stroke-width="5" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <rect x="16" y="36" width="66" height="34" rx="5" fill="#fff1cf" stroke="#0b4a3c" stroke-width="5" stroke-linejoin="round"></rect>
+  <path d="M12,30 H74 L84,40" stroke-width="5" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <circle cx="60" cy="51" r="14" fill="#072e26" stroke="#0b4a3c" stroke-width="3.4"></circle>
+  <circle id="f100-iris-bullet" cx="60" cy="51" r="6.2" fill="#f0c24a"></circle>
+  <circle cx="55.8" cy="46.8" r="2.4" fill="#fff1cf" opacity="0.9"></circle></g><g transform="translate(160.00,268.00) scale(1.0400)"><path d="M50,16 V6 M38,6 H62" stroke-width="5" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <rect x="16" y="16" width="68" height="68" rx="19" fill="#fff1cf" stroke="#0b4a3c" stroke-width="5" stroke-linejoin="round"></rect>
+  <circle cx="73" cy="26" r="3.4" fill="#f0c24a" stroke="#0b4a3c" stroke-width="1.3"></circle>
+  <circle cx="50" cy="50" r="17" fill="#072e26" stroke="#0b4a3c" stroke-width="3.4"></circle>
+  <circle id="f200-iris-cube" cx="50" cy="50" r="7.5" fill="#f0c24a"></circle>
+  <circle cx="44.9" cy="44.9" r="2.9" fill="#fff1cf" opacity="0.9"></circle></g><g transform="translate(400.00,264.00) scale(1.0400)"><path d="M40,36 V22 M28,22 H52" stroke-width="5" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <rect x="6" y="36" width="88" height="28" rx="14" fill="#fff1cf" stroke="#0b4a3c" stroke-width="5" stroke-linejoin="round"></rect>
+  <g fill="#072e26"><circle cx="62" cy="44" r="2"></circle><circle cx="70" cy="50" r="2"></circle><circle cx="62" cy="56" r="2"></circle><circle cx="78" cy="45" r="2"></circle><circle cx="80" cy="55" r="2"></circle><circle cx="86" cy="50" r="2"></circle></g>
+  <circle cx="30" cy="50" r="12" fill="#072e26" stroke="#0b4a3c" stroke-width="3.4"></circle>
+  <circle id="f300-iris-pill" cx="30" cy="50" r="5.3" fill="#f0c24a"></circle>
+  <circle cx="26.4" cy="46.4" r="2" fill="#fff1cf" opacity="0.9"></circle></g><g transform="translate(-80.00,264.00) scale(1.0400)"><path d="M40,36 V22 M28,22 H52" stroke-width="5" fill="none" stroke="#0b4a3c" stroke-linecap="round" stroke-linejoin="round"></path>
+  <rect x="6" y="36" width="88" height="28" rx="14" fill="#fff1cf" stroke="#0b4a3c" stroke-width="5" stroke-linejoin="round"></rect>
+  <g fill="#072e26"><circle cx="62" cy="44" r="2"></circle><circle cx="70" cy="50" r="2"></circle><circle cx="62" cy="56" r="2"></circle><circle cx="78" cy="45" r="2"></circle><circle cx="80" cy="55" r="2"></circle><circle cx="86" cy="50" r="2"></circle></g>
+  <circle cx="30" cy="50" r="12" fill="#072e26" stroke="#0b4a3c" stroke-width="3.4"></circle>
+  <circle id="f3n4800-iris-pill" cx="30" cy="50" r="5.3" fill="#f0c24a"></circle>
+  <circle cx="26.4" cy="46.4" r="2" fill="#fff1cf" opacity="0.9"></circle></g></g></svg>
