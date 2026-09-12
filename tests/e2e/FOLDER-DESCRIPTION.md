@@ -2,7 +2,7 @@
 
 This folder contains Playwright end-to-end tests for browser-facing flows.
 
-The tests exercise complementary-project generation and category filtering, cultural-reference page rendering and archive navigation, loader behavior, overlay mode behavior, and face-matching workflows against the static app served locally.
+The tests exercise complementary-project generation and category filtering, cultural-reference page rendering and archive navigation, the generated genealogy chart (one mark per reference and per project, every mark resolving to an entry on its destination page), loader behavior, overlay mode behavior, and face-matching workflows against the static app served locally.
 
 These files are excluded from code2prompt because they are browser test implementation detail, but the project keeps them as regression coverage for user-visible flows.
 

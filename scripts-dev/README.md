@@ -17,6 +17,7 @@ Run the commands below from the `ghostmaxxing` repository root. Most scripts res
 | Rebuild API documentation | `npm run docs:rebuild` | Deletes `docs/jsdoc/`, then runs JSDoc |
 | Validate complementary projects | `npm run validate:projects` | Checks JSON, URLs, categories and local images |
 | Build complementary projects | `npm run update:projects` | Overwrites `projects/index.html` |
+| Redraw the genealogy chart | `npm run update:genealogy` | Overwrites `genealogy.html` and `styles/genealogy.css` (needs `python3`) |
 | Generate a code map and viewer | `npm run codemap` | `codemap/codemap.json`, `codemap/codemap.html` |
 | Export UI translations | `npm run i18n:extract` | POT and pipe-delimited CSV under `translations/` |
 | Extract public copy | `node scripts-dev/extract-text-only.js` | `EXTRACTED-text-YYYY-MM-DD.md` |
@@ -74,6 +75,7 @@ npm run docs:rebuild
 npm run validate:projects
 npm run update:projects
 npm run update:references
+npm run update:genealogy
 ```
 
 `docs` runs `jsdoc -c jsdoc.clean.json`. The supplied technical index identifies `JSDOC_index.md` as the generated home and `docs/jsdoc/` as the output location; check the actual configuration when changing either.
@@ -83,6 +85,8 @@ npm run update:references
 `validate:projects` checks `projects/PROJECTS.json`, its single primary strategy per entry, absolute URLs, duplicate identifiers, image metadata, and the presence of every local image under `images/projects/`. `update:projects` validates first and then fills `projects/templates/projects.template.html`, overwriting `projects/index.html`. It never downloads media or establishes permission to republish third-party images. Follow `projects/CONTRIBUTING-PROJECTS.md` when adding an entry.
 
 `update:references` runs `references/build-references-page.js`, which validates `references/REFERENCES.json` and fills `references/templates/references.template.html`, overwriting `references/index.html`. The references dataset remains the larger cultural and technical archive; do not move papers or articles into the complementary-project catalogue merely because they describe a possible intervention.
+
+`update:genealogy` runs `scripts-dev/build-genealogy.py` (Python 3, standard library only). It reads `references/REFERENCES.json` and `projects/PROJECTS.json`, places every reference and every project on the genealogy chart by year and by the row its `target` tags select, and overwrites `genealogy.html` and `styles/genealogy.css`. It stops with a message when an entry carries a target the row table does not know, so run it after adding to either dataset. The row table and the access-to-kind mapping for projects live at the top of the script.
 
 After a documentation change, inspect the home, one affected module and any changed tutorial links. The source review does not establish that every module currently appears in JSDoc.
 

@@ -78,6 +78,7 @@ npm run docs               # generate the JSDoc site into docs/jsdoc/
 npm run validate:ghostyles # validate every ghostyle in ghostyles/
 npm run validate:ghostyle -- ghostyles/your-slug.js   # validate one
 npm run update:references  # rebuild references/index.html from REFERENCES.json
+npm run update:genealogy   # redraw genealogy.html from REFERENCES.json + PROJECTS.json (python3)
 npm run update:projects    # rebuild projects/index.html from PROJECTS.json
 npm run i18n:extract       # regenerate the .pot / summary CSV for translation
 npm run docs:screenshots -- --locale en,it --loader-time 3 # regenerate screenshots for functionality docs, also with --include-brush
@@ -146,6 +147,10 @@ maintenance notes live in [`references/NOTES.md`](references/NOTES.md);
 `npm run update:references` regenerates the browsable
 [`references/`](references/) page. Browse it live at
 [ghostmaxxing.vecna.eu/references/](https://ghostmaxxing.vecna.eu/references/).
+
+Both datasets also feed [`genealogy.html`](genealogy.html): every reference and
+every project is drawn at its year, in the row its `target` tags select. Run
+`npm run update:genealogy` after editing either file.
 
 ## Provenance
 

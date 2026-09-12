@@ -66,6 +66,15 @@
   border: 1px solid rgba(7, 26, 51, 0.32);
   background: var(--gm-panel);
   box-shadow: var(--gm-shadow-block);
+  scroll-margin-top: 1.5rem;
+}
+
+/* Arrived from a genealogy mark (/references/#slug): the entry the link named
+   gets the cream surface and an ink border so it can be told from its
+   neighbours after the scroll. */
+.reference-entry:target {
+  border-color: var(--gm-ink);
+  background: var(--gm-cream);
 }
 
 .reference-entry__meta {

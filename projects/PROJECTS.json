@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-09-11",
+  "last_updated": "2026-09-12",
   "language": "en",
   "categories": [
     {
@@ -29,6 +29,31 @@
       "description": "Interfere with visible-light, infrared, or depth capture before recognition begins."
     }
   ],
+  "tag_definitions": {
+    "target": [
+      "face-detection",
+      "face-landmarks",
+      "face-recognition",
+      "face-verification",
+      "gender-classification",
+      "public-space-surveillance",
+      "nir-face-recognition",
+      "3d-face-recognition",
+      "depth-face-recognition",
+      "person-detection",
+      "object-detection",
+      "image-classification",
+      "license-plate-recognition",
+      "sensor-disturbance",
+      "security-camera",
+      "thermal-imaging",
+      "flash-photography",
+      "networked-surveillance",
+      "watchlist-matching",
+      "wearable-camera",
+      "smart-glasses"
+    ]
+  },
   "projects": [
     {
       "slug": "cap-able",
@@ -37,6 +62,11 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2022,
+      "target": [
+        "person-detection",
+        "object-detection"
+      ],
       "description": "A Milan-based fashion company producing knitted garments whose adversarial patterns are intended to confuse automated person and object detectors. The clothing acts upstream of face matching: it tries to stop a camera system from classifying the wearer as a person in the first place.",
       "image": {
         "src": "/images/projects/cap-able.webp",
@@ -54,6 +84,10 @@
       "category": "decoy-flooding",
       "status": "active",
       "access": "commercial",
+      "year": 2023,
+      "target": [
+        "face-detection"
+      ],
       "description": "A Leipzig privacy-fashion label selling Faception garments covered with face-like signals, alongside reflective anti-photography clothing and Faraday accessories. Its face-pattern collection aims to make automated systems detect faces where no face exists, increasing ambiguity around the wearer.",
       "image": {
         "src": "/images/projects/urban-privacy.webp",
@@ -76,6 +110,11 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "commercial",
+      "year": 2016,
+      "target": [
+        "nir-face-recognition",
+        "sensor-disturbance"
+      ],
       "description": "Commercial privacy eyewear combining infrared-blocking lenses with reflective frames. Different models target infrared illumination, eye tracking, or depth-based face mapping; the effect therefore depends on the camera spectrum and acquisition system rather than providing universal invisibility.",
       "image": {
         "src": "/images/projects/reflectacles.webp",
@@ -93,6 +132,11 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2026,
+      "target": [
+        "person-detection",
+        "face-recognition"
+      ],
       "description": "Bill Swearingen's project uses an evolutionary process to search for adversarial patterns that can be printed on ordinary fabric. Presented at DEF CON as an experiment about whether clothing can defeat a complete recognition pipeline, it is now moving from conference prototype toward a crowdfunded garment.",
       "image": {
         "src": "/images/projects/norecognition.webp",
@@ -115,6 +159,10 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2025,
+      "target": [
+        "person-detection"
+      ],
       "description": "Simon Weckert's wearable installation turns an adversarial pattern developed against YOLO person detection into a shirt and public artwork. It exposes the fragility of automated seeing; the artist explicitly does not promise anonymity or effectiveness against a particular government system.",
       "image": {
         "src": "/images/projects/digital-camouflage.webp",
@@ -132,6 +180,11 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "free-diy",
+      "year": 2023,
+      "target": [
+        "security-camera",
+        "sensor-disturbance"
+      ],
       "description": "Mac Pierce's open DIY garment places high-power infrared emitters around the hood and uses a tuned strobe to disturb night-vision exposure around the head. It targets IR-sensitive cameras rather than directly changing a face descriptor, and its effect varies with the camera, distance, light, and exposure controls.",
       "image": {
         "src": "/images/projects/camera-shy-hoodie.webp",
@@ -154,6 +207,10 @@
       "category": "face-dazzling",
       "status": "archived",
       "access": "free-method",
+      "year": 2010,
+      "target": [
+        "face-detection"
+      ],
       "description": "Adam Harvey's foundational computer-vision camouflage project uses makeup, hairstyling, occlusion, and asymmetry to break the facial structure expected by a detector. The original looks targeted Viola-Jones Haar cascades and are historical examples, not current protection recipes for modern neural networks.",
       "image": {
         "src": "/images/projects/cv-dazzle.webp",
@@ -171,6 +228,11 @@
       "category": "face-dazzling",
       "status": "active",
       "access": "exhibition",
+      "year": 2023,
+      "target": [
+        "face-detection",
+        "face-recognition"
+      ],
       "description": "Michelle Tylicki and Lauri Love turn anti-surveillance makeup into an interactive salon for teaching, designing, and testing a look. The touring work connects collective experimentation with model feedback, although its public documentation does not provide a complete reproducible benchmark.",
       "image": {
         "src": "/images/projects/dazzle.webp",
@@ -188,6 +250,11 @@
       "category": "face-dazzling",
       "status": "archived",
       "access": "collective-practice",
+      "year": 2019,
+      "target": [
+        "public-space-surveillance",
+        "face-recognition"
+      ],
       "description": "A London collective that used CV Dazzle walks, workshops, films, and public interventions to make surveillance infrastructure visible and discussable. Its contribution is a repeatable social and workshop practice rather than a controlled claim of recognition evasion.",
       "image": {
         "src": "/images/projects/dazzle-club.webp",
@@ -205,6 +272,10 @@
       "category": "decoy-flooding",
       "status": "archived",
       "access": "prototype",
+      "year": 2016,
+      "target": [
+        "face-detection"
+      ],
       "description": "Adam Harvey and Hyphen-Labs developed a textile covered with machine-readable false faces, redirecting a detector toward decoys around the wearer. Its first version was specific to OpenCV Haar cascades, was never sold, and was not tested against modern deep face detectors.",
       "image": {
         "src": "/images/projects/hyperface.webp",
@@ -222,6 +293,11 @@
       "category": "sensor-dazzling",
       "status": "archived",
       "access": "research-prototype",
+      "year": 2012,
+      "target": [
+        "face-detection",
+        "sensor-disturbance"
+      ],
       "description": "A National Institute of Informatics research programme that explored active infrared emitters and later passive reflective or absorbing eyewear. The visor aims to suppress the eye-region contrast used by some face-analysis pipelines; NII now lists it as a past project.",
       "image": {
         "src": "/images/projects/privacy-visor.webp",
@@ -239,6 +315,10 @@
       "category": "face-mismatching",
       "status": "archived",
       "access": "artwork",
+      "year": 2013,
+      "target": [
+        "face-recognition"
+      ],
       "description": "Simone C. Niquille printed T-shirts with celebrity impersonators and highly circulated stock faces to introduce false identities into social-media recognition and tagging. The shirts do not hide the wearer's face; they explore privacy through misidentification, duplication, and database noise.",
       "image": {
         "src": "/images/projects/realface-glamouflage.webp",
@@ -261,6 +341,10 @@
       "category": "face-mismatching",
       "status": "archived",
       "access": "prototype",
+      "year": 2014,
+      "target": [
+        "face-recognition"
+      ],
       "description": "Leonardo Selvaggio distributed photorealistic prosthetic and paper masks of his own face so that many wearers would present the same identity to cameras. URME replaces one identity with another rather than attempting invisibility, turning biometric substitution into a collective artwork.",
       "image": {
         "src": "/images/projects/urme-surveillance.webp",
@@ -283,6 +367,11 @@
       "category": "face-dazzling",
       "status": "archived",
       "access": "collective-practice",
+      "year": 2012,
+      "target": [
+        "face-recognition",
+        "face-detection"
+      ],
       "description": "Zach Blas's workshops aggregate participants' facial data into amorphous collective masks that cannot be reduced to one individual portrait. The project opposes biometric classification and its social biases through collective masking, performance, and public discussion.",
       "image": {
         "src": "/images/projects/facial-weaponization-suite.webp",
@@ -300,6 +389,10 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "commercial",
+      "year": 2025,
+      "target": [
+        "nir-face-recognition"
+      ],
       "description": "A lens coating sold by the mass-market optician Zenni, which the company says reflects up to 80 per cent of near-infrared light between 700 and 1050 nanometres. It targets the acquisition stage of infrared-based systems such as phone face unlock and infrared-illuminated cameras, not visible-light face matching. Zenni states that it does not guarantee anonymity or total protection, and independent testing by 404 Media found the lenses block infrared while leaving an ordinary daylight photograph fully usable for matching.",
       "image": {
         "src": "/images/projects/zenni-id-guard.webp",
@@ -322,6 +415,10 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "commercial",
+      "year": 2025,
+      "target": [
+        "nir-face-recognition"
+      ],
       "description": "An American eyewear brand selling frames with what it describes as passive optical filtering of specific infrared wavelengths. The stated aim is to reduce the accuracy and consistency of camera-based face recognition rather than to prevent it; the company's published evidence is that iPhone Face ID “did not consistently unlock” in its own internal testing. Several of the uses it names, such as retail and event scanning, are visible-light systems that an infrared filter would not be expected to affect.",
       "image": {
         "src": "/images/projects/solir-optics.webp",
@@ -339,6 +436,10 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "commercial",
+      "year": 2025,
+      "target": [
+        "nir-face-recognition"
+      ],
       "description": "Privacy sunglasses sold by an undisclosed operator, built around a lens the company calls GLX or Green Light Lens technology. The marketing claims disruption of infrared recognition, visible-light recognition and thermal imaging; only the infrared claim has a conventional physical basis, since a tinted lens leaves the jaw, nose and head geometry fully imaged by a daylight camera and does not change the thermal emission of skin. No wavelength data, rejection curve or test results are published.",
       "image": {
         "src": "/images/projects/vaydr-recon.webp",
@@ -356,6 +457,10 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2023,
+      "target": [
+        "person-detection"
+      ],
       "description": "An online shop selling garments, gaiters and masks printed with patterns the seller describes as chosen to disrupt computer-vision systems. The shop's own wording is that the images are “thoughtfully crafted, designed, and selected”, and its founder told the Mozilla Foundation that the designs are tested informally against a TensorFlow model and that he is “not saying it will always work”. In Mozilla's hands-on review the garments avoided a consumer camera's human-detection alert but did not defeat a pose-estimation model.",
       "image": {
         "src": "/images/projects/antiai-clothing.webp",
@@ -378,6 +483,12 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2024,
+      "target": [
+        "person-detection",
+        "object-detection",
+        "face-recognition"
+      ],
       "description": "An anonymously operated shop selling hoodies, shirts and masks it describes as carrying engineered adversarial patterns, citing published techniques including Expectation over Transformation and the ImageNet-Patch dataset. It claims effects on face recognition, object detection and multi-object tracking, which is the widest claim set among comparable sellers. No test results, target models or imagery of a detector failing are published, and the shop discloses no company name, location or team.",
       "image": {
         "src": "/images/projects/adversarial-apparel.webp",
@@ -395,6 +506,10 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "commercial",
+      "year": 2020,
+      "target": [
+        "person-detection"
+      ],
       "description": "A Montreal print-on-demand shop run by Jennifer Wu, selling apparel and accessories marketed to privacy and anti-surveillance audiences. Unlike comparable sellers it makes no technical claim about how its prints affect any system, presenting the range as protest and gift merchandise. Mozilla's review found the garments avoided a consumer camera's human-detection alert but not a pose-estimation model.",
       "image": {
         "src": "/images/projects/yelo-pomelo.webp",
@@ -417,6 +532,10 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "commercial",
+      "year": 2015,
+      "target": [
+        "flash-photography"
+      ],
       "description": "A retroreflective scarf by Saif Siddiqui whose woven reflective elements return a camera flash toward its source, overexposing the wearer in the resulting photograph. The product targets flash photography on consumer devices and the brand makes no face-recognition claim; it has no effect on ambient-light photography, on closed-circuit cameras or on any recognition pipeline. A retroreflective surface also increases the wearer's visibility to infrared-illuminated cameras at night.",
       "image": {
         "src": "/images/projects/the-ishu.webp",
@@ -434,6 +553,10 @@
       "category": "sensor-dazzling",
       "status": "archived",
       "access": "commercial",
+      "year": 2015,
+      "target": [
+        "flash-photography"
+      ],
       "description": "A 2015 collection of five retroreflective garments by the clothing brand Betabrand with the musician Chris Holmes, using fabric coated with glass nanospheres that return a camera flash to the lens. It was conceived to disrupt press photography rather than recognition systems, and made no claim about face detection or matching. The collection was crowdfunded, shipped, and is no longer sold.",
       "image": {
         "src": "/images/projects/betabrand-flashback.webp",
@@ -451,6 +574,10 @@
       "category": "decoy-flooding",
       "status": "archived",
       "access": "commercial",
+      "year": 2019,
+      "target": [
+        "license-plate-recognition"
+      ],
       "description": "Kate Bertash printed garments covered with plausible vehicle number plates so that automated licence plate readers would capture, timestamp and record them alongside real vehicles. The mechanism is data injection rather than evasion: the plates only need to be accepted by a reader, not to defeat a classifier, and the target is the integrity of plate-reader databases rather than any face system. Demonstrated at DEF CON 27 against OpenALPR and commercial mobile readers; the garments have not been sold since around 2023.",
       "image": {
         "src": "/images/projects/adversarial-fashion.webp",
@@ -468,6 +595,10 @@
       "category": "sensor-dazzling",
       "status": "archived",
       "access": "artwork",
+      "year": 2013,
+      "target": [
+        "thermal-imaging"
+      ],
       "description": "Adam Harvey's 2013 garment series used silver-plated, thermally reflective fabric to reduce the wearer's thermal signature in long-wave infrared imaging. It addresses aerial and thermal observation rather than face detection or matching, and is frequently miscited as anti-face-recognition clothing. The pieces were sold briefly through Harvey's Privacy Gift Shop and are now sold out.",
       "image": {
         "src": "/images/projects/stealth-wear.webp",
@@ -485,6 +616,10 @@
       "category": "full-body-scrambling",
       "status": "active",
       "access": "free-diy",
+      "year": 2019,
+      "target": [
+        "person-detection"
+      ],
       "description": "Open-source code from the EAVISE group at KU Leuven that generates a printable patch optimised against a person detector's own objectness loss, so that a person holding it produces no detection proposal. Published results against YOLOv2 on the INRIA test set report recall falling from 100 per cent to 26.5 per cent with the best patch, at a patch of roughly 40 centimetres held facing the camera. The authors note that patches transfer poorly to different detector architectures; because it is a generator rather than a fixed pattern, it can be retrained against a current model.",
       "image": {
         "src": "/images/projects/adversarial-yolo.webp",
@@ -507,6 +642,11 @@
       "category": "sensor-dazzling",
       "status": "active",
       "access": "free-diy",
+      "year": 2020,
+      "target": [
+        "security-camera",
+        "sensor-disturbance"
+      ],
       "description": "Nick Bild's open-source build sews 940-nanometre infrared LEDs into a hat to overwhelm the photodiodes of infrared-sensitive cameras. The 940-nanometre choice produces almost no visible glow, so the wearer does not appear conspicuous to onlookers, which the project states as a design goal for protest use. Code, schematic and parts list are published; like all infrared flooding it depends on the camera passing near-infrared, so a daytime infrared-cut filter removes the effect.",
       "image": {
         "src": "/images/projects/freedom-shield.webp",
@@ -529,6 +669,12 @@
       "category": "sensor-dazzling",
       "status": "archived",
       "access": "prototype",
+      "year": 2016,
+      "target": [
+        "face-detection",
+        "security-camera",
+        "sensor-disturbance"
+      ],
       "description": "A 2016 prototype by Becca Ricks and Shir David placing 22 infrared LEDs around the bill of a baseball cap, with a potentiometer to vary brightness, to saturate a camera sensor over the wearer's face. The makers ran surveillance footage through the Google Cloud Vision API and reported that the wearer went undetected while an unprotected face in the same frame was detected. It was a single informal trial with no stated distances or light levels, and no build files were released.",
       "image": {
         "src": "/images/projects/unidentified-halo.webp",
@@ -546,6 +692,11 @@
       "category": "sensor-dazzling",
       "status": "archived",
       "access": "commercial",
+      "year": 2014,
+      "target": [
+        "security-camera",
+        "sensor-disturbance"
+      ],
       "description": "Hand-built caps sold from the Czech Republic with a nine-LED infrared strip in the brim, powered by two AAA cells for twelve to fourteen hours. They were intended to wash out the wearer's face for cameras sensitive to near-infrared in low light, and no wavelength, radiant power or test data was ever published. The maker's domain ceased to be associated with the product in November 2019; the listing survives as a product record and unbranded copies circulate on marketplaces.",
       "image": {
         "src": "/images/projects/justice-caps.webp",
@@ -563,6 +714,11 @@
       "category": "face-mismatching",
       "status": "archived",
       "access": "artwork",
+      "year": 2013,
+      "target": [
+        "face-detection",
+        "face-recognition"
+      ],
       "description": "Sterling Crispin used genetic algorithms driven by face detection and recognition systems to evolve forms those systems read as maximally face-like, then 3D-printed them as wearable masks. The series is presented as a way to show the machine what it is looking for rather than as a countermeasure; Crispin states directly that defeating face recognition is not the goal, since covering a face with a hand already achieves non-detection. Produced between 2013 and 2015 and exhibited internationally.",
       "image": {
         "src": "/images/projects/data-masks.webp",
@@ -580,6 +736,11 @@
       "category": "face-dazzling",
       "status": "archived",
       "access": "prototype",
+      "year": 2019,
+      "target": [
+        "face-landmarks",
+        "face-recognition"
+      ],
       "description": "Ewa Nowak's brass face jewellery hooks behind the ears and places two discs below the eyes and a rectangle between them, positioned to disturb the facial landmarks a detector locates. The designer's only reported test was uploading photographs to Facebook and observing that its tag suggestion did not appear, which is a single consumer-platform check on frontal stills rather than a measurement. It was made as a prototype and has not been produced commercially.",
       "image": {
         "src": "/images/projects/incognito-nowak.webp",
@@ -597,6 +758,11 @@
       "category": "face-dazzling",
       "status": "unknown",
       "access": "prototype",
+      "year": 2017,
+      "target": [
+        "face-landmarks",
+        "face-recognition"
+      ],
       "description": "Dutch designer Jip van Leeuwenstein made a transparent moulded mask at the Utrecht School of the Arts in 2017 that bends and refracts light across the face, with the stated aim of preventing a camera from recovering accurate facial geometry while people can still read the wearer's expressions. The designer hedges the claim to “some forms of facial recognition” and publishes no test, target system or material specification. Snopes rated the widely shared claim that it blocks recognition from all angles as “Mixture”, finding it unclear whether the mask was ever produced or remained a thought experiment.",
       "image": {
         "src": "/images/projects/surveillance-exclusion.webp",
@@ -619,6 +785,10 @@
       "category": "face-mismatching",
       "status": "archived",
       "access": "prototype",
+      "year": 2017,
+      "target": [
+        "face-recognition"
+      ],
       "description": "Jing-cai Liu's 2017 bachelor project at the Utrecht School of the Arts mounts a small projector on the head to cast a different appearance over the wearer's face. It is a speculative design rather than a tested countermeasure: the project page states that most of the designs in the series are not working products, and no optical specification or test result is published. It is frequently misattributed to Jip van Leeuwenstein, who was one of five collaborators on the wider series.",
       "image": {
         "src": "/images/projects/wearable-face-projector.webp",
@@ -636,6 +806,11 @@
       "category": "face-dazzling",
       "status": "active",
       "access": "collective-practice",
+      "year": 2026,
+      "target": [
+        "face-recognition",
+        "gender-classification"
+      ],
       "description": "A hands-on workshop titled “Face/Off: Adversarial Drag in the Age of Capture”, run within the Queer and Feminist Informatics Network at the University of Amsterdam. It uses drag technique and adversarial makeup against both facial and automated gender classification, treating the binaries encoded in classifiers as part of what is being contested. The network presents it as pedagogy and creative research and makes no claim of effectiveness against a named system.",
       "image": {
         "src": "/images/projects/qfin-adversarial-drag.webp",

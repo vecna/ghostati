@@ -37,7 +37,7 @@ These files are linked directly by HTML pages and provide page layout or unique 
 - `index.css` — homepage-specific styling for the landing page.
   - Included by: `index.html`
 
-- `genealogy.css` — genealogy page layout and presentation, especially the circular stamp and related visual composition.
+- `genealogy.css` — genealogy page layout: hero, the two generated charts and their marks, legend, row cards. Generated together with `genealogy.html` by `scripts-dev/build-genealogy.py`; edit the CSS string there.
   - Included by: `genealogy.html`
 
 - `pages.css` — shared layout layer for content-style pages such as the editorial landing, about, report, transfer, references, workshops, and loader variants.

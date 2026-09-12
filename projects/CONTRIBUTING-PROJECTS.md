@@ -26,9 +26,32 @@ Choose the category that best describes the project's primary mechanism. Do not 
 2. Confirm whether it is currently active, archived, or of unknown status.
 3. Confirm whether people can buy it, build it, attend it, or only study the prototype.
 4. Identify the exact technical layer it claims to affect.
-5. Find a representative image published by the project or creator.
-6. Record the image's original page, credit, and reuse status. Finding an image online is not permission to republish it.
-7. Add a demonstration video only when it materially helps explain the project.
+5. Find the year it was first shown in public: launch, exhibition, conference talk, crowdfunding campaign or publication, whichever came first. Not the year work started, and not the year of the latest press.
+6. Find a representative image published by the project or creator.
+7. Record the image's original page, credit, and reuse status. Finding an image online is not permission to republish it.
+8. Add a demonstration video only when it materially helps explain the project.
+
+## Year and target: the genealogy fields
+
+`genealogy.html` is drawn from this file and from `references/REFERENCES.json` by `scripts-dev/build-genealogy.py`. Two fields place a project on that chart.
+
+- `year` is the first public showing, as an integer. It sets the horizontal position of the mark.
+- `target` is what the project says it aims at, as one or more tags from `tag_definitions.target` at the top of `PROJECTS.json`, most specific first. It picks the row (the family of reading system) and decides whether the mark is drawn as aimed at a face system (pink ring) or at another target (yellow ring: a person or object detector, a plate reader, a sensor, a camera flash).
+
+A target describes the claim, not its success: `nir-face-recognition` on a pair of glasses means the maker aims at infrared face capture, not that the glasses were shown to affect it. Non-face targets are welcome. A garment aimed at person detection belongs on the chart, drawn in the other-target colour, because it addresses a recognition technology.
+
+Rows, and the targets that land on them:
+
+| Row | Targets |
+|---|---|
+| Face detection | `face-detection` |
+| Landmark geometry | `face-landmarks` |
+| Learned embeddings | `face-recognition`, `face-verification`, `gender-classification`, `public-space-surveillance`, `person-detection`, `object-detection`, `image-classification`, `license-plate-recognition` |
+| Depth and near-infrared | `nir-face-recognition`, `3d-face-recognition`, `depth-face-recognition`, `sensor-disturbance`, `security-camera`, `thermal-imaging`, `flash-photography` |
+| Networked readers | `networked-surveillance`, `watchlist-matching` |
+| Wearable readers | `wearable-camera`, `smart-glasses` |
+
+When several targets point to different rows, the sensor row wins, then landmarks, then detection, then embeddings. To add a tag, add it to `tag_definitions.target` and to the row table in `scripts-dev/build-genealogy.py`; the build stops on a tag it cannot place.
 
 ## Writing the description
 
@@ -55,6 +78,8 @@ Avoid promotional adjectives, unverifiable effectiveness claims, star ratings, a
   "category": "face-dazzling",
   "status": "active",
   "access": "free-diy",
+  "year": 2021,
+  "target": ["face-detection"],
   "description": "Two or three factual sentences in English.",
   "image": {
     "src": "/images/projects/example-project.webp",
@@ -79,6 +104,7 @@ Run from the repository root:
 ```sh
 npm run validate:projects
 npm run update:projects
+npm run update:genealogy
 ```
 
-Validation rejects undeclared categories, duplicate slugs, malformed links, and missing local images. Then open `/projects/`, test every category button, follow every external link, and review the mobile layout. Generated `projects/index.html` is output: edit the JSON, template, stylesheet, or filter script instead.
+Validation rejects undeclared categories, undeclared targets, a missing or implausible year, duplicate slugs, malformed links, and missing local images. The third command redraws `genealogy.html`, which places every project by its year and target. Then open `/projects/`, test every category button, follow every external link, and review the mobile layout. Generated `projects/index.html` is output: edit the JSON, template, stylesheet, or filter script instead.

@@ -54,11 +54,15 @@ function renderLinks(project) {
   return links.join('\n                ');
 }
 
+// Each row carries id="<slug>" so genealogy.html can link a mark straight to
+// its project (/projects/#slug), the way reference marks already reach
+// /references/#slug. The year is the first public showing, the same value the
+// genealogy chart places the mark at.
 function renderRows(projects, categoryMap) {
   return projects.map((project) => {
     const category = categoryMap.get(project.category);
     return `
-          <tr class="project-row" data-project-category="${esc(project.category)}">
+          <tr class="project-row" id="${esc(project.slug)}" data-project-category="${esc(project.category)}">
             <td class="project-row__media">
               <figure>
                 <img src="${esc(project.image.src)}" alt="${esc(project.image.alt)}" width="720" height="480" loading="lazy" decoding="async" />
@@ -68,7 +72,7 @@ function renderRows(projects, categoryMap) {
             <td class="project-row__project">
               <p class="project-row__category">${esc(category.label)}</p>
               <h2><a href="${esc(project.url)}" target="_blank" rel="noopener noreferrer">${esc(project.name)}</a></h2>
-              <p class="project-row__state">${esc(ACCESS_LABELS[project.access] || titleCase(project.access))} &middot; ${esc(titleCase(project.status))}</p>
+              <p class="project-row__state">${esc(ACCESS_LABELS[project.access] || titleCase(project.access))} &middot; ${esc(titleCase(project.status))} &middot; <time datetime="${esc(project.year)}">${esc(project.year)}</time></p>
             </td>
             <td class="project-row__description">
               <p>${esc(project.description)}</p>

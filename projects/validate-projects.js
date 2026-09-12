@@ -32,6 +32,14 @@ function validateProjects(data) {
   assert(Array.isArray(data.categories) && data.categories.length > 0, 'categories must be a non-empty array.');
   assert(Array.isArray(data.projects) && data.projects.length > 0, 'projects must be a non-empty array.');
 
+  // The target vocabulary is declared once, at the top of the file, the way
+  // REFERENCES.json declares its tags. Every project target must come from it,
+  // and scripts-dev/build-genealogy.py must know every tag in it.
+  const targetTags = new Set((data.tag_definitions && data.tag_definitions.target) || []);
+  assert(targetTags.size > 0, 'tag_definitions.target must be a non-empty array of slugs.');
+  for (const tag of targetTags) assert(isSlug(tag), `tag_definitions.target: "${tag}" is not a slug.`);
+  const thisYear = new Date().getUTCFullYear();
+
   const categoryIds = new Set();
   for (const [index, category] of (data.categories || []).entries()) {
     const label = `category #${index + 1}`;
@@ -55,6 +63,12 @@ function validateProjects(data) {
     assert(categoryIds.has(project.category), `${label}: unknown category "${project.category}".`);
     assert(ALLOWED_STATUS.has(project.status), `${label}: status must be active, archived, or unknown.`);
     assert(isSlug(project.access), `${label}: access must be a lowercase slug.`);
+    assert(Number.isInteger(project.year) && project.year >= 1990 && project.year <= thisYear + 1,
+      `${label}: year must be an integer between 1990 and ${thisYear + 1} (first public showing).`);
+    assert(Array.isArray(project.target) && project.target.length > 0, `${label}: target must be a non-empty array.`);
+    for (const tag of project.target || []) {
+      assert(targetTags.has(tag), `${label}: target "${tag}" is not declared in tag_definitions.target.`);
+    }
     assert(isText(project.description), `${label}: missing description.`);
 
     if (slugs.has(project.slug)) errors.push(`${label}: duplicate slug.`);
